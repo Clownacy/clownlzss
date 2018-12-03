@@ -80,31 +80,11 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 
 static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_NodeMeta *node_meta_array, void *user)
 {
-	return;
+	(void)data;
+	(void)data_size;
+	(void)offset;
+	(void)node_meta_array;
 	(void)user;
-
-	if (offset < 0x1000)
-	{
-		const size_t max_read_ahead = CLOWNLZSS_MIN(0x12, data_size - offset);
-
-		for (size_t k = 0; k < max_read_ahead; ++k)
-		{
-			if (data[offset + k] == 0)
-			{
-				const unsigned int cost = GetMatchCost(0, k + 1, user);
-
-				if (cost && node_meta_array[offset + k + 1].cost > node_meta_array[offset].cost + cost)
-				{
-					node_meta_array[offset + k + 1].cost = node_meta_array[offset].cost + cost;
-					node_meta_array[offset + k + 1].previous_node_index = offset;
-					node_meta_array[offset + k + 1].match_length = k + 1;
-					node_meta_array[offset + k + 1].match_offset = 0xFFF;
-				}
-			}
-			else
-				break;
-		}
-	}
 }
 
 static CLOWNLZSS_MAKE_FUNCTION(FindMatchesRocket, unsigned char, 0x40, 0x400, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
