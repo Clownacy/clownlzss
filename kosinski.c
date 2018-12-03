@@ -58,8 +58,9 @@ static void DoLiteral(unsigned char value, void *user)
 	PutMatchByte(value);
 }
 
-static void DoMatch(size_t distance, size_t length, void *user)
+static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
+	(void)offset;
 	(void)user;
 
 	if (length >= 2 && length <= 5 && distance <= 256)

@@ -18,6 +18,7 @@ typedef struct ClownLZSS_NodeMeta
 	size_t previous_node_index;
 	size_t match_distance;
 	size_t match_length;
+	size_t match_offset;
 } ClownLZSS_NodeMeta;
 
 #define CLOWNLZSS_MAKE_FUNCTION(NAME, TYPE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
@@ -48,6 +49,7 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 						node_meta_array[i + k + 1].previous_node_index = i;\
 						node_meta_array[i + k + 1].match_distance = i - j;\
 						node_meta_array[i + k + 1].match_length = k + 1;\
+						node_meta_array[i + k + 1].match_offset = j;\
 					}\
 				}\
 				else\
@@ -73,7 +75,7 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 		const size_t next_index = node_meta_array[node_index].next_node_index;\
 \
 		if (node_meta_array[next_index].match_distance)\
-			MATCH_CALLBACK(node_meta_array[next_index].match_distance, node_meta_array[next_index].match_length, user);\
+			MATCH_CALLBACK(node_meta_array[next_index].match_distance, node_meta_array[next_index].match_length, node_meta_array[next_index].match_offset, user);\
 		else\
 			LITERAL_CALLBACK(data[node_index], user);\
 	}\
