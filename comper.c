@@ -49,7 +49,7 @@ static void PutDescriptorBit(bool bit)
 	descriptor |= bit;
 }
 
-static void DoLiteral(unsigned char value, void *user)
+static void DoLiteral(unsigned short value, void *user)
 {
 	(void)user;
 
@@ -84,7 +84,7 @@ unsigned char* ComperCompress(unsigned char *data, size_t data_size, size_t *com
 	match_stream = MemoryStream_Init(0x10);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	FindMatchesComper((unsigned short*)data, data_size, NULL);
+	FindMatchesComper((unsigned short*)data, data_size / sizeof(unsigned short), NULL);
 
 	// Terminator match
 	PutDescriptorBit(true);
