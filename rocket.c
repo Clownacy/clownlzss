@@ -1,4 +1,4 @@
-#include "saxman.h"
+#include "rocket.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -62,9 +62,11 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 	(void)distance;
 	(void)user;
 
+	const unsigned short offset_adjusted = (offset + 0x3C0) & 0x3FF;
+
 	PutDescriptorBit(false);
-	PutMatchByte((offset - 0x12) & 0xFF);
-	PutMatchByte((((offset - 0x12) & 0xF00) >> 4) | (length - 3));
+	PutMatchByte(((offset_adjusted >> 8) & 3) | ((length - 1) << 2));
+	PutMatchByte(offset_adjusted & 0xFF);
 }
 
 static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
@@ -73,14 +75,12 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	(void)length;
 	(void)user;
 
-	if (length >= 3)
-		return 16 + 1;
-	else
-		return 0;
+	return 16 + 1;
 }
 
 static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_NodeMeta *node_meta_array, void *user)
 {
+	return;
 	(void)user;
 
 	if (offset < 0x1000)
@@ -107,15 +107,15 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	}
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatchesSaxman, unsigned char, 0x12, 0x1000, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FUNCTION(FindMatchesRocket, unsigned char, 0x40, 0x400, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
 
-unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* RocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
 	output_stream = MemoryStream_Init(0x100);
 	match_stream = MemoryStream_Init(0x10);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	FindMatchesSaxman(data, data_size, NULL);
+	FindMatchesRocket(data, data_size, NULL);
 
 	FlushData();
 
