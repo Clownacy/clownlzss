@@ -2,9 +2,11 @@
 
 #include <limits.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #define CLOWNLZSS_MIN(a, b) (a) < (b) ? (a) : (b)
+#define CLOWNLZSS_MAX(a, b) (a) > (b) ? (a) : (b)
 
 typedef struct ClownLZSS_NodeMeta
 {
@@ -30,21 +32,21 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 	for (size_t i = 0; i < data_size; ++i)\
 	{\
 		const size_t max_read_ahead = CLOWNLZSS_MIN(MAX_MATCH_LENGTH, data_size - i);\
-		const size_t max_read_behind = CLOWNLZSS_MIN(i, MAX_MATCH_DISTANCE);\
+		const size_t max_read_behind = MAX_MATCH_DISTANCE > i ? 0 : i - MAX_MATCH_DISTANCE;\
 \
-		for (size_t j = 1; j < max_read_behind + 1; ++j)\
+		for (size_t j = i; j-- > max_read_behind;)\
 		{\
 			for (size_t k = 0; k < max_read_ahead; ++k)\
 			{\
-				if (data[i + k] == data[i - j + k])\
+				if (data[i + k] == data[j + k])\
 				{\
-					const unsigned int cost = MATCH_COST_CALLBACK(j, k + 1, user);\
+					const unsigned int cost = MATCH_COST_CALLBACK(i - j, k + 1, user);\
 \
 					if (cost && node_meta_array[i + k + 1].cost > node_meta_array[i].cost + cost)\
 					{\
 						node_meta_array[i + k + 1].cost = node_meta_array[i].cost + cost;\
 						node_meta_array[i + k + 1].previous_node_index = i;\
-						node_meta_array[i + k + 1].match_distance = j;\
+						node_meta_array[i + k + 1].match_distance = i - j;\
 						node_meta_array[i + k + 1].match_length = k + 1;\
 					}\
 				}\
@@ -61,12 +63,12 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 		}\
 	}\
 \
-	node_meta_array[0].previous_node_index = UINT_MAX;\
-	node_meta_array[data_size].next_node_index = UINT_MAX;\
-	for (size_t node_index = data_size; node_meta_array[node_index].previous_node_index != UINT_MAX; node_index = node_meta_array[node_index].previous_node_index)\
+	node_meta_array[0].previous_node_index = SIZE_MAX;\
+	node_meta_array[data_size].next_node_index = SIZE_MAX;\
+	for (size_t node_index = data_size; node_meta_array[node_index].previous_node_index != SIZE_MAX; node_index = node_meta_array[node_index].previous_node_index)\
 		node_meta_array[node_meta_array[node_index].previous_node_index].next_node_index = node_index;\
 \
-	for (size_t node_index = 0; node_meta_array[node_index].next_node_index != UINT_MAX; node_index = node_meta_array[node_index].next_node_index)\
+	for (size_t node_index = 0; node_meta_array[node_index].next_node_index != SIZE_MAX; node_index = node_meta_array[node_index].next_node_index)\
 	{\
 		const size_t next_index = node_meta_array[node_index].next_node_index;\
 \
