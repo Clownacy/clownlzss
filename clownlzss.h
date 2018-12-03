@@ -21,7 +21,7 @@ typedef struct ClownLZSS_NodeMeta
 	size_t match_offset;
 } ClownLZSS_NodeMeta;
 
-#define CLOWNLZSS_MAKE_FUNCTION(NAME, TYPE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
+#define CLOWNLZSS_MAKE_FUNCTION(NAME, TYPE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
 void NAME(TYPE *data, size_t data_size, void *user)\
 {\
 	ClownLZSS_NodeMeta *node_meta_array = malloc((data_size + 1) * sizeof(ClownLZSS_NodeMeta));	/* +1 for the end-node */\
@@ -34,6 +34,8 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 	{\
 		const size_t max_read_ahead = CLOWNLZSS_MIN(MAX_MATCH_LENGTH, data_size - i);\
 		const size_t max_read_behind = MAX_MATCH_DISTANCE > i ? 0 : i - MAX_MATCH_DISTANCE;\
+\
+		FIND_EXTRA_MATCHES(data, data_size, i, node_meta_array, user);\
 \
 		for (size_t j = i; j-- > max_read_behind;)\
 		{\
@@ -61,7 +63,7 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 		{\
 			node_meta_array[i + 1].cost = node_meta_array[i].cost + LITERAL_COST;\
 			node_meta_array[i + 1].previous_node_index = i;\
-			node_meta_array[i + 1].match_distance = 0;\
+			node_meta_array[i + 1].match_length = 0;\
 		}\
 	}\
 \
@@ -74,7 +76,7 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 	{\
 		const size_t next_index = node_meta_array[node_index].next_node_index;\
 \
-		if (node_meta_array[next_index].match_distance)\
+		if (node_meta_array[next_index].match_length)\
 			MATCH_CALLBACK(node_meta_array[next_index].match_distance, node_meta_array[next_index].match_length, node_meta_array[next_index].match_offset, user);\
 		else\
 			LITERAL_CALLBACK(data[node_index], user);\

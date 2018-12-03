@@ -102,7 +102,16 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 		return 0; 		// In the event a match cannot be compressed
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatchesKosinski, unsigned char, 0x100, 0x2000, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
+static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_NodeMeta *node_meta_array, void *user)
+{
+	(void)data;
+	(void)data_size;
+	(void)offset;
+	(void)node_meta_array;
+	(void)user;
+}
+
+static CLOWNLZSS_MAKE_FUNCTION(FindMatchesKosinski, unsigned char, 0x100, 0x2000, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
 
 unsigned char* KosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {

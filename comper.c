@@ -77,7 +77,16 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	return 16 + 1;
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatchesComper, unsigned short, 0x100, 0x100, 16 + 1, DoLiteral, GetMatchCost, DoMatch)
+static void FindExtraMatches(unsigned short *data, size_t data_size, size_t offset, ClownLZSS_NodeMeta *node_meta_array, void *user)
+{
+	(void)data;
+	(void)data_size;
+	(void)offset;
+	(void)node_meta_array;
+	(void)user;
+}
+
+static CLOWNLZSS_MAKE_FUNCTION(FindMatchesComper, unsigned short, 0x100, 0x100, FindExtraMatches, 16 + 1, DoLiteral, GetMatchCost, DoMatch)
 
 unsigned char* ComperCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
