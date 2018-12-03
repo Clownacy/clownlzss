@@ -1,6 +1,9 @@
 CFLAGS := -O2 -s -Wall -Wextra -fno-ident -flto
 
-all: kos
+all: kos comp
 
-kos: main.c memory_stream.c clownlzss.c
+kos: maink.c memory_stream.c
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+comp: main.c memory_stream.c
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)

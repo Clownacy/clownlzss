@@ -18,9 +18,6 @@ static void FlushData(void)
 {
 	descriptor >>= descriptor_bits_remaining;
 
-	// Descriptors are stored byte-swapped, so it's possible the
-	// original compressor did this:
-	//fwrite(&descriptor, 2, 1, output_file);
 	MemoryStream_WriteByte(output_stream, descriptor & 0xFF);
 	MemoryStream_WriteByte(output_stream, descriptor >> 8);
 
@@ -37,12 +34,14 @@ static void PutMatchByte(unsigned char byte)
 
 static void PutDescriptorBit(bool bit)
 {
+	--descriptor_bits_remaining;
+
 	descriptor >>= 1;
 
 	if (bit)
 		descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
 
-	if (--descriptor_bits_remaining == 0)
+	if (descriptor_bits_remaining == 0)
 	{
 		FlushData();
 
@@ -51,15 +50,19 @@ static void PutDescriptorBit(bool bit)
 	}
 }
 
-static void DoLiteral(unsigned char value)
+static void DoLiteral(unsigned char value, void *user)
 {
+	(void)user;
+
 	PutDescriptorBit(true);
 	PutMatchByte(value);
 }
 
-static void DoMatch(size_t distance, size_t length)
+static void DoMatch(size_t distance, size_t length, void *user)
 {
-	if (length >= 2 && length <= 5 && distance <= 256)	// Mistake 3: This should be '<= 256'
+	(void)user;
+
+	if (length >= 2 && length <= 5 && distance <= 256)
 	{
 		PutDescriptorBit(false);
 		PutDescriptorBit(false);
@@ -84,8 +87,10 @@ static void DoMatch(size_t distance, size_t length)
 	}
 }
 
-static unsigned int GetCost(size_t distance, size_t length)
+static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 {
+	(void)user;
+
 	if (length >= 2 && length <= 5 && distance <= 256)
 		return 8 + 2 + 2;	// Offset byte, length bits, descriptor bits
 	else if (length >= 3 && length <= 9)
@@ -95,6 +100,8 @@ static unsigned int GetCost(size_t distance, size_t length)
 	else
 		return 0; 		// In the event a match cannot be compressed
 }
+
+CLOWNLZSS_MAKE_FUNCTION(CompressKosinski, unsigned char, 0x100, 0x2000, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
 
 int main(int argc, char *argv[])
 {
@@ -116,7 +123,7 @@ int main(int argc, char *argv[])
 			match_stream = MemoryStream_Init(0x10);
 			descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-			ClownLZSS_CompressData(file_buffer, file_size, 0x100, 0x2000, 8 + 1, GetCost, DoLiteral, DoMatch);
+			CompressKosinski(file_buffer, file_size, NULL);
 
 			#ifdef DEBUG
 			printf("%X - Terminator: %X\n", MemoryStream_GetIndex(output_stream) + MemoryStream_GetIndex(match_stream) + 2, file_pointer - file_buffer);
