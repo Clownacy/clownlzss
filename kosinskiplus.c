@@ -109,7 +109,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatchesKosinskiPlus, unsigned char, 0x100 + 8, 0x2000, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0x100 + 8, 0x2000, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
 
 unsigned char* KosinskiPlusCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
@@ -117,7 +117,7 @@ unsigned char* KosinskiPlusCompress(unsigned char *data, size_t data_size, size_
 	match_stream = MemoryStream_Init(0x10);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	FindMatchesKosinskiPlus(data, data_size, NULL);
+	FindMatches(data, data_size, NULL);
 
 	// Terminator match
 	PutDescriptorBit(false);

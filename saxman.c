@@ -107,7 +107,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	}
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatchesSaxman, unsigned char, 0x12, 0x1000, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0x12, 0x1000, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
 
 unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
@@ -115,7 +115,7 @@ unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *com
 	match_stream = MemoryStream_Init(0x10);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	FindMatchesSaxman(data, data_size, NULL);
+	FindMatches(data, data_size, NULL);
 
 	FlushData();
 

@@ -87,7 +87,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatchesRocket, unsigned char, 0x40, 0x400, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0x40, 0x400, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
 
 unsigned char* RocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
@@ -95,7 +95,7 @@ unsigned char* RocketCompress(unsigned char *data, size_t data_size, size_t *com
 	match_stream = MemoryStream_Init(0x10);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	FindMatchesRocket(data, data_size, NULL);
+	FindMatches(data, data_size, NULL);
 
 	FlushData();
 

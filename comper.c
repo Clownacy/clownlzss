@@ -86,7 +86,7 @@ static void FindExtraMatches(unsigned short *data, size_t data_size, size_t offs
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatchesComper, unsigned short, 0x100, 0x100, FindExtraMatches, 16 + 1, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned short, 0x100, 0x100, FindExtraMatches, 16 + 1, DoLiteral, GetMatchCost, DoMatch)
 
 unsigned char* ComperCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
@@ -94,7 +94,7 @@ unsigned char* ComperCompress(unsigned char *data, size_t data_size, size_t *com
 	match_stream = MemoryStream_Init(0x10);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	FindMatchesComper((unsigned short*)data, data_size / sizeof(unsigned short), NULL);
+	FindMatches((unsigned short*)data, data_size / sizeof(unsigned short), NULL);
 
 	// Terminator match
 	PutDescriptorBit(true);
