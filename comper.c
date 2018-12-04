@@ -53,7 +53,7 @@ static void DoLiteral(unsigned short value, void *user)
 {
 	(void)user;
 
-	PutDescriptorBit(false);
+	PutDescriptorBit(0);
 	PutMatchByte(value & 0xFF);
 	PutMatchByte(value >> 8);
 }
@@ -63,7 +63,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 	(void)offset;
 	(void)user;
 
-	PutDescriptorBit(true);
+	PutDescriptorBit(1);
 	PutMatchByte(-distance);
 	PutMatchByte(length - 1);
 }
@@ -97,9 +97,9 @@ unsigned char* ComperCompress(unsigned char *data, size_t data_size, size_t *com
 	FindMatches((unsigned short*)data, data_size / sizeof(unsigned short), NULL);
 
 	// Terminator match
-	PutDescriptorBit(true);
-	PutMatchByte(0x00);
-	PutMatchByte(0x00);
+	PutDescriptorBit(1);
+	PutMatchByte(0);
+	PutMatchByte(0);
 
 	FlushData();
 

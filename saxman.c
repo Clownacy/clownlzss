@@ -53,7 +53,7 @@ static void DoLiteral(unsigned short value, void *user)
 {
 	(void)user;
 
-	PutDescriptorBit(true);
+	PutDescriptorBit(1);
 	PutMatchByte(value);
 }
 
@@ -62,7 +62,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 	(void)distance;
 	(void)user;
 
-	PutDescriptorBit(false);
+	PutDescriptorBit(0);
 	PutMatchByte((offset - 0x12) & 0xFF);
 	PutMatchByte((((offset - 0x12) & 0xF00) >> 4) | (length - 3));
 }

@@ -52,7 +52,7 @@ static void DoLiteral(unsigned char value, void *user)
 {
 	(void)user;
 
-	PutDescriptorBit(true);
+	PutDescriptorBit(1);
 	PutMatchByte(value);
 }
 
@@ -63,23 +63,23 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 
 	if (length >= 2 && length <= 5 && distance <= 256)
 	{
-		PutDescriptorBit(false);
-		PutDescriptorBit(false);
+		PutDescriptorBit(0);
+		PutDescriptorBit(0);
 		PutMatchByte(-distance);
 		PutDescriptorBit((length - 2) & 2);
 		PutDescriptorBit((length - 2) & 1);
 	}
 	else if (length >= 3 && length <= 9)
 	{
-		PutDescriptorBit(false);
-		PutDescriptorBit(true);
+		PutDescriptorBit(0);
+		PutDescriptorBit(1);
 		PutMatchByte(((-distance >> (8 - 3)) & 0xF8) | ((10 - length) & 7));
 		PutMatchByte(-distance & 0xFF);
 	}
 	else //if (length >= 10)
 	{
-		PutDescriptorBit(false);
-		PutDescriptorBit(true);
+		PutDescriptorBit(0);
+		PutDescriptorBit(1);
 		PutMatchByte((-distance >> (8 - 3)) & 0xF8);
 		PutMatchByte(-distance & 0xFF);
 		PutMatchByte(length - 9);
@@ -120,8 +120,8 @@ unsigned char* KosinskiPlusCompress(unsigned char *data, size_t data_size, size_
 	FindMatches(data, data_size, NULL);
 
 	// Terminator match
-	PutDescriptorBit(false);
-	PutDescriptorBit(true);
+	PutDescriptorBit(0);
+	PutDescriptorBit(1);
 	PutMatchByte(0xF0);
 	PutMatchByte(0x00);
 	PutMatchByte(0x00);

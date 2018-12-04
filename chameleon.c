@@ -53,7 +53,7 @@ static void DoLiteral(unsigned char value, void *user)
 {
 	(void)user;
 
-	PutDescriptorBit(true);
+	PutDescriptorBit(1);
 	PutMatchByte(value);
 }
 
@@ -64,15 +64,15 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 
 	if (length >= 2 && length <= 3 && distance < 256)
 	{
-		PutDescriptorBit(false);
-		PutDescriptorBit(false);
+		PutDescriptorBit(0);
+		PutDescriptorBit(0);
 		PutMatchByte(distance);
 		PutDescriptorBit(length == 3);
 	}
 	else if (length >= 3 && length <= 5)
 	{
-		PutDescriptorBit(false);
-		PutDescriptorBit(true);
+		PutDescriptorBit(0);
+		PutDescriptorBit(1);
 		PutDescriptorBit(distance & (1 << 10));
 		PutDescriptorBit(distance & (1 << 9));
 		PutDescriptorBit(distance & (1 << 8));
@@ -82,14 +82,14 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 	}
 	else //if (length >= 6)
 	{
-		PutDescriptorBit(false);
-		PutDescriptorBit(true);
+		PutDescriptorBit(0);
+		PutDescriptorBit(1);
 		PutDescriptorBit(distance & (1 << 10));
 		PutDescriptorBit(distance & (1 << 9));
 		PutDescriptorBit(distance & (1 << 8));
 		PutMatchByte(distance & 0xFF);
-		PutDescriptorBit(true);
-		PutDescriptorBit(true);
+		PutDescriptorBit(1);
+		PutDescriptorBit(1);
 		PutMatchByte(length);
 	}
 }
@@ -129,14 +129,14 @@ unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *
 	FindMatches(data, data_size, NULL);
 
 	// Terminator match
-	PutDescriptorBit(false);
-	PutDescriptorBit(true);
-	PutDescriptorBit(false);
-	PutDescriptorBit(false);
-	PutDescriptorBit(false);
+	PutDescriptorBit(0);
+	PutDescriptorBit(1);
+	PutDescriptorBit(0);
+	PutDescriptorBit(0);
+	PutDescriptorBit(0);
 	PutMatchByte(0);
-	PutDescriptorBit(true);
-	PutDescriptorBit(true);
+	PutDescriptorBit(1);
+	PutDescriptorBit(1);
 	PutMatchByte(0);
 
 	FlushData();
