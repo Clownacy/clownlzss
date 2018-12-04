@@ -99,13 +99,13 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	(void)user;
 
 	if (length >= 2 && length <= 3 && distance < 256)
-		return 2 + 8 + 1;		// Offset byte, length bits, descriptor bits
+		return 2 + 8 + 1;		// Descriptor bits, offset byte, length bit
 	else if (length >= 3 && length <= 5)
-		return 2 + 3 + 8 + 2;		// Offset/length bytes, descriptor bits
+		return 2 + 3 + 8 + 2;		// Descriptor bits, offset bits, offset byte, length bits
 	else if (length >= 6)
-		return 2 + 3 + 8 + 2 + 8;	// Offset/length bytes, descriptor bits
+		return 2 + 3 + 8 + 2 + 8;	// Descriptor bits, offset bits, offset byte, (blank) length bits, length byte
 	else
-		return 0; 		// In the event a match cannot be compressed
+		return 0; 			// In the event a match cannot be compressed
 }
 
 static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_NodeMeta *node_meta_array, void *user)
@@ -117,7 +117,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0xFF, 0x7FF, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
 unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {

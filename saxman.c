@@ -74,7 +74,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	(void)user;
 
 	if (length >= 3)
-		return 16 + 1;
+		return 1 + 16;	// Descriptor bit, offset/length bits
 	else
 		return 0;
 }
@@ -107,7 +107,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	}
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0x12, 0x1000, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0x12, 0x1000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
 unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {

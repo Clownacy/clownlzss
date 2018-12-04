@@ -93,11 +93,11 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	(void)user;
 
 	if (length >= 2 && length <= 5 && distance <= 256)
-		return 8 + 2 + 2;	// Offset byte, length bits, descriptor bits
+		return 2 + 2 + 8;	// Descriptor bits, length bits, offset byte
 	else if (length >= 3 && length <= 9)
-		return 16 + 2;		// Offset/length bytes, descriptor bits
+		return 2 + 16;		// Descriptor bits, offset/length bytes
 	else if (length >= 3)
-		return 24 + 2;		// Offset/length bytes, descriptor bits
+		return 2 + 16 + 8;	// Descriptor bits, offset bytes, length byte
 	else
 		return 0; 		// In the event a match cannot be compressed
 }
@@ -111,7 +111,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0x100, 0x2000, FindExtraMatches, 8 + 1, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0x100, 0x2000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
 unsigned char* KosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
