@@ -24,7 +24,7 @@ typedef struct ClownLZSS_NodeMeta
 #define CLOWNLZSS_MAKE_FUNCTION(NAME, TYPE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
 void NAME(TYPE *data, size_t data_size, void *user)\
 {\
-	ClownLZSS_NodeMeta *node_meta_array = malloc((data_size + 1) * sizeof(ClownLZSS_NodeMeta));	/* +1 for the end-node */\
+	ClownLZSS_NodeMeta *node_meta_array = (ClownLZSS_NodeMeta*)malloc((data_size + 1) * sizeof(ClownLZSS_NodeMeta));	/* +1 for the end-node */\
 \
 	node_meta_array[0].cost = 0;\
 	for (size_t i = 1; i < data_size + 1; ++i)\

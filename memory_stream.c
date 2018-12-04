@@ -18,7 +18,7 @@ typedef struct MemoryStream
 
 MemoryStream* MemoryStream_Create(size_t growth, bool free_buffer_when_destroyed)
 {
-	MemoryStream *memory_stream = malloc(sizeof(MemoryStream));
+	MemoryStream *memory_stream = (MemoryStream*)malloc(sizeof(MemoryStream));
 	memory_stream->buffer = NULL;
 	memory_stream->index = 0;
 	memory_stream->size = 0;
@@ -40,7 +40,7 @@ void MemoryStream_WriteByte(MemoryStream *memory_stream, unsigned char byte)
 	if (memory_stream->index + 1 > memory_stream->size)
 	{
 		memory_stream->size += memory_stream->growth;
-		memory_stream->buffer = realloc(memory_stream->buffer, memory_stream->size);
+		memory_stream->buffer = (unsigned char*)realloc(memory_stream->buffer, memory_stream->size);
 	}
 
 	memory_stream->buffer[memory_stream->index++] = byte;
@@ -53,7 +53,7 @@ void MemoryStream_WriteBytes(MemoryStream *memory_stream, unsigned char *bytes, 
 		while (memory_stream->index + byte_count > memory_stream->size)
 			memory_stream->size += memory_stream->growth;
 
-		memory_stream->buffer = realloc(memory_stream->buffer, memory_stream->size);
+		memory_stream->buffer = (unsigned char*)realloc(memory_stream->buffer, memory_stream->size);
 	}
 
 	memcpy(&memory_stream->buffer[memory_stream->index], bytes, byte_count);
