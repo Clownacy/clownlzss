@@ -1,6 +1,6 @@
 CFLAGS := -O2 -s -Wall -Wextra -fno-ident -flto
 
-all: kos kosp sax comp rock
+all: kos kosp sax comp rock cham
 
 kos: maink.c kosinski.c memory_stream.c
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
@@ -15,4 +15,7 @@ comp: main.c comper.c memory_stream.c
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 rock: mainr.c rocket.c memory_stream.c
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+cham: mainch.c chameleon.c memory_stream.c
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
