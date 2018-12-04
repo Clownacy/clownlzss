@@ -1,4 +1,4 @@
-CFLAGS := -O2 -s -Wall -Wextra -fno-ident -flto -include stb_leakcheck.h
+CFLAGS := -O2 -std=c11 -s -Wall -Wextra -pedantic -fno-ident -flto -include stb_leakcheck.h
 
 all: cham comp kos kosp rock sax
 
