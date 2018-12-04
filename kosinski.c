@@ -115,8 +115,8 @@ static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0x100, 0x2000, FindEx
 
 unsigned char* KosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
-	output_stream = MemoryStream_Init(0x100);
-	match_stream = MemoryStream_Init(0x10);
+	output_stream = MemoryStream_Create(0x100, false);
+	match_stream = MemoryStream_Create(0x10, true);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	FindMatches(data, data_size, NULL);
@@ -135,8 +135,8 @@ unsigned char* KosinskiCompress(unsigned char *data, size_t data_size, size_t *c
 	if (compressed_size)
 		*compressed_size = MemoryStream_GetIndex(output_stream);
 
-	free(match_stream);
-	free(output_stream);
+	MemoryStream_Destroy(match_stream);
+	MemoryStream_Destroy(output_stream);
 
 	return out_buffer;
 }

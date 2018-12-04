@@ -2,11 +2,13 @@
 
 #pragma once 
 
+#include <stdbool.h>
 #include <stddef.h>
 
 typedef struct MemoryStream MemoryStream;
 
-MemoryStream* MemoryStream_Init(size_t growth);
+MemoryStream* MemoryStream_Create(size_t growth, bool free_buffer_when_destroyed);
+void MemoryStream_Destroy(MemoryStream *memory_stream);
 void MemoryStream_WriteByte(MemoryStream *memory_stream, unsigned char byte);
 void MemoryStream_WriteBytes(MemoryStream *memory_stream, unsigned char *bytes, unsigned int byte_count);
 unsigned char* MemoryStream_GetBuffer(MemoryStream *memory_stream);

@@ -2,6 +2,7 @@
 
 #include "memory_stream.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,16 +13,26 @@ typedef struct MemoryStream
 	size_t index;
 	size_t size;
 	size_t growth;
+	bool free_buffer_when_destroyed;
 } MemoryStream;
 
-MemoryStream* MemoryStream_Init(size_t growth)
+MemoryStream* MemoryStream_Create(size_t growth, bool free_buffer_when_destroyed)
 {
 	MemoryStream *memory_stream = malloc(sizeof(MemoryStream));
 	memory_stream->buffer = NULL;
 	memory_stream->index = 0;
 	memory_stream->size = 0;
 	memory_stream->growth = growth;
+	memory_stream->free_buffer_when_destroyed = free_buffer_when_destroyed;
 	return memory_stream;
+}
+
+void MemoryStream_Destroy(MemoryStream *memory_stream)
+{
+	if (memory_stream->free_buffer_when_destroyed)
+		free(memory_stream->buffer);
+
+	free(memory_stream);
 }
 
 void MemoryStream_WriteByte(MemoryStream *memory_stream, unsigned char byte)

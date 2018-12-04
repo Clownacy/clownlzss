@@ -121,9 +121,9 @@ static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0xFF, 0x7FF, FindExtr
 
 unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
-	output_stream = MemoryStream_Init(0x100);
-	match_stream = MemoryStream_Init(0x100);
-	descriptor_stream = MemoryStream_Init(0x100);
+	output_stream = MemoryStream_Create(0x100, false);
+	match_stream = MemoryStream_Create(0x100, true);
+	descriptor_stream = MemoryStream_Create(0x100, true);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	FindMatches(data, data_size, NULL);
@@ -159,9 +159,9 @@ unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *
 	if (compressed_size)
 		*compressed_size = MemoryStream_GetIndex(output_stream);
 
-	free(descriptor_stream);
-	free(match_stream);
-	free(output_stream);
+	MemoryStream_Destroy(descriptor_stream);
+	MemoryStream_Destroy(match_stream);
+	MemoryStream_Destroy(output_stream);
 
 	return out_buffer;
 }
