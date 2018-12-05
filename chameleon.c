@@ -20,11 +20,6 @@ static void FlushData(void)
 	descriptor <<= descriptor_bits_remaining;
 
 	MemoryStream_WriteByte(descriptor_stream, descriptor);
-
-//	const size_t match_buffer_size = MemoryStream_GetIndex(match_stream);
-//	unsigned char *match_buffer = MemoryStream_GetBuffer(match_stream);
-
-//	MemoryStream_WriteBytes(output_stream, match_buffer, match_buffer_size);
 }
 
 static void PutMatchByte(unsigned char byte)
@@ -39,7 +34,6 @@ static void PutDescriptorBit(bool bit)
 		MemoryStream_WriteByte(descriptor_stream, descriptor);
 
 		descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-//		MemoryStream_Reset(match_stream);
 	}
 
 	--descriptor_bits_remaining;
