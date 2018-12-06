@@ -1,5 +1,3 @@
-// Copyright (c) 2018 Clownacy
-
 #include "memory_stream.h"
 
 #include <stdbool.h>

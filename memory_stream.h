@@ -1,5 +1,3 @@
-// Copyright (c) 2018 Clownacy
-
 #pragma once 
 
 #include <stdbool.h>
