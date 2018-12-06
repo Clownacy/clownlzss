@@ -48,8 +48,10 @@ void MemoryStream_WriteBytes(MemoryStream *memory_stream, unsigned char *bytes, 
 {
 	if (memory_stream->index + byte_count > memory_stream->size)
 	{
-		while (memory_stream->index + byte_count > memory_stream->size)
+		do
+		{
 			memory_stream->size += memory_stream->growth;
+		} while (memory_stream->index + byte_count > memory_stream->size);
 
 		memory_stream->buffer = (unsigned char*)realloc(memory_stream->buffer, memory_stream->size);
 	}
