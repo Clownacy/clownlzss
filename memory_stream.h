@@ -8,7 +8,7 @@ typedef struct MemoryStream MemoryStream;
 MemoryStream* MemoryStream_Create(size_t growth, bool free_buffer_when_destroyed);
 void MemoryStream_Destroy(MemoryStream *memory_stream);
 void MemoryStream_WriteByte(MemoryStream *memory_stream, unsigned char byte);
-void MemoryStream_WriteBytes(MemoryStream *memory_stream, unsigned char *bytes, unsigned int byte_count);
+void MemoryStream_WriteBytes(MemoryStream *memory_stream, unsigned char *bytes, size_t byte_count);
 unsigned char* MemoryStream_GetBuffer(MemoryStream *memory_stream);
 size_t MemoryStream_GetIndex(MemoryStream *memory_stream);
 void MemoryStream_Reset(MemoryStream *memory_stream);

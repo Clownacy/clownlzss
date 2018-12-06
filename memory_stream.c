@@ -44,9 +44,9 @@ void MemoryStream_WriteByte(MemoryStream *memory_stream, unsigned char byte)
 	memory_stream->buffer[memory_stream->index++] = byte;
 }
 
-void MemoryStream_WriteBytes(MemoryStream *memory_stream, unsigned char *bytes, unsigned int byte_count)
+void MemoryStream_WriteBytes(MemoryStream *memory_stream, unsigned char *bytes, size_t length)
 {
-	const size_t needed_size = memory_stream->index + byte_count;
+	const size_t needed_size = memory_stream->index + length;
 
 	if (needed_size > memory_stream->size)
 	{
@@ -54,9 +54,9 @@ void MemoryStream_WriteBytes(MemoryStream *memory_stream, unsigned char *bytes, 
 		memory_stream->buffer = (unsigned char*)realloc(memory_stream->buffer, memory_stream->size);
 	}
 
-	memcpy(&memory_stream->buffer[memory_stream->index], bytes, byte_count);
+	memcpy(&memory_stream->buffer[memory_stream->index], bytes, length);
 
-	memory_stream->index += byte_count;
+	memory_stream->index += length;
 }
 
 unsigned char* MemoryStream_GetBuffer(MemoryStream *memory_stream)
