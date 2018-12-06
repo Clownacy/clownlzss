@@ -46,13 +46,11 @@ void MemoryStream_WriteByte(MemoryStream *memory_stream, unsigned char byte)
 
 void MemoryStream_WriteBytes(MemoryStream *memory_stream, unsigned char *bytes, unsigned int byte_count)
 {
-	if (memory_stream->index + byte_count > memory_stream->size)
-	{
-		do
-		{
-			memory_stream->size += memory_stream->growth;
-		} while (memory_stream->index + byte_count > memory_stream->size);
+	const size_t needed_size = memory_stream->index + byte_count;
 
+	if (needed_size > memory_stream->size)
+	{
+		memory_stream->size = needed_size + memory_stream->growth - (needed_size % memory_stream->growth);
 		memory_stream->buffer = (unsigned char*)realloc(memory_stream->buffer, memory_stream->size);
 	}
 
