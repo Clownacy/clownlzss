@@ -33,9 +33,6 @@
 #define EXTENSION "sax"
 #endif
 
-#define STB_LEAKCHECK_IMPLEMENTATION
-#include "stb_leakcheck.h"
-
 int main(int argc, char *argv[])
 {
 	if (argc > 1)
@@ -76,6 +73,4 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-
-	stb_leakcheck_dumpmem();
 }
