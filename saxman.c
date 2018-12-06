@@ -16,8 +16,6 @@ static unsigned int descriptor_bits_remaining;
 
 static void FlushData(void)
 {
-	descriptor >>= descriptor_bits_remaining;
-
 	MemoryStream_WriteByte(output_stream, descriptor);
 
 	const size_t match_buffer_size = MemoryStream_GetIndex(match_stream);
@@ -117,6 +115,7 @@ unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *com
 
 	FindMatches(data, data_size, NULL);
 
+	descriptor >>= descriptor_bits_remaining;
 	FlushData();
 
 	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);

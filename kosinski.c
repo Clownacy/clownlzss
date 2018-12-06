@@ -16,8 +16,6 @@ static unsigned int descriptor_bits_remaining;
 
 static void FlushData(void)
 {
-	descriptor >>= descriptor_bits_remaining;
-
 	MemoryStream_WriteByte(output_stream, descriptor & 0xFF);
 	MemoryStream_WriteByte(output_stream, descriptor >> 8);
 
@@ -128,6 +126,7 @@ unsigned char* KosinskiCompress(unsigned char *data, size_t data_size, size_t *c
 	PutMatchByte(0xF0);
 	PutMatchByte(0x00);
 
+	descriptor >>= descriptor_bits_remaining;
 	FlushData();
 
 	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);

@@ -16,8 +16,6 @@ static unsigned int descriptor_bits_remaining;
 
 static void FlushData(void)
 {
-	descriptor <<= descriptor_bits_remaining;
-
 	MemoryStream_WriteByte(output_stream, descriptor >> 8);
 	MemoryStream_WriteByte(output_stream, descriptor & 0xFF);
 
@@ -101,6 +99,7 @@ unsigned char* ComperCompress(unsigned char *data, size_t data_size, size_t *com
 	PutMatchByte(0);
 	PutMatchByte(0);
 
+	descriptor <<= descriptor_bits_remaining;
 	FlushData();
 
 	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);

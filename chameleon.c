@@ -15,13 +15,6 @@ static MemoryStream *descriptor_stream;
 static unsigned char descriptor;
 static unsigned int descriptor_bits_remaining;
 
-static void FlushData(void)
-{
-	descriptor <<= descriptor_bits_remaining;
-
-	MemoryStream_WriteByte(descriptor_stream, descriptor);
-}
-
 static void PutMatchByte(unsigned char byte)
 {
 	MemoryStream_WriteByte(match_stream, byte);
@@ -133,7 +126,7 @@ unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *
 	PutDescriptorBit(1);
 	PutMatchByte(0);
 
-	FlushData();
+	MemoryStream_WriteByte(descriptor_stream, descriptor << descriptor_bits_remaining);
 
 	const size_t descriptor_buffer_size = MemoryStream_GetIndex(descriptor_stream);
 	unsigned char *descriptor_buffer = MemoryStream_GetBuffer(descriptor_stream);
