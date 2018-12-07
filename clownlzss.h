@@ -16,7 +16,6 @@ typedef struct ClownLZSS_NodeMeta
 		size_t next_node_index;
 	};
 	size_t previous_node_index;
-	size_t match_distance;
 	size_t match_length;
 	size_t match_offset;
 } ClownLZSS_NodeMeta;
@@ -49,7 +48,6 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 					{\
 						node_meta_array[i + k + 1].cost = node_meta_array[i].cost + cost;\
 						node_meta_array[i + k + 1].previous_node_index = i;\
-						node_meta_array[i + k + 1].match_distance = i - j;\
 						node_meta_array[i + k + 1].match_length = k + 1;\
 						node_meta_array[i + k + 1].match_offset = j;\
 					}\
@@ -77,7 +75,7 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 		const size_t next_index = node_meta_array[node_index].next_node_index;\
 \
 		if (node_meta_array[next_index].match_length)\
-			MATCH_CALLBACK(node_meta_array[next_index].match_distance, node_meta_array[next_index].match_length, node_meta_array[next_index].match_offset, user);\
+			MATCH_CALLBACK(next_index - node_meta_array[next_index].match_length - node_meta_array[next_index].match_offset, node_meta_array[next_index].match_length, node_meta_array[next_index].match_offset, user);\
 		else\
 			LITERAL_CALLBACK(data[node_index], user);\
 	}\
