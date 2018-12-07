@@ -107,11 +107,15 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0x12, 0x1000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *out_compressed_size)
 {
 	output_stream = MemoryStream_Create(0x100, false);
 	match_stream = MemoryStream_Create(0x10, true);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
+
+	// Blank header
+	MemoryStream_WriteByte(output_stream, 0);
+	MemoryStream_WriteByte(output_stream, 0);
 
 	FindMatches(data, data_size, NULL);
 
@@ -120,11 +124,17 @@ unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *com
 
 	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);
 
-	if (compressed_size)
-		*compressed_size = MemoryStream_GetIndex(output_stream);
+	const size_t compressed_size = MemoryStream_GetIndex(output_stream);
+
+	if (out_compressed_size)
+		*out_compressed_size = compressed_size;
 
 	MemoryStream_Destroy(match_stream);
 	MemoryStream_Destroy(output_stream);
+
+	// Fill in header
+	out_buffer[0] = compressed_size & 0xFF;
+	out_buffer[1] = compressed_size >> 8;
 
 	return out_buffer;
 }
