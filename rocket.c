@@ -5,6 +5,7 @@
 
 #include "clownlzss.h"
 #include "memory_stream.h"
+#include "moduled.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
@@ -85,11 +86,14 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0x40, 0x400, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FUNCTION(CompressData, unsigned char, 0x40, 0x400, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-unsigned char* RocketCompress(unsigned char *data, size_t data_size, size_t *out_compressed_size)
+static void RocketCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream)
 {
-	output_stream = MemoryStream_Create(0x100, false);
+	output_stream = p_output_stream;
+
+	const size_t file_offset = MemoryStream_GetIndex(output_stream);
+
 	match_stream = MemoryStream_Create(0x10, true);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
@@ -99,24 +103,38 @@ unsigned char* RocketCompress(unsigned char *data, size_t data_size, size_t *out
 	MemoryStream_WriteByte(output_stream, 0);
 	MemoryStream_WriteByte(output_stream, 0);
 
-	FindMatches(data, data_size, NULL);
+	CompressData(data, data_size, NULL);
 
 	descriptor >>= descriptor_bits_remaining;
 	FlushData();
 
-	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);
+	MemoryStream_Destroy(match_stream);
 
+	unsigned char *buffer = MemoryStream_GetBuffer(output_stream);
 	const size_t compressed_size = MemoryStream_GetIndex(output_stream);
 
-	if (out_compressed_size)
-		*out_compressed_size = compressed_size;
+	// Finish header
+	buffer[file_offset + 2] = compressed_size >> 8;
+	buffer[file_offset + 3] = compressed_size & 0xFF;
+}
 
-	MemoryStream_Destroy(match_stream);
+unsigned char* RocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+{
+	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
+
+	RocketCompressStream(data, data_size, output_stream);
+
+	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);
+
+	if (compressed_size)
+		*compressed_size = MemoryStream_GetIndex(output_stream);
+
 	MemoryStream_Destroy(output_stream);
 
-	// Fill in header
-	out_buffer[2] = compressed_size >> 8;
-	out_buffer[3] = compressed_size & 0xFF;
-
 	return out_buffer;
+}
+
+unsigned char* ModuledRocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+{
+	return ModuledCompress(data, data_size, compressed_size, RocketCompressStream, module_size, 1);
 }

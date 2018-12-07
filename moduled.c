@@ -5,7 +5,7 @@
 
 #include "memory_stream.h"
 
-unsigned char* ModuledCompress(unsigned char *data, size_t data_size, size_t *out_compressed_size, unsigned char* (*function)(unsigned char *data, size_t data_size, size_t *compressed_size), size_t module_size, size_t module_alignment)
+unsigned char* ModuledCompress(unsigned char *data, size_t data_size, size_t *out_compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream), size_t module_size, size_t module_alignment)
 {
 	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
 
@@ -20,11 +20,9 @@ unsigned char* ModuledCompress(unsigned char *data, size_t data_size, size_t *ou
 			for (unsigned int i = 0; i < module_alignment - (compressed_size % module_alignment); ++i)
 				MemoryStream_WriteByte(output_stream, 0);
 
-		unsigned char *compressed_buffer = function(data + i, module_size < data_size - i ? module_size : data_size - i, &compressed_size);
-
-		MemoryStream_WriteBytes(output_stream, compressed_buffer, compressed_size);
-
-		free(compressed_buffer);
+		const size_t start = MemoryStream_GetIndex(output_stream);
+		function(data + i, module_size < data_size - i ? module_size : data_size - i, output_stream);
+		compressed_size = MemoryStream_GetIndex(output_stream) - start;
 	}
 
 	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);

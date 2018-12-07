@@ -5,10 +5,10 @@
 
 #include "clownlzss.h"
 #include "memory_stream.h"
+#include "moduled.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
-static MemoryStream *output_stream;
 static MemoryStream *match_stream;
 static MemoryStream *descriptor_stream;
 
@@ -104,16 +104,15 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FUNCTION(CompressData, unsigned char, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+static void ChameleonCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream)
 {
-	output_stream = MemoryStream_Create(0x100, false);
 	match_stream = MemoryStream_Create(0x100, true);
 	descriptor_stream = MemoryStream_Create(0x100, true);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	FindMatches(data, data_size, NULL);
+	CompressData(data, data_size, NULL);
 
 	// Terminator match
 	PutDescriptorBit(0);
@@ -141,14 +140,27 @@ unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *
 
 	MemoryStream_WriteBytes(output_stream, match_buffer, match_buffer_size);
 
+	MemoryStream_Destroy(descriptor_stream);
+	MemoryStream_Destroy(match_stream);
+}
+
+unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+{
+	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
+
+	ChameleonCompressStream(data, data_size, output_stream);
+
 	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);
 
 	if (compressed_size)
 		*compressed_size = MemoryStream_GetIndex(output_stream);
 
-	MemoryStream_Destroy(descriptor_stream);
-	MemoryStream_Destroy(match_stream);
 	MemoryStream_Destroy(output_stream);
 
 	return out_buffer;
+}
+
+unsigned char* ModuledChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+{
+	return ModuledCompress(data, data_size, compressed_size, ChameleonCompressStream, module_size, 1);
 }

@@ -8,38 +8,25 @@
 #include "comper.h"
 #include "kosinski.h"
 #include "kosinskiplus.h"
-#include "moduled.h"
 #include "rocket.h"
 #include "saxman.h"
 
-typedef enum ModeID
-{
-	MODE_CHAMELEON,
-	MODE_COMPER,
-	MODE_KOSINSKI,
-	MODE_KOSINSKIPLUS,
-	MODE_ROCKET,
-	MODE_SAXMAN
-} ModeID;
-
 typedef struct Mode
 {
-	ModeID id;
 	char *command;
-	char *default_filename;
-	char *default_filename_moduled;
-	size_t module_alignment;
-	unsigned char* (*function)(unsigned char *data, size_t data_size, size_t *compressed_size);
-
+	char *normal_default_filename;
+	unsigned char* (*normal_function)(unsigned char *data, size_t data_size, size_t *compressed_size);
+	char *moduled_default_filename;
+	unsigned char* (*moduled_function)(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
 } Mode;
 
 Mode modes[] = {
-	{MODE_CHAMELEON, "-ch", "out.cham", "out.chamm", 1, ChameleonCompress},
-	{MODE_COMPER, "-c", "out.comp", "out.compm", 1, ComperCompress},
-	{MODE_KOSINSKI, "-k", "out.kos", "out.kosm", 0x10, KosinskiCompress},
-	{MODE_KOSINSKIPLUS, "-kp", "out.kosp", "out.kospm", 1, KosinskiPlusCompress},
-	{MODE_ROCKET, "-r", "out.rock", "out.rockm", 1, RocketCompress},
-	{MODE_SAXMAN, "-s", "out.sax", "out.saxm", 1, SaxmanCompress},
+	{"-ch", "out.cham", ChameleonCompress, "out.chamm", ModuledChameleonCompress},
+	{"-c", "out.comp", ComperCompress, "out.compm", ModuledComperCompress},
+	{"-k", "out.kos", KosinskiCompress, "out.kosm", ModuledKosinskiCompress},
+	{"-kp", "out.kosp", KosinskiPlusCompress, "out.kospm", ModuledKosinskiPlusCompress},
+	{"-r", "out.rock", RocketCompress, "out.rockm", ModuledRocketCompress},
+	{"-s", "out.sax", SaxmanCompress, "out.saxm", ModuledSaxmanCompress},
 };
 
 int main(int argc, char *argv[])
@@ -92,7 +79,7 @@ int main(int argc, char *argv[])
 	else
 	{
 		if (!out_filename)
-			out_filename = moduled ? mode->default_filename_moduled : mode->default_filename;
+			out_filename = moduled ? mode->moduled_default_filename : mode->normal_default_filename;
 
 		FILE *in_file = fopen(in_filename, "rb");
 
@@ -110,9 +97,9 @@ int main(int argc, char *argv[])
 			unsigned char *compressed_buffer;
 
 			if (moduled)
-				compressed_buffer = ModuledCompress(file_buffer, file_size, &compressed_size, mode->function, 0x1000, mode->module_alignment);
+				compressed_buffer = mode->moduled_function(file_buffer, file_size, &compressed_size, 0x1000);
 			else
-				compressed_buffer = mode->function(file_buffer, file_size, &compressed_size);
+				compressed_buffer = mode->normal_function(file_buffer, file_size, &compressed_size);
 
 			FILE *out_file = fopen(out_filename, "wb");
 

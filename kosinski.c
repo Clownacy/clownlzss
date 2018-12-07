@@ -5,6 +5,7 @@
 
 #include "clownlzss.h"
 #include "memory_stream.h"
+#include "moduled.h"
 
 #define TOTAL_DESCRIPTOR_BITS 16
 
@@ -109,15 +110,16 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(FindMatches, unsigned char, 0x100, 0x2000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FUNCTION(CompressData, unsigned char, 0x100, 0x2000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-unsigned char* KosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+static void KosinskiCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream)
 {
-	output_stream = MemoryStream_Create(0x100, false);
+	output_stream = p_output_stream;
+
 	match_stream = MemoryStream_Create(0x10, true);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	FindMatches(data, data_size, NULL);
+	CompressData(data, data_size, NULL);
 
 	// Terminator match
 	PutDescriptorBit(0);
@@ -129,13 +131,26 @@ unsigned char* KosinskiCompress(unsigned char *data, size_t data_size, size_t *c
 	descriptor >>= descriptor_bits_remaining;
 	FlushData();
 
+	MemoryStream_Destroy(match_stream);
+}
+
+unsigned char* KosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+{
+	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
+
+	KosinskiCompressStream(data, data_size, output_stream);
+
 	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);
 
 	if (compressed_size)
 		*compressed_size = MemoryStream_GetIndex(output_stream);
 
-	MemoryStream_Destroy(match_stream);
 	MemoryStream_Destroy(output_stream);
 
 	return out_buffer;
+}
+
+unsigned char* ModuledKosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+{
+	return ModuledCompress(data, data_size, compressed_size, KosinskiCompressStream, module_size, 0x10);
 }
