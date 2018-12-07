@@ -57,14 +57,18 @@ int main(int argc, char *argv[])
 		if (argv[i][0] == '-')
 		{
 			if (!strcmp(argv[i], "-m"))
-				moduled = true;
-
-			for (size_t j = 0; j < sizeof(modes) / sizeof(modes[0]); ++j)
 			{
-				if (!strcmp(argv[i], modes[j].command))
+				moduled = true;
+			}
+			else
+			{
+				for (size_t j = 0; j < sizeof(modes) / sizeof(modes[0]); ++j)
 				{
-					mode = &modes[j];
-					break;
+					if (!strcmp(argv[i], modes[j].command))
+					{
+						mode = &modes[j];
+						break;
+					}
 				}
 			}
 		}
@@ -79,7 +83,7 @@ int main(int argc, char *argv[])
 
 	if (!in_filename)
 	{
-		printf("Error: In-file not specified\n");
+		printf("Error: Input file not specified\n");
 	}
 	else if (!mode)
 	{

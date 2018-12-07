@@ -93,9 +93,9 @@ unsigned char* RocketCompress(unsigned char *data, size_t data_size, size_t *out
 	match_stream = MemoryStream_Create(0x10, true);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	// Blank header
-	MemoryStream_WriteByte(output_stream, 0);
-	MemoryStream_WriteByte(output_stream, 0);
+	// Incomplete header
+	MemoryStream_WriteByte(output_stream, data_size >> 8);
+	MemoryStream_WriteByte(output_stream, data_size & 0xFF);
 	MemoryStream_WriteByte(output_stream, 0);
 	MemoryStream_WriteByte(output_stream, 0);
 
@@ -115,8 +115,6 @@ unsigned char* RocketCompress(unsigned char *data, size_t data_size, size_t *out
 	MemoryStream_Destroy(output_stream);
 
 	// Fill in header
-	out_buffer[0] = data_size >> 8;
-	out_buffer[1] = data_size & 0xFF;
 	out_buffer[2] = compressed_size >> 8;
 	out_buffer[3] = compressed_size & 0xFF;
 
