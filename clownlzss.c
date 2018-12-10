@@ -1,11 +1,27 @@
-#include "moduled.h"
+#include "clownlzss.h"
 
 #include <stddef.h>
 #include <stdlib.h>
 
 #include "memory_stream.h"
 
-unsigned char* ModuledCompress(unsigned char *data, size_t data_size, size_t *out_compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream), size_t module_size, size_t module_alignment)
+unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream))
+{
+	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
+
+	function(data, data_size, output_stream);
+
+	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);
+
+	if (compressed_size)
+		*compressed_size = MemoryStream_GetIndex(output_stream);
+
+	MemoryStream_Destroy(output_stream);
+
+	return out_buffer;
+}
+
+unsigned char* ModuledCompressionWrapper(unsigned char *data, size_t data_size, size_t *out_compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream), size_t module_size, size_t module_alignment)
 {
 	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
 

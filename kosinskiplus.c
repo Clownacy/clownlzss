@@ -5,7 +5,6 @@
 
 #include "clownlzss.h"
 #include "memory_stream.h"
-#include "moduled.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
@@ -99,7 +98,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 		return 0; 		// In the event a match cannot be compressed
 }
 
-static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_NodeMeta *node_meta_array, void *user)
+static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, LZSSNodeMeta *node_meta_array, void *user)
 {
 	(void)data;
 	(void)data_size;
@@ -108,7 +107,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(CompressData, unsigned char, 0x100 + 8, 0x2000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static MAKE_FIND_MATCHES_FUNCTION(CompressData, unsigned char, 0x100 + 8, 0x2000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
 static void KosinskiPlusCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream)
 {
@@ -134,21 +133,10 @@ static void KosinskiPlusCompressStream(unsigned char *data, size_t data_size, Me
 
 unsigned char* KosinskiPlusCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
-	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
-
-	KosinskiPlusCompressStream(data, data_size, output_stream);
-
-	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);
-
-	if (compressed_size)
-		*compressed_size = MemoryStream_GetIndex(output_stream);
-
-	MemoryStream_Destroy(output_stream);
-
-	return out_buffer;
+	return RegularWrapper(data, data_size, compressed_size, KosinskiPlusCompressStream);
 }
 
 unsigned char* ModuledKosinskiPlusCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
-	return ModuledCompress(data, data_size, compressed_size, KosinskiPlusCompressStream, module_size, 1);
+	return ModuledCompressionWrapper(data, data_size, compressed_size, KosinskiPlusCompressStream, module_size, 1);
 }

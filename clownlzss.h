@@ -5,10 +5,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define CLOWNLZSS_MIN(a, b) (a) < (b) ? (a) : (b)
-#define CLOWNLZSS_MAX(a, b) (a) > (b) ? (a) : (b)
+#include "memory_stream.h"
 
-typedef struct ClownLZSS_NodeMeta
+#undef MIN
+#undef MAX
+#define MIN(a, b) (a) < (b) ? (a) : (b)
+#define MAX(a, b) (a) > (b) ? (a) : (b)
+
+typedef struct LZSSNodeMeta
 {
 	union
 	{
@@ -18,12 +22,12 @@ typedef struct ClownLZSS_NodeMeta
 	size_t previous_node_index;
 	size_t match_length;
 	size_t match_offset;
-} ClownLZSS_NodeMeta;
+} LZSSNodeMeta;
 
-#define CLOWNLZSS_MAKE_FUNCTION(NAME, TYPE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
+#define MAKE_FIND_MATCHES_FUNCTION(NAME, TYPE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
 void NAME(TYPE *data, size_t data_size, void *user)\
 {\
-	ClownLZSS_NodeMeta *node_meta_array = (ClownLZSS_NodeMeta*)malloc((data_size + 1) * sizeof(ClownLZSS_NodeMeta));	/* +1 for the end-node */\
+	LZSSNodeMeta *node_meta_array = (LZSSNodeMeta*)malloc((data_size + 1) * sizeof(LZSSNodeMeta));	/* +1 for the end-node */\
 \
 	node_meta_array[0].cost = 0;\
 	for (size_t i = 1; i < data_size + 1; ++i)\
@@ -31,7 +35,7 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 \
 	for (size_t i = 0; i < data_size; ++i)\
 	{\
-		const size_t max_read_ahead = CLOWNLZSS_MIN(MAX_MATCH_LENGTH, data_size - i);\
+		const size_t max_read_ahead = MIN(MAX_MATCH_LENGTH, data_size - i);\
 		const size_t max_read_behind = MAX_MATCH_DISTANCE > i ? 0 : i - MAX_MATCH_DISTANCE;\
 \
 		FIND_EXTRA_MATCHES(data, data_size, i, node_meta_array, user);\
@@ -82,3 +86,6 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 \
 	free(node_meta_array);\
 }
+
+unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream));
+unsigned char* ModuledCompressionWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream), size_t module_size, size_t module_alignment);

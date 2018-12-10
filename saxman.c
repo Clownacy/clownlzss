@@ -5,7 +5,6 @@
 
 #include "clownlzss.h"
 #include "memory_stream.h"
-#include "moduled.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
@@ -78,13 +77,13 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 		return 0;
 }
 
-static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_NodeMeta *node_meta_array, void *user)
+static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, LZSSNodeMeta *node_meta_array, void *user)
 {
 	(void)user;
 
 	if (offset < 0x1000)
 	{
-		const size_t max_read_ahead = CLOWNLZSS_MIN(0x12, data_size - offset);
+		const size_t max_read_ahead = MIN(0x12, data_size - offset);
 
 		for (size_t k = 0; k < max_read_ahead; ++k)
 		{
@@ -106,7 +105,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	}
 }
 
-static CLOWNLZSS_MAKE_FUNCTION(CompressData, unsigned char, 0x12, 0x1000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static MAKE_FIND_MATCHES_FUNCTION(CompressData, unsigned char, 0x12, 0x1000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
 static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream)
 {
@@ -138,21 +137,10 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
-	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
-
-	SaxmanCompressStream(data, data_size, output_stream);
-
-	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);
-
-	if (compressed_size)
-		*compressed_size = MemoryStream_GetIndex(output_stream);
-
-	MemoryStream_Destroy(output_stream);
-
-	return out_buffer;
+	return RegularWrapper(data, data_size, compressed_size, SaxmanCompressStream);
 }
 
 unsigned char* ModuledSaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
-	return ModuledCompress(data, data_size, compressed_size, SaxmanCompressStream, module_size, 1);
+	return ModuledCompressionWrapper(data, data_size, compressed_size, SaxmanCompressStream, module_size, 1);
 }
