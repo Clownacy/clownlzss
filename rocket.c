@@ -47,7 +47,7 @@ static void PutDescriptorBit(bool bit)
 		descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
 }
 
-static void DoLiteral(unsigned short value, void *user)
+static void DoLiteral(unsigned char value, void *user)
 {
 	(void)user;
 
@@ -110,7 +110,7 @@ static void RocketCompressStream(unsigned char *data, size_t data_size, MemorySt
 	MemoryStream_Destroy(match_stream);
 
 	unsigned char *buffer = MemoryStream_GetBuffer(output_stream);
-	const size_t compressed_size = MemoryStream_GetIndex(output_stream);
+	const size_t compressed_size = MemoryStream_GetIndex(output_stream) - file_offset - 2;
 
 	// Finish header
 	buffer[file_offset + 2] = compressed_size >> 8;
