@@ -77,9 +77,11 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 	for (size_t node_index = 0; node_meta_array[node_index].next_node_index != SIZE_MAX; node_index = node_meta_array[node_index].next_node_index)\
 	{\
 		const size_t next_index = node_meta_array[node_index].next_node_index;\
+		const size_t length = node_meta_array[next_index].match_length;\
+		const size_t offset = node_meta_array[next_index].match_offset;\
 \
-		if (node_meta_array[next_index].match_length)\
-			MATCH_CALLBACK(next_index - node_meta_array[next_index].match_length - node_meta_array[next_index].match_offset, node_meta_array[next_index].match_length, node_meta_array[next_index].match_offset, user);\
+		if (length)\
+			MATCH_CALLBACK(next_index - length - offset, length, offset, user);\
 		else\
 			LITERAL_CALLBACK(data[node_index], user);\
 	}\
