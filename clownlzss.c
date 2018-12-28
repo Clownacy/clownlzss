@@ -14,7 +14,7 @@ unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *com
 	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);
 
 	if (compressed_size)
-		*compressed_size = MemoryStream_GetIndex(output_stream);
+		*compressed_size = MemoryStream_GetPosition(output_stream);
 
 	MemoryStream_Destroy(output_stream);
 
@@ -36,15 +36,15 @@ unsigned char* ModuledCompressionWrapper(unsigned char *data, size_t data_size, 
 			for (unsigned int i = 0; i < module_alignment - (compressed_size % module_alignment); ++i)
 				MemoryStream_WriteByte(output_stream, 0);
 
-		const size_t start = MemoryStream_GetIndex(output_stream);
+		const size_t start = MemoryStream_GetPosition(output_stream);
 		function(data + i, module_size < data_size - i ? module_size : data_size - i, output_stream);
-		compressed_size = MemoryStream_GetIndex(output_stream) - start;
+		compressed_size = MemoryStream_GetPosition(output_stream) - start;
 	}
 
 	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);
 
 	if (out_compressed_size)
-		*out_compressed_size = MemoryStream_GetIndex(output_stream);
+		*out_compressed_size = MemoryStream_GetPosition(output_stream);
 
 	MemoryStream_Destroy(output_stream);
 

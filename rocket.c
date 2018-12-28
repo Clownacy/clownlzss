@@ -18,7 +18,7 @@ static void FlushData(void)
 {
 	MemoryStream_WriteByte(output_stream, descriptor);
 
-	const size_t match_buffer_size = MemoryStream_GetIndex(match_stream);
+	const size_t match_buffer_size = MemoryStream_GetPosition(match_stream);
 	unsigned char *match_buffer = MemoryStream_GetBuffer(match_stream);
 
 	MemoryStream_WriteBytes(output_stream, match_buffer, match_buffer_size);
@@ -36,7 +36,7 @@ static void PutDescriptorBit(bool bit)
 		FlushData();
 
 		descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-		MemoryStream_Reset(match_stream);
+		MemoryStream_Rewind(match_stream);
 	}
 
 	--descriptor_bits_remaining;
@@ -91,7 +91,7 @@ static void RocketCompressStream(unsigned char *data, size_t data_size, MemorySt
 {
 	output_stream = p_output_stream;
 
-	const size_t file_offset = MemoryStream_GetIndex(output_stream);
+	const size_t file_offset = MemoryStream_GetPosition(output_stream);
 
 	match_stream = MemoryStream_Create(0x10, true);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
@@ -110,7 +110,7 @@ static void RocketCompressStream(unsigned char *data, size_t data_size, MemorySt
 	MemoryStream_Destroy(match_stream);
 
 	unsigned char *buffer = MemoryStream_GetBuffer(output_stream);
-	const size_t compressed_size = MemoryStream_GetIndex(output_stream) - file_offset - 2;
+	const size_t compressed_size = MemoryStream_GetPosition(output_stream) - file_offset - 2;
 
 	// Finish header
 	buffer[file_offset + 2] = compressed_size >> 8;
