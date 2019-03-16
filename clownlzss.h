@@ -22,7 +22,7 @@ typedef struct ClownLZSS_GraphEdge
 	size_t match_offset;
 } ClownLZSS_GraphEdge;
 
-#define CLOWNLZSS_MAKE_FIND_MATCHES_FUNCTION(NAME, TYPE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
+#define CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(NAME, TYPE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
 void NAME(TYPE *data, size_t data_size, void *user)\
 {\
 	ClownLZSS_GraphEdge *node_meta_array = (ClownLZSS_GraphEdge*)malloc((data_size + 1) * sizeof(ClownLZSS_GraphEdge));	/* +1 for the end-node */\
