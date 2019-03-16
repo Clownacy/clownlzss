@@ -76,7 +76,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	return 1 + 16;	// Descriptor bit, offset/length bytes
 }
 
-static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, LZSSNodeMeta *node_meta_array, void *user)
+static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
 {
 	(void)data;
 	(void)data_size;
@@ -85,7 +85,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static MAKE_FIND_MATCHES_FUNCTION(CompressData, unsigned char, 0x40, 0x400, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FIND_MATCHES_FUNCTION(CompressData, unsigned char, 0x40, 0x400, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
 static void RocketCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream)
 {
@@ -119,10 +119,10 @@ static void RocketCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 unsigned char* RocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
-	return RegularWrapper(data, data_size, compressed_size, RocketCompressStream);
+	return ClownLZSS_RegularWrapper(data, data_size, compressed_size, RocketCompressStream);
 }
 
 unsigned char* ModuledRocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
-	return ModuledCompressionWrapper(data, data_size, compressed_size, RocketCompressStream, module_size, 1);
+	return ClownLZSS_ModuledCompressionWrapper(data, data_size, compressed_size, RocketCompressStream, module_size, 1);
 }

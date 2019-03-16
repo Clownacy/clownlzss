@@ -5,7 +5,7 @@
 
 #include "memory_stream.h"
 
-unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream))
+unsigned char* ClownLZSS_RegularWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream))
 {
 	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
 
@@ -21,7 +21,7 @@ unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *com
 	return out_buffer;
 }
 
-unsigned char* ModuledCompressionWrapper(unsigned char *data, size_t data_size, size_t *out_compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream), size_t module_size, size_t module_alignment)
+unsigned char* ClownLZSS_ModuledCompressionWrapper(unsigned char *data, size_t data_size, size_t *out_compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream), size_t module_size, size_t module_alignment)
 {
 	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
 

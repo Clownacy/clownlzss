@@ -94,7 +94,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 		return 0; 			// In the event a match cannot be compressed
 }
 
-static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, LZSSNodeMeta *node_meta_array, void *user)
+static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
 {
 	(void)data;
 	(void)data_size;
@@ -103,7 +103,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static MAKE_FIND_MATCHES_FUNCTION(CompressData, unsigned char, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_FIND_MATCHES_FUNCTION(CompressData, unsigned char, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
 static void ChameleonCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream)
 {
@@ -145,10 +145,10 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 
 unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
-	return RegularWrapper(data, data_size, compressed_size, ChameleonCompressStream);
+	return ClownLZSS_RegularWrapper(data, data_size, compressed_size, ChameleonCompressStream);
 }
 
 unsigned char* ModuledChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
-	return ModuledCompressionWrapper(data, data_size, compressed_size, ChameleonCompressStream, module_size, 1);
+	return ClownLZSS_ModuledCompressionWrapper(data, data_size, compressed_size, ChameleonCompressStream, module_size, 1);
 }
