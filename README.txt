@@ -1,5 +1,5 @@
 clownlzss is a lightweight, minimalist, graph-based LZSS framework.
-Also included are a collection of (de)compressors which utilise the framework.
+Also included are a collection of compressors which utilise the framework.
 
 Formats supported by the supplied utilities include:
 * Kosinski - a compression format common to first-party Sega Mega Drive games
