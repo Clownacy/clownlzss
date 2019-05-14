@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct MemoryStream
+struct MemoryStream
 {
 	unsigned char *buffer;
 	size_t position;
@@ -14,7 +14,7 @@ typedef struct MemoryStream
 	size_t size;
 	size_t growth;
 	bool free_buffer_when_destroyed;
-} MemoryStream;
+};
 
 static void ResizeIfNeeded(MemoryStream *memory_stream, size_t minimum_needed_size)
 {

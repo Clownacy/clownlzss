@@ -91,9 +91,9 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 			{
 				const unsigned int cost = GetMatchCost(0, k + 1, user);
 
-				if (cost && node_meta_array[offset + k + 1].cost > node_meta_array[offset].cost + cost)
+				if (cost && node_meta_array[offset + k + 1].u.cost > node_meta_array[offset].u.cost + cost)
 				{
-					node_meta_array[offset + k + 1].cost = node_meta_array[offset].cost + cost;
+					node_meta_array[offset + k + 1].u.cost = node_meta_array[offset].u.cost + cost;
 					node_meta_array[offset + k + 1].previous_node_index = offset;
 					node_meta_array[offset + k + 1].match_length = k + 1;
 					node_meta_array[offset + k + 1].match_offset = 0xFFF;

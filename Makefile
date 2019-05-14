@@ -1,4 +1,4 @@
-CFLAGS := -O2 -std=c11 -s -Wall -Wextra -pedantic -fno-ident -flto
+CFLAGS := -O2 -std=c99 -s -Wall -Wextra -pedantic -fno-ident -flto
 
 all: tool
 
