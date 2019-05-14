@@ -11,22 +11,33 @@
 #include "rocket.h"
 #include "saxman.h"
 
+typedef enum Format
+{
+	FORMAT_CHAMELEON,
+	FORMAT_COMPER,
+	FORMAT_KOSINSKI,
+	FORMAT_KOSINSKIPLUS,
+	FORMAT_ROCKET,
+	FORMAT_SAXMAN,
+	FORMAT_SAXMAN_NO_HEADER
+} Format;
+
 typedef struct Mode
 {
 	char *command;
+	Format format;
 	char *normal_default_filename;
-	unsigned char* (*normal_function)(unsigned char *data, size_t data_size, size_t *compressed_size);
 	char *moduled_default_filename;
-	unsigned char* (*moduled_function)(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
 } Mode;
 
 static Mode modes[] = {
-	{"-ch", "out.cham", ChameleonCompress, "out.chamm", ModuledChameleonCompress},
-	{"-c", "out.comp", ComperCompress, "out.compm", ModuledComperCompress},
-	{"-k", "out.kos", KosinskiCompress, "out.kosm", ModuledKosinskiCompress},
-	{"-kp", "out.kosp", KosinskiPlusCompress, "out.kospm", ModuledKosinskiPlusCompress},
-	{"-r", "out.rock", RocketCompress, "out.rockm", ModuledRocketCompress},
-	{"-s", "out.sax", SaxmanCompress, "out.saxm", ModuledSaxmanCompress},
+	{"-ch", FORMAT_CHAMELEON, "out.cham", "out.chamm"},
+	{"-c", FORMAT_COMPER, "out.comp", "out.compm"},
+	{"-k", FORMAT_KOSINSKI, "out.kos", "out.kosm"},
+	{"-kp", FORMAT_KOSINSKIPLUS, "out.kosp", "out.kospm"},
+	{"-r", FORMAT_ROCKET, "out.rock", "out.rockm"},
+	{"-s", FORMAT_SAXMAN, "out.sax", "out.saxm"},
+	{"-sn", FORMAT_SAXMAN_NO_HEADER, "out.sax", "out.saxm"},
 };
 
 static void PrintUsage(void)
@@ -45,6 +56,7 @@ static void PrintUsage(void)
 	"  -kp    Compress in Kosinski+ format\n"
 	"  -r     Compress in Rocket format\n"
 	"  -s     Compress in Saxman format\n"
+	"  -sn    Compress in Saxman format (with no header)\n"
 	"\n"
 	" Misc:\n"
 	"  -m[=MODULE_SIZE]  Compresses into modules\n"
@@ -145,20 +157,70 @@ int main(int argc, char *argv[])
 			fclose(in_file);
 
 			size_t compressed_size;
-			unsigned char *compressed_buffer;
+			unsigned char *compressed_buffer = NULL;
 
-			if (moduled)
-				compressed_buffer = mode->moduled_function(file_buffer, file_size, &compressed_size, module_size);
-			else
-				compressed_buffer = mode->normal_function(file_buffer, file_size, &compressed_size);
-
-			FILE *out_file = fopen(out_filename, "wb");
-
-			if (out_file)
+			switch (mode->format)
 			{
-				fwrite(compressed_buffer, compressed_size, 1, out_file);
-				free(compressed_buffer);
-				fclose(out_file);
+				case FORMAT_CHAMELEON:
+					if (moduled)
+						compressed_buffer = ModuledChameleonCompress(file_buffer, file_size, &compressed_size, module_size);
+					else
+						compressed_buffer = ChameleonCompress(file_buffer, file_size, &compressed_size);
+					break;
+
+				case FORMAT_COMPER:
+					if (moduled)
+						compressed_buffer = ModuledComperCompress(file_buffer, file_size, &compressed_size, module_size);
+					else
+						compressed_buffer = ComperCompress(file_buffer, file_size, &compressed_size);
+					break;
+
+				case FORMAT_KOSINSKI:
+					if (moduled)
+						compressed_buffer = ModuledKosinskiCompress(file_buffer, file_size, &compressed_size, module_size);
+					else
+						compressed_buffer = KosinskiCompress(file_buffer, file_size, &compressed_size);
+					break;
+
+				case FORMAT_KOSINSKIPLUS:
+					if (moduled)
+						compressed_buffer = ModuledKosinskiPlusCompress(file_buffer, file_size, &compressed_size, module_size);
+					else
+						compressed_buffer = KosinskiPlusCompress(file_buffer, file_size, &compressed_size);
+					break;
+
+				case FORMAT_ROCKET:
+					if (moduled)
+						compressed_buffer = ModuledRocketCompress(file_buffer, file_size, &compressed_size, module_size);
+					else
+						compressed_buffer = RocketCompress(file_buffer, file_size, &compressed_size);
+					break;
+
+				case FORMAT_SAXMAN:
+					if (moduled)
+						compressed_buffer = ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, module_size, true);
+					else
+						compressed_buffer = SaxmanCompress(file_buffer, file_size, &compressed_size, true);
+					break;
+
+				case FORMAT_SAXMAN_NO_HEADER:
+					if (moduled)
+						compressed_buffer = ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, module_size, false);
+					else
+						compressed_buffer = SaxmanCompress(file_buffer, file_size, &compressed_size, false);
+					break;
+			}
+
+			if (compressed_buffer)
+			{
+				FILE *out_file = fopen(out_filename, "wb");
+
+				if (out_file)
+				{
+					fwrite(compressed_buffer, compressed_size, 1, out_file);
+					free(compressed_buffer);
+					fclose(out_file);
+				}
 			}
 		}
 	}

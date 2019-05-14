@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "clownlzss.h"
+#include "common.h"
 #include "memory_stream.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
@@ -107,8 +108,10 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0x12, 0x1000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream)
+static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream, void *user_data)
 {
+	const bool header = *(bool*)user_data;
+
 	output_stream = p_output_stream;
 
 	const size_t file_offset = MemoryStream_GetPosition(output_stream);
@@ -116,9 +119,12 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 	match_stream = MemoryStream_Create(0x10, true);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	// Blank header
-	MemoryStream_WriteByte(output_stream, 0);
-	MemoryStream_WriteByte(output_stream, 0);
+	if (header)
+	{
+		// Blank header
+		MemoryStream_WriteByte(output_stream, 0);
+		MemoryStream_WriteByte(output_stream, 0);
+	}
 
 	CompressData(data, data_size, NULL);
 
@@ -127,20 +133,23 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 	MemoryStream_Destroy(match_stream);
 
-	unsigned char *buffer = MemoryStream_GetBuffer(output_stream);
-	const size_t compressed_size = MemoryStream_GetPosition(output_stream) - file_offset - 2;
+	if (header)
+	{
+		unsigned char *buffer = MemoryStream_GetBuffer(output_stream);
+		const size_t compressed_size = MemoryStream_GetPosition(output_stream) - file_offset - 2;
 
-	// Fill in header
-	buffer[file_offset + 0] = compressed_size & 0xFF;
-	buffer[file_offset + 1] = compressed_size >> 8;
+		// Fill in header
+		buffer[file_offset + 0] = compressed_size & 0xFF;
+		buffer[file_offset + 1] = compressed_size >> 8;
+	}
 }
 
-unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, bool header)
 {
-	return ClownLZSS_RegularWrapper(data, data_size, compressed_size, SaxmanCompressStream);
+	return RegularWrapper(data, data_size, compressed_size, &header, SaxmanCompressStream);
 }
 
-unsigned char* ModuledSaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+unsigned char* ModuledSaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, bool header, size_t module_size)
 {
-	return ClownLZSS_ModuledCompressionWrapper(data, data_size, compressed_size, SaxmanCompressStream, module_size, 1);
+	return ModuledCompressionWrapper(data, data_size, compressed_size, &header, SaxmanCompressStream, module_size, 1);
 }

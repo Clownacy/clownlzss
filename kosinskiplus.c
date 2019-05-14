@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "clownlzss.h"
+#include "common.h"
 #include "memory_stream.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
@@ -109,8 +110,10 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0x100 + 8, 0x2000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void KosinskiPlusCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream)
+static void KosinskiPlusCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream, void *user_data)
 {
+	(void)user_data;
+
 	output_stream = p_output_stream;
 
 	match_stream = MemoryStream_Create(0x10, true);
@@ -133,10 +136,10 @@ static void KosinskiPlusCompressStream(unsigned char *data, size_t data_size, Me
 
 unsigned char* KosinskiPlusCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
-	return ClownLZSS_RegularWrapper(data, data_size, compressed_size, KosinskiPlusCompressStream);
+	return RegularWrapper(data, data_size, compressed_size, NULL, KosinskiPlusCompressStream);
 }
 
 unsigned char* ModuledKosinskiPlusCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
-	return ClownLZSS_ModuledCompressionWrapper(data, data_size, compressed_size, KosinskiPlusCompressStream, module_size, 1);
+	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, KosinskiPlusCompressStream, module_size, 1);
 }

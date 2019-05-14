@@ -5,8 +5,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "memory_stream.h"
-
 #define CLOWNLZSS_MIN(a, b) (a) < (b) ? (a) : (b)
 #define CLOWNLZSS_MAX(a, b) (a) > (b) ? (a) : (b)
 
@@ -86,6 +84,3 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 \
 	free(node_meta_array);\
 }
-
-unsigned char* ClownLZSS_RegularWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream));
-unsigned char* ClownLZSS_ModuledCompressionWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream), size_t module_size, size_t module_alignment);

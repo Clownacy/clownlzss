@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "clownlzss.h"
+#include "common.h"
 #include "memory_stream.h"
 
 #define TOTAL_DESCRIPTOR_BITS 16
@@ -86,8 +87,10 @@ static void FindExtraMatches(unsigned short *data, size_t data_size, size_t offs
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned short, 0x100, 0x100, FindExtraMatches, 1 + 16, DoLiteral, GetMatchCost, DoMatch)
 
-static void ComperCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream)
+static void ComperCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream, void *user_data)
 {
+	(void)user_data;
+
 	output_stream = p_output_stream;
 
 	match_stream = MemoryStream_Create(0x10, true);
@@ -108,10 +111,10 @@ static void ComperCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 unsigned char* ComperCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
-	return ClownLZSS_RegularWrapper(data, data_size, compressed_size, ComperCompressStream);
+	return RegularWrapper(data, data_size, compressed_size, NULL, ComperCompressStream);
 }
 
 unsigned char* ModuledComperCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
-	return ClownLZSS_ModuledCompressionWrapper(data, data_size, compressed_size, ComperCompressStream, module_size, 1);
+	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, ComperCompressStream, module_size, 1);
 }

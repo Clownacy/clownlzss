@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "clownlzss.h"
+#include "common.h"
 #include "memory_stream.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
@@ -87,8 +88,10 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0x40, 0x400, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void RocketCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream)
+static void RocketCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream, void *user_data)
 {
+	(void)user_data;
+
 	output_stream = p_output_stream;
 
 	const size_t file_offset = MemoryStream_GetPosition(output_stream);
@@ -119,10 +122,10 @@ static void RocketCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 unsigned char* RocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
-	return ClownLZSS_RegularWrapper(data, data_size, compressed_size, RocketCompressStream);
+	return RegularWrapper(data, data_size, compressed_size, NULL, RocketCompressStream);
 }
 
 unsigned char* ModuledRocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
-	return ClownLZSS_ModuledCompressionWrapper(data, data_size, compressed_size, RocketCompressStream, module_size, 1);
+	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, RocketCompressStream, module_size, 1);
 }

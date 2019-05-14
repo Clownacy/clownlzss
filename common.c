@@ -1,15 +1,15 @@
-#include "clownlzss.h"
+#include "common.h"
 
 #include <stddef.h>
 #include <stdlib.h>
 
 #include "memory_stream.h"
 
-unsigned char* ClownLZSS_RegularWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream))
+unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void *user_data, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data))
 {
 	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
 
-	function(data, data_size, output_stream);
+	function(data, data_size, output_stream, user_data);
 
 	unsigned char *out_buffer = MemoryStream_GetBuffer(output_stream);
 
@@ -21,7 +21,7 @@ unsigned char* ClownLZSS_RegularWrapper(unsigned char *data, size_t data_size, s
 	return out_buffer;
 }
 
-unsigned char* ClownLZSS_ModuledCompressionWrapper(unsigned char *data, size_t data_size, size_t *out_compressed_size, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream), size_t module_size, size_t module_alignment)
+unsigned char* ModuledCompressionWrapper(unsigned char *data, size_t data_size, size_t *out_compressed_size, void *user_data, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data), size_t module_size, size_t module_alignment)
 {
 	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
 
@@ -37,7 +37,7 @@ unsigned char* ClownLZSS_ModuledCompressionWrapper(unsigned char *data, size_t d
 				MemoryStream_WriteByte(output_stream, 0);
 
 		const size_t start = MemoryStream_GetPosition(output_stream);
-		function(data + i, module_size < data_size - i ? module_size : data_size - i, output_stream);
+		function(data + i, module_size < data_size - i ? module_size : data_size - i, output_stream, user_data);
 		compressed_size = MemoryStream_GetPosition(output_stream) - start;
 	}
 

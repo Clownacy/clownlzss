@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "clownlzss.h"
+#include "common.h"
 #include "memory_stream.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
@@ -105,8 +106,10 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void ChameleonCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream)
+static void ChameleonCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data)
 {
+	(void)user_data;
+
 	match_stream = MemoryStream_Create(0x100, true);
 	descriptor_stream = MemoryStream_Create(0x100, true);
 	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
@@ -145,10 +148,10 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 
 unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
-	return ClownLZSS_RegularWrapper(data, data_size, compressed_size, ChameleonCompressStream);
+	return RegularWrapper(data, data_size, compressed_size, NULL, ChameleonCompressStream);
 }
 
 unsigned char* ModuledChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
-	return ClownLZSS_ModuledCompressionWrapper(data, data_size, compressed_size, ChameleonCompressStream, module_size, 1);
+	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, ChameleonCompressStream, module_size, 1);
 }
