@@ -57,7 +57,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 	{
 		PutDescriptorBit(instance, 0);
 		PutDescriptorBit(instance, 0);
-		PutMatchByte(instance, distance);
+		PutMatchByte(instance, (unsigned char)distance);
 		PutDescriptorBit(instance, length == 3);
 	}
 	else if (length >= 3 && length <= 5)
@@ -81,7 +81,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 		PutMatchByte(instance, distance & 0xFF);
 		PutDescriptorBit(instance, 1);
 		PutDescriptorBit(instance, 1);
-		PutMatchByte(instance, length);
+		PutMatchByte(instance, (unsigned char)length);
 	}
 }
 
@@ -137,7 +137,7 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 	const size_t descriptor_buffer_size = MemoryStream_GetPosition(instance.descriptor_stream);
 	unsigned char *descriptor_buffer = MemoryStream_GetBuffer(instance.descriptor_stream);
 
-	MemoryStream_WriteByte(output_stream, descriptor_buffer_size >> 8);
+	MemoryStream_WriteByte(output_stream, (descriptor_buffer_size >> 8) & 0xFF);
 	MemoryStream_WriteByte(output_stream, descriptor_buffer_size & 0xFF);
 
 	MemoryStream_WriteBytes(output_stream, descriptor_buffer, descriptor_buffer_size);

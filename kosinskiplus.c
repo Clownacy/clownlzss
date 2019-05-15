@@ -68,7 +68,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 	{
 		PutDescriptorBit(instance, 0);
 		PutDescriptorBit(instance, 0);
-		PutMatchByte(instance, -distance);
+		PutMatchByte(instance, (unsigned char)-distance);
 		PutDescriptorBit(instance, (length - 2) & 2);
 		PutDescriptorBit(instance, (length - 2) & 1);
 	}
@@ -85,7 +85,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 		PutDescriptorBit(instance, 1);
 		PutMatchByte(instance, (-distance >> (8 - 3)) & 0xF8);
 		PutMatchByte(instance, -distance & 0xFF);
-		PutMatchByte(instance, length - 9);
+		PutMatchByte(instance, (unsigned char)(length - 9));
 	}
 }
 
@@ -123,7 +123,7 @@ static void KosinskiPlusCompressStream(unsigned char *data, size_t data_size, Me
 	instance.match_stream = MemoryStream_Create(0x10, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	CompressData(data, data_size, NULL);
+	CompressData(data, data_size, &instance);
 
 	// Terminator match
 	PutDescriptorBit(&instance, 0);

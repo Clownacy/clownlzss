@@ -67,7 +67,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 
 	PutDescriptorBit(instance, 0);
 	PutMatchByte(instance, (offset - 0x12) & 0xFF);
-	PutMatchByte(instance, (((offset - 0x12) & 0xF00) >> 4) | (length - 3));
+	PutMatchByte(instance, (unsigned char)((((offset - 0x12) & 0xF00) >> 4) | (length - 3)));
 }
 
 static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
@@ -130,7 +130,7 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 		MemoryStream_WriteByte(output_stream, 0);
 	}
 
-	CompressData(data, data_size, NULL);
+	CompressData(data, data_size, &instance);
 
 	instance.descriptor >>= instance.descriptor_bits_remaining;
 	FlushData(&instance);
@@ -144,7 +144,7 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 		// Fill in header
 		buffer[file_offset + 0] = compressed_size & 0xFF;
-		buffer[file_offset + 1] = compressed_size >> 8;
+		buffer[file_offset + 1] = (compressed_size >> 8) & 0xFF;
 	}
 }
 

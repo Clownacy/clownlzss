@@ -80,13 +80,13 @@ void MemoryStream_SetPosition(MemoryStream *memory_stream, intmax_t offset, enum
 	switch (origin)
 	{
 		case MEMORYSTREAM_START:
-			memory_stream->position = offset;
+			memory_stream->position = (size_t)offset;
 			break;
 		case MEMORYSTREAM_CURRENT:
-			memory_stream->position += offset;
+			memory_stream->position = (size_t)(memory_stream->position + offset);
 			break;
 		case MEMORYSTREAM_END:
-			memory_stream->position = memory_stream->end + offset;
+			memory_stream->position = (size_t)(memory_stream->end + offset);
 			break;
 	}
 }

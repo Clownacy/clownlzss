@@ -67,8 +67,8 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 	Instance *instance = (Instance*)user;
 
 	PutDescriptorBit(instance, 1);
-	PutMatchByte(instance, -distance);
-	PutMatchByte(instance, length - 1);
+	PutMatchByte(instance, (unsigned char)-distance);
+	PutMatchByte(instance, (unsigned char)(length - 1));
 }
 
 static unsigned int GetMatchCost(size_t distance, size_t length, void *user)

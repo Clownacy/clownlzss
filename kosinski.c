@@ -72,7 +72,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 		PutDescriptorBit(instance, 0);
 		PutDescriptorBit(instance, (length - 2) & 2);
 		PutDescriptorBit(instance, (length - 2) & 1);
-		PutMatchByte(instance, -distance);
+		PutMatchByte(instance, (unsigned char)-distance);
 	}
 	else if (length >= 3 && length <= 9)
 	{
@@ -87,7 +87,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 		PutDescriptorBit(instance, 1);
 		PutMatchByte(instance, -distance & 0xFF);
 		PutMatchByte(instance, (-distance >> (8 - 3)) & 0xF8);
-		PutMatchByte(instance, length - 1);
+		PutMatchByte(instance, (unsigned char)(length - 1));
 	}
 }
 

@@ -25,7 +25,7 @@ unsigned char* ModuledCompressionWrapper(unsigned char *data, size_t data_size, 
 {
 	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
 
-	const unsigned short header = (data_size % module_size) | ((data_size / module_size) << 12);
+	const unsigned short header = (unsigned short)((data_size % module_size) | ((data_size / module_size) << 12));
 
 	MemoryStream_WriteByte(output_stream, header >> 8);
 	MemoryStream_WriteByte(output_stream, header & 0xFF);

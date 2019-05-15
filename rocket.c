@@ -68,7 +68,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 	const unsigned short offset_adjusted = (offset + 0x3C0) & 0x3FF;
 
 	PutDescriptorBit(instance, 0);
-	PutMatchByte(instance, ((offset_adjusted >> 8) & 3) | ((length - 1) << 2));
+	PutMatchByte(instance, (unsigned char)(((offset_adjusted >> 8) & 3) | ((length - 1) << 2)));
 	PutMatchByte(instance, offset_adjusted & 0xFF);
 }
 
@@ -104,7 +104,7 @@ static void RocketCompressStream(unsigned char *data, size_t data_size, MemorySt
 	const size_t file_offset = MemoryStream_GetPosition(output_stream);
 
 	// Incomplete header
-	MemoryStream_WriteByte(output_stream, data_size >> 8);
+	MemoryStream_WriteByte(output_stream, (data_size >> 8) & 0xFF);
 	MemoryStream_WriteByte(output_stream, data_size & 0xFF);
 	MemoryStream_WriteByte(output_stream, 0);
 	MemoryStream_WriteByte(output_stream, 0);
@@ -120,7 +120,7 @@ static void RocketCompressStream(unsigned char *data, size_t data_size, MemorySt
 	const size_t compressed_size = MemoryStream_GetPosition(output_stream) - file_offset - 2;
 
 	// Finish header
-	buffer[file_offset + 2] = compressed_size >> 8;
+	buffer[file_offset + 2] = (compressed_size >> 8) & 0xFF;
 	buffer[file_offset + 3] = compressed_size & 0xFF;
 }
 
