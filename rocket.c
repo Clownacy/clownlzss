@@ -92,9 +92,9 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0x40, 0x400, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void RocketCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data)
+static void RocketCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
-	(void)user_data;
+	(void)user;
 
 	Instance instance;
 	instance.output_stream = output_stream;

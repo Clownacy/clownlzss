@@ -112,9 +112,9 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0x12, 0x1000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data)
+static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
-	const bool header = *(bool*)user_data;
+	const bool header = *(bool*)user;
 
 	Instance instance;
 	instance.output_stream = output_stream;

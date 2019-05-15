@@ -110,9 +110,9 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void ChameleonCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data)
+static void ChameleonCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
-	(void)user_data;
+	(void)user;
 
 	Instance instance;
 	instance.match_stream = MemoryStream_Create(0x100, true);
