@@ -9,62 +9,66 @@
 
 #define TOTAL_DESCRIPTOR_BITS 16
 
-static MemoryStream *output_stream;
-static MemoryStream *match_stream;
-
-static unsigned short descriptor;
-static unsigned int descriptor_bits_remaining;
-
-static void FlushData(void)
+typedef struct Instance
 {
-	MemoryStream_WriteByte(output_stream, descriptor >> 8);
-	MemoryStream_WriteByte(output_stream, descriptor & 0xFF);
+	MemoryStream *output_stream;
+	MemoryStream *match_stream;
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(match_stream);
+	unsigned short descriptor;
+	unsigned int descriptor_bits_remaining;
+} Instance;
 
-	MemoryStream_WriteBytes(output_stream, match_buffer, match_buffer_size);
+static void FlushData(Instance *instance)
+{
+	MemoryStream_WriteByte(instance->output_stream, instance->descriptor >> 8);
+	MemoryStream_WriteByte(instance->output_stream, instance->descriptor & 0xFF);
+
+	const size_t match_buffer_size = MemoryStream_GetPosition(instance->match_stream);
+	unsigned char *match_buffer = MemoryStream_GetBuffer(instance->match_stream);
+
+	MemoryStream_WriteBytes(instance->output_stream, match_buffer, match_buffer_size);
 }
 
-static void PutMatchByte(unsigned char byte)
+static void PutMatchByte(Instance *instance, unsigned char byte)
 {
-	MemoryStream_WriteByte(match_stream, byte);
+	MemoryStream_WriteByte(instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(bool bit)
+static void PutDescriptorBit(Instance *instance, bool bit)
 {
-	if (descriptor_bits_remaining == 0)
+	if (instance->descriptor_bits_remaining == 0)
 	{
-		FlushData();
+		FlushData(instance);
 
-		descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-		MemoryStream_Rewind(match_stream);
+		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
+		MemoryStream_Rewind(instance->match_stream);
 	}
 
-	--descriptor_bits_remaining;
+	--instance->descriptor_bits_remaining;
 
-	descriptor <<= 1;
+	instance->descriptor <<= 1;
 
-	descriptor |= bit;
+	instance->descriptor |= bit;
 }
 
 static void DoLiteral(unsigned short value, void *user)
 {
-	(void)user;
+	Instance *instance = (Instance*)user;
 
-	PutDescriptorBit(0);
-	PutMatchByte(value & 0xFF);
-	PutMatchByte(value >> 8);
+	PutDescriptorBit(instance, 0);
+	PutMatchByte(instance, value & 0xFF);
+	PutMatchByte(instance, value >> 8);
 }
 
 static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
 	(void)offset;
-	(void)user;
 
-	PutDescriptorBit(1);
-	PutMatchByte(-distance);
-	PutMatchByte(length - 1);
+	Instance *instance = (Instance*)user;
+
+	PutDescriptorBit(instance, 1);
+	PutMatchByte(instance, -distance);
+	PutMatchByte(instance, length - 1);
 }
 
 static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
@@ -87,26 +91,26 @@ static void FindExtraMatches(unsigned short *data, size_t data_size, size_t offs
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned short, 0x100, 0x100, FindExtraMatches, 1 + 16, DoLiteral, GetMatchCost, DoMatch)
 
-static void ComperCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream, void *user_data)
+static void ComperCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data)
 {
 	(void)user_data;
 
-	output_stream = p_output_stream;
+	Instance instance;
+	instance.output_stream = output_stream;
+	instance.match_stream = MemoryStream_Create(0x10, true);
+	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	match_stream = MemoryStream_Create(0x10, true);
-	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-
-	CompressData((unsigned short*)data, data_size / sizeof(unsigned short), NULL);
+	CompressData((unsigned short*)data, data_size / sizeof(unsigned short), &instance);
 
 	// Terminator match
-	PutDescriptorBit(1);
-	PutMatchByte(0);
-	PutMatchByte(0);
+	PutDescriptorBit(&instance, 1);
+	PutMatchByte(&instance, 0);
+	PutMatchByte(&instance, 0);
 
-	descriptor <<= descriptor_bits_remaining;
-	FlushData();
+	instance.descriptor <<= instance.descriptor_bits_remaining;
+	FlushData(&instance);
 
-	MemoryStream_Destroy(match_stream);
+	MemoryStream_Destroy(instance.match_stream);
 }
 
 unsigned char* ComperCompress(unsigned char *data, size_t data_size, size_t *compressed_size)

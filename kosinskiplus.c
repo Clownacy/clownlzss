@@ -9,79 +9,83 @@
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
-static MemoryStream *output_stream;
-static MemoryStream *match_stream;
-
-static unsigned char descriptor;
-static unsigned int descriptor_bits_remaining;
-
-static void FlushData(void)
+typedef struct Instance
 {
-	MemoryStream_WriteByte(output_stream, descriptor);
+	MemoryStream *output_stream;
+	MemoryStream *match_stream;
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(match_stream);
+	unsigned char descriptor;
+	unsigned int descriptor_bits_remaining;
+} Instance;
 
-	MemoryStream_WriteBytes(output_stream, match_buffer, match_buffer_size);
+static void FlushData(Instance *instance)
+{
+	MemoryStream_WriteByte(instance->output_stream, instance->descriptor);
+
+	const size_t match_buffer_size = MemoryStream_GetPosition(instance->match_stream);
+	unsigned char *match_buffer = MemoryStream_GetBuffer(instance->match_stream);
+
+	MemoryStream_WriteBytes(instance->output_stream, match_buffer, match_buffer_size);
 }
 
-static void PutMatchByte(unsigned char byte)
+static void PutMatchByte(Instance *instance, unsigned char byte)
 {
-	MemoryStream_WriteByte(match_stream, byte);
+	MemoryStream_WriteByte(instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(bool bit)
+static void PutDescriptorBit(Instance *instance, bool bit)
 {
-	if (descriptor_bits_remaining == 0)
+	if (instance->descriptor_bits_remaining == 0)
 	{
-		FlushData();
+		FlushData(instance);
 
-		descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-		MemoryStream_Rewind(match_stream);
+		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
+		MemoryStream_Rewind(instance->match_stream);
 	}
 
-	--descriptor_bits_remaining;
+	--instance->descriptor_bits_remaining;
 
-	descriptor <<= 1;
+	instance->descriptor <<= 1;
 
-	descriptor |= bit;
+	instance->descriptor |= bit;
 }
 
 static void DoLiteral(unsigned char value, void *user)
 {
-	(void)user;
+	Instance *instance = (Instance*)user;
 
-	PutDescriptorBit(1);
-	PutMatchByte(value);
+	PutDescriptorBit(instance, 1);
+	PutMatchByte(instance, value);
 }
 
 static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
 	(void)offset;
-	(void)user;
+
+	Instance *instance = (Instance*)user;
 
 	if (length >= 2 && length <= 5 && distance <= 256)
 	{
-		PutDescriptorBit(0);
-		PutDescriptorBit(0);
-		PutMatchByte(-distance);
-		PutDescriptorBit((length - 2) & 2);
-		PutDescriptorBit((length - 2) & 1);
+		PutDescriptorBit(instance, 0);
+		PutDescriptorBit(instance, 0);
+		PutMatchByte(instance, -distance);
+		PutDescriptorBit(instance, (length - 2) & 2);
+		PutDescriptorBit(instance, (length - 2) & 1);
 	}
 	else if (length >= 3 && length <= 9)
 	{
-		PutDescriptorBit(0);
-		PutDescriptorBit(1);
-		PutMatchByte(((-distance >> (8 - 3)) & 0xF8) | ((10 - length) & 7));
-		PutMatchByte(-distance & 0xFF);
+		PutDescriptorBit(instance, 0);
+		PutDescriptorBit(instance, 1);
+		PutMatchByte(instance, ((-distance >> (8 - 3)) & 0xF8) | ((10 - length) & 7));
+		PutMatchByte(instance, -distance & 0xFF);
 	}
 	else //if (length >= 10)
 	{
-		PutDescriptorBit(0);
-		PutDescriptorBit(1);
-		PutMatchByte((-distance >> (8 - 3)) & 0xF8);
-		PutMatchByte(-distance & 0xFF);
-		PutMatchByte(length - 9);
+		PutDescriptorBit(instance, 0);
+		PutDescriptorBit(instance, 1);
+		PutMatchByte(instance, (-distance >> (8 - 3)) & 0xF8);
+		PutMatchByte(instance, -distance & 0xFF);
+		PutMatchByte(instance, length - 9);
 	}
 }
 
@@ -110,28 +114,28 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0x100 + 8, 0x2000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void KosinskiPlusCompressStream(unsigned char *data, size_t data_size, MemoryStream *p_output_stream, void *user_data)
+static void KosinskiPlusCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data)
 {
 	(void)user_data;
 
-	output_stream = p_output_stream;
-
-	match_stream = MemoryStream_Create(0x10, true);
-	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
+	Instance instance;
+	instance.output_stream = output_stream;
+	instance.match_stream = MemoryStream_Create(0x10, true);
+	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	CompressData(data, data_size, NULL);
 
 	// Terminator match
-	PutDescriptorBit(0);
-	PutDescriptorBit(1);
-	PutMatchByte(0xF0);
-	PutMatchByte(0x00);
-	PutMatchByte(0x00);
+	PutDescriptorBit(&instance, 0);
+	PutDescriptorBit(&instance, 1);
+	PutMatchByte(&instance, 0xF0);
+	PutMatchByte(&instance, 0x00);
+	PutMatchByte(&instance, 0x00);
 
-	descriptor <<= descriptor_bits_remaining;
-	FlushData();
+	instance.descriptor <<= instance.descriptor_bits_remaining;
+	FlushData(&instance);
 
-	MemoryStream_Destroy(match_stream);
+	MemoryStream_Destroy(instance.match_stream);
 }
 
 unsigned char* KosinskiPlusCompress(unsigned char *data, size_t data_size, size_t *compressed_size)

@@ -9,75 +9,79 @@
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
-static MemoryStream *match_stream;
-static MemoryStream *descriptor_stream;
-
-static unsigned char descriptor;
-static unsigned int descriptor_bits_remaining;
-
-static void PutMatchByte(unsigned char byte)
+typedef struct Instance
 {
-	MemoryStream_WriteByte(match_stream, byte);
+	MemoryStream *match_stream;
+	MemoryStream *descriptor_stream;
+
+	unsigned char descriptor;
+	unsigned int descriptor_bits_remaining;
+} Instance;
+
+static void PutMatchByte(Instance *instance, unsigned char byte)
+{
+	MemoryStream_WriteByte(instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(bool bit)
+static void PutDescriptorBit(Instance *instance, bool bit)
 {
-	if (descriptor_bits_remaining == 0)
+	if (instance->descriptor_bits_remaining == 0)
 	{
-		MemoryStream_WriteByte(descriptor_stream, descriptor);
+		MemoryStream_WriteByte(instance->descriptor_stream, instance->descriptor);
 
-		descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
+		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 	}
 
-	--descriptor_bits_remaining;
+	--instance->descriptor_bits_remaining;
 
-	descriptor <<= 1;
+	instance->descriptor <<= 1;
 
-	descriptor |= bit;
+	instance->descriptor |= bit;
 }
 
 static void DoLiteral(unsigned char value, void *user)
 {
-	(void)user;
+	Instance *instance = (Instance*)user;
 
-	PutDescriptorBit(1);
-	PutMatchByte(value);
+	PutDescriptorBit(instance, 1);
+	PutMatchByte(instance, value);
 }
 
 static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
 	(void)offset;
-	(void)user;
+
+	Instance *instance = (Instance*)user;
 
 	if (length >= 2 && length <= 3 && distance < 256)
 	{
-		PutDescriptorBit(0);
-		PutDescriptorBit(0);
-		PutMatchByte(distance);
-		PutDescriptorBit(length == 3);
+		PutDescriptorBit(instance, 0);
+		PutDescriptorBit(instance, 0);
+		PutMatchByte(instance, distance);
+		PutDescriptorBit(instance, length == 3);
 	}
 	else if (length >= 3 && length <= 5)
 	{
-		PutDescriptorBit(0);
-		PutDescriptorBit(1);
-		PutDescriptorBit(distance & (1 << 10));
-		PutDescriptorBit(distance & (1 << 9));
-		PutDescriptorBit(distance & (1 << 8));
-		PutMatchByte(distance & 0xFF);
-		PutDescriptorBit(length == 5);
-		PutDescriptorBit(length == 4);
+		PutDescriptorBit(instance, 0);
+		PutDescriptorBit(instance, 1);
+		PutDescriptorBit(instance, distance & (1 << 10));
+		PutDescriptorBit(instance, distance & (1 << 9));
+		PutDescriptorBit(instance, distance & (1 << 8));
+		PutMatchByte(instance, distance & 0xFF);
+		PutDescriptorBit(instance, length == 5);
+		PutDescriptorBit(instance, length == 4);
 	}
 	else //if (length >= 6)
 	{
-		PutDescriptorBit(0);
-		PutDescriptorBit(1);
-		PutDescriptorBit(distance & (1 << 10));
-		PutDescriptorBit(distance & (1 << 9));
-		PutDescriptorBit(distance & (1 << 8));
-		PutMatchByte(distance & 0xFF);
-		PutDescriptorBit(1);
-		PutDescriptorBit(1);
-		PutMatchByte(length);
+		PutDescriptorBit(instance, 0);
+		PutDescriptorBit(instance, 1);
+		PutDescriptorBit(instance, distance & (1 << 10));
+		PutDescriptorBit(instance, distance & (1 << 9));
+		PutDescriptorBit(instance, distance & (1 << 8));
+		PutMatchByte(instance, distance & 0xFF);
+		PutDescriptorBit(instance, 1);
+		PutDescriptorBit(instance, 1);
+		PutMatchByte(instance, length);
 	}
 }
 
@@ -110,40 +114,41 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 {
 	(void)user_data;
 
-	match_stream = MemoryStream_Create(0x100, true);
-	descriptor_stream = MemoryStream_Create(0x100, true);
-	descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
+	Instance instance;
+	instance.match_stream = MemoryStream_Create(0x100, true);
+	instance.descriptor_stream = MemoryStream_Create(0x100, true);
+	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	CompressData(data, data_size, NULL);
+	CompressData(data, data_size, &instance);
 
 	// Terminator match
-	PutDescriptorBit(0);
-	PutDescriptorBit(1);
-	PutDescriptorBit(0);
-	PutDescriptorBit(0);
-	PutDescriptorBit(0);
-	PutMatchByte(0);
-	PutDescriptorBit(1);
-	PutDescriptorBit(1);
-	PutMatchByte(0);
+	PutDescriptorBit(&instance, 0);
+	PutDescriptorBit(&instance, 1);
+	PutDescriptorBit(&instance, 0);
+	PutDescriptorBit(&instance, 0);
+	PutDescriptorBit(&instance, 0);
+	PutMatchByte(&instance, 0);
+	PutDescriptorBit(&instance, 1);
+	PutDescriptorBit(&instance, 1);
+	PutMatchByte(&instance, 0);
 
-	MemoryStream_WriteByte(descriptor_stream, descriptor << descriptor_bits_remaining);
+	MemoryStream_WriteByte(instance.descriptor_stream, instance.descriptor << instance.descriptor_bits_remaining);
 
-	const size_t descriptor_buffer_size = MemoryStream_GetPosition(descriptor_stream);
-	unsigned char *descriptor_buffer = MemoryStream_GetBuffer(descriptor_stream);
+	const size_t descriptor_buffer_size = MemoryStream_GetPosition(instance.descriptor_stream);
+	unsigned char *descriptor_buffer = MemoryStream_GetBuffer(instance.descriptor_stream);
 
 	MemoryStream_WriteByte(output_stream, descriptor_buffer_size >> 8);
 	MemoryStream_WriteByte(output_stream, descriptor_buffer_size & 0xFF);
 
 	MemoryStream_WriteBytes(output_stream, descriptor_buffer, descriptor_buffer_size);
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(match_stream);
+	const size_t match_buffer_size = MemoryStream_GetPosition(instance.match_stream);
+	unsigned char *match_buffer = MemoryStream_GetBuffer(instance.match_stream);
 
 	MemoryStream_WriteBytes(output_stream, match_buffer, match_buffer_size);
 
-	MemoryStream_Destroy(descriptor_stream);
-	MemoryStream_Destroy(match_stream);
+	MemoryStream_Destroy(instance.descriptor_stream);
+	MemoryStream_Destroy(instance.match_stream);
 }
 
 unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
