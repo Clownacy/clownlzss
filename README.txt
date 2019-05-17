@@ -2,9 +2,10 @@ clownlzss is a lightweight, minimalist, graph-based LZSS framework.
 Also included are a collection of compressors which utilise the framework.
 
 Formats supported by the supplied utilities include:
+
 * Kosinski - a compression format common to first-party Sega Mega Drive games
 
-* Saxman - a format used by Sonic the Hedgehog 2, to compress its sound driver
+* Saxman - a format used by Sonic the Hedgehog 2, to compress its sound engine
   and music data
 
 * Kosinski+ - a modified version of Kosinski developed by the Sonic ROM-hacking
