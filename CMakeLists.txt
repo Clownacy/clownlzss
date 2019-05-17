@@ -18,6 +18,11 @@ add_executable(tool
 	"saxman.c"
 )
 
+set_target_properties(tool PROPERTIES
+	C_STANDARD 99
+	C_EXTENSIONS OFF
+)
+
 # MSVC tweak
 if(MSVC)
 	target_compile_definitions(tool PRIVATE _CRT_SECURE_NO_WARNINGS)	# Shut up those stupid warnings
