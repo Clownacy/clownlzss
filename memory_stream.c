@@ -1,8 +1,9 @@
 #include "memory_stream.h"
 
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
 #include <stddef.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -75,7 +76,7 @@ size_t MemoryStream_GetPosition(MemoryStream *memory_stream)
 	return memory_stream->position;
 }
 
-void MemoryStream_SetPosition(MemoryStream *memory_stream, intmax_t offset, enum MemoryStream_Origin origin)
+void MemoryStream_SetPosition(MemoryStream *memory_stream, ptrdiff_t offset, enum MemoryStream_Origin origin)
 {
 	switch (origin)
 	{

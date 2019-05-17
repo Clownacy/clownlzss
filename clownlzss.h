@@ -2,7 +2,6 @@
 
 #include <limits.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdlib.h>
 
 #define CLOWNLZSS_MIN(a, b) (a) < (b) ? (a) : (b)
@@ -65,12 +64,12 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 		}\
 	}\
 \
-	node_meta_array[0].previous_node_index = SIZE_MAX;\
-	node_meta_array[data_size].u.next_node_index = SIZE_MAX;\
-	for (size_t node_index = data_size; node_meta_array[node_index].previous_node_index != SIZE_MAX; node_index = node_meta_array[node_index].previous_node_index)\
+	node_meta_array[0].previous_node_index = (size_t)-1;\
+	node_meta_array[data_size].u.next_node_index = (size_t)-1;\
+	for (size_t node_index = data_size; node_meta_array[node_index].previous_node_index != (size_t)-1; node_index = node_meta_array[node_index].previous_node_index)\
 		node_meta_array[node_meta_array[node_index].previous_node_index].u.next_node_index = node_index;\
 \
-	for (size_t node_index = 0; node_meta_array[node_index].u.next_node_index != SIZE_MAX; node_index = node_meta_array[node_index].u.next_node_index)\
+	for (size_t node_index = 0; node_meta_array[node_index].u.next_node_index != (size_t)-1; node_index = node_meta_array[node_index].u.next_node_index)\
 	{\
 		const size_t next_index = node_meta_array[node_index].u.next_node_index;\
 		const size_t length = node_meta_array[next_index].match_length;\

@@ -1,4 +1,6 @@
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>

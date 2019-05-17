@@ -1,6 +1,8 @@
 #include "chameleon.h"
 
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
 #include <stddef.h>
 
 #include "clownlzss.h"
