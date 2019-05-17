@@ -9,16 +9,16 @@
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
-typedef struct Instance
+typedef struct SaxmanInstance
 {
 	MemoryStream *output_stream;
 	MemoryStream *match_stream;
 
 	unsigned char descriptor;
 	unsigned int descriptor_bits_remaining;
-} Instance;
+} SaxmanInstance;
 
-static void FlushData(Instance *instance)
+static void FlushData(SaxmanInstance *instance)
 {
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor);
 
@@ -28,12 +28,12 @@ static void FlushData(Instance *instance)
 	MemoryStream_WriteBytes(instance->output_stream, match_buffer, match_buffer_size);
 }
 
-static void PutMatchByte(Instance *instance, unsigned char byte)
+static void PutMatchByte(SaxmanInstance *instance, unsigned char byte)
 {
 	MemoryStream_WriteByte(instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(Instance *instance, bool bit)
+static void PutDescriptorBit(SaxmanInstance *instance, bool bit)
 {
 	if (instance->descriptor_bits_remaining == 0)
 	{
@@ -53,7 +53,7 @@ static void PutDescriptorBit(Instance *instance, bool bit)
 
 static void DoLiteral(unsigned char value, void *user)
 {
-	Instance *instance = (Instance*)user;
+	SaxmanInstance *instance = (SaxmanInstance*)user;
 
 	PutDescriptorBit(instance, 1);
 	PutMatchByte(instance, value);
@@ -63,7 +63,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
 	(void)distance;
 
-	Instance *instance = (Instance*)user;
+	SaxmanInstance *instance = (SaxmanInstance*)user;
 
 	PutDescriptorBit(instance, 0);
 	PutMatchByte(instance, (offset - 0x12) & 0xFF);
@@ -116,7 +116,7 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 {
 	const bool header = *(bool*)user;
 
-	Instance instance;
+	SaxmanInstance instance;
 	instance.output_stream = output_stream;
 	instance.match_stream = MemoryStream_Create(0x10, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;

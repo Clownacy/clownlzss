@@ -9,21 +9,21 @@
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
-typedef struct Instance
+typedef struct ChameleonInstance
 {
 	MemoryStream *match_stream;
 	MemoryStream *descriptor_stream;
 
 	unsigned char descriptor;
 	unsigned int descriptor_bits_remaining;
-} Instance;
+} ChameleonInstance;
 
-static void PutMatchByte(Instance *instance, unsigned char byte)
+static void PutMatchByte(ChameleonInstance *instance, unsigned char byte)
 {
 	MemoryStream_WriteByte(instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(Instance *instance, bool bit)
+static void PutDescriptorBit(ChameleonInstance *instance, bool bit)
 {
 	if (instance->descriptor_bits_remaining == 0)
 	{
@@ -41,7 +41,7 @@ static void PutDescriptorBit(Instance *instance, bool bit)
 
 static void DoLiteral(unsigned char value, void *user)
 {
-	Instance *instance = (Instance*)user;
+	ChameleonInstance *instance = (ChameleonInstance*)user;
 
 	PutDescriptorBit(instance, 1);
 	PutMatchByte(instance, value);
@@ -51,7 +51,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
 	(void)offset;
 
-	Instance *instance = (Instance*)user;
+	ChameleonInstance *instance = (ChameleonInstance*)user;
 
 	if (length >= 2 && length <= 3 && distance < 256)
 	{
@@ -114,7 +114,7 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 {
 	(void)user;
 
-	Instance instance;
+	ChameleonInstance instance;
 	instance.match_stream = MemoryStream_Create(0x100, true);
 	instance.descriptor_stream = MemoryStream_Create(0x100, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;

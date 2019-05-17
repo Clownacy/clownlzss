@@ -9,16 +9,16 @@
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
-typedef struct Instance
+typedef struct RocketInstance
 {
 	MemoryStream *output_stream;
 	MemoryStream *match_stream;
 
 	unsigned char descriptor;
 	unsigned int descriptor_bits_remaining;
-} Instance;
+} RocketInstance;
 
-static void FlushData(Instance *instance)
+static void FlushData(RocketInstance *instance)
 {
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor);
 
@@ -28,12 +28,12 @@ static void FlushData(Instance *instance)
 	MemoryStream_WriteBytes(instance->output_stream, match_buffer, match_buffer_size);
 }
 
-static void PutMatchByte(Instance *instance, unsigned char byte)
+static void PutMatchByte(RocketInstance *instance, unsigned char byte)
 {
 	MemoryStream_WriteByte(instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(Instance *instance, bool bit)
+static void PutDescriptorBit(RocketInstance *instance, bool bit)
 {
 	if (instance->descriptor_bits_remaining == 0)
 	{
@@ -53,7 +53,7 @@ static void PutDescriptorBit(Instance *instance, bool bit)
 
 static void DoLiteral(unsigned char value, void *user)
 {
-	Instance *instance = (Instance*)user;
+	RocketInstance *instance = (RocketInstance*)user;
 
 	PutDescriptorBit(instance, 1);
 	PutMatchByte(instance, value);
@@ -63,7 +63,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
 	(void)distance;
 
-	Instance *instance = (Instance*)user;
+	RocketInstance *instance = (RocketInstance*)user;
 
 	const unsigned short offset_adjusted = (offset + 0x3C0) & 0x3FF;
 
@@ -96,7 +96,7 @@ static void RocketCompressStream(unsigned char *data, size_t data_size, MemorySt
 {
 	(void)user;
 
-	Instance instance;
+	RocketInstance instance;
 	instance.output_stream = output_stream;
 	instance.match_stream = MemoryStream_Create(0x10, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;

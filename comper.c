@@ -9,16 +9,16 @@
 
 #define TOTAL_DESCRIPTOR_BITS 16
 
-typedef struct Instance
+typedef struct ComperInstance
 {
 	MemoryStream *output_stream;
 	MemoryStream *match_stream;
 
 	unsigned short descriptor;
 	unsigned int descriptor_bits_remaining;
-} Instance;
+} ComperInstance;
 
-static void FlushData(Instance *instance)
+static void FlushData(ComperInstance *instance)
 {
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor >> 8);
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor & 0xFF);
@@ -29,12 +29,12 @@ static void FlushData(Instance *instance)
 	MemoryStream_WriteBytes(instance->output_stream, match_buffer, match_buffer_size);
 }
 
-static void PutMatchByte(Instance *instance, unsigned char byte)
+static void PutMatchByte(ComperInstance *instance, unsigned char byte)
 {
 	MemoryStream_WriteByte(instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(Instance *instance, bool bit)
+static void PutDescriptorBit(ComperInstance *instance, bool bit)
 {
 	if (instance->descriptor_bits_remaining == 0)
 	{
@@ -53,7 +53,7 @@ static void PutDescriptorBit(Instance *instance, bool bit)
 
 static void DoLiteral(unsigned short value, void *user)
 {
-	Instance *instance = (Instance*)user;
+	ComperInstance *instance = (ComperInstance*)user;
 
 	PutDescriptorBit(instance, 0);
 	PutMatchByte(instance, value & 0xFF);
@@ -64,7 +64,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
 	(void)offset;
 
-	Instance *instance = (Instance*)user;
+	ComperInstance *instance = (ComperInstance*)user;
 
 	PutDescriptorBit(instance, 1);
 	PutMatchByte(instance, (unsigned char)-distance);
@@ -95,7 +95,7 @@ static void ComperCompressStream(unsigned char *data, size_t data_size, MemorySt
 {
 	(void)user;
 
-	Instance instance;
+	ComperInstance instance;
 	instance.output_stream = output_stream;
 	instance.match_stream = MemoryStream_Create(0x10, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;

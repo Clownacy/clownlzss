@@ -9,16 +9,16 @@
 
 #define TOTAL_DESCRIPTOR_BITS 16
 
-typedef struct Instance
+typedef struct KosinskiInstance
 {
 	MemoryStream *output_stream;
 	MemoryStream *match_stream;
 
 	unsigned short descriptor;
 	unsigned int descriptor_bits_remaining;
-} Instance;
+} KosinskiInstance;
 
-static void FlushData(Instance *instance)
+static void FlushData(KosinskiInstance *instance)
 {
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor & 0xFF);
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor >> 8);
@@ -29,12 +29,12 @@ static void FlushData(Instance *instance)
 	MemoryStream_WriteBytes(instance->output_stream, match_buffer, match_buffer_size);
 }
 
-static void PutMatchByte(Instance *instance, unsigned char byte)
+static void PutMatchByte(KosinskiInstance *instance, unsigned char byte)
 {
 	MemoryStream_WriteByte(instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(Instance *instance, bool bit)
+static void PutDescriptorBit(KosinskiInstance *instance, bool bit)
 {
 	--instance->descriptor_bits_remaining;
 
@@ -54,7 +54,7 @@ static void PutDescriptorBit(Instance *instance, bool bit)
 
 static void DoLiteral(unsigned char value, void *user)
 {
-	Instance *instance = (Instance*)user;
+	KosinskiInstance *instance = (KosinskiInstance*)user;
 
 	PutDescriptorBit(instance, 1);
 	PutMatchByte(instance, value);
@@ -64,7 +64,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
 	(void)offset;
 
-	Instance *instance = (Instance*)user;
+	KosinskiInstance *instance = (KosinskiInstance*)user;
 
 	if (length >= 2 && length <= 5 && distance <= 256)
 	{
@@ -120,7 +120,7 @@ static void KosinskiCompressStream(unsigned char *data, size_t data_size, Memory
 {
 	(void)user;
 
-	Instance instance;
+	KosinskiInstance instance;
 	instance.output_stream = output_stream;
 	instance.match_stream = MemoryStream_Create(0x10, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;

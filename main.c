@@ -24,13 +24,13 @@ typedef enum Format
 
 typedef struct Mode
 {
-	char *command;
+	const char *command;
 	Format format;
-	char *normal_default_filename;
-	char *moduled_default_filename;
+	const char *normal_default_filename;
+	const char *moduled_default_filename;
 } Mode;
 
-static Mode modes[] = {
+static const Mode modes[] = {
 	{"-ch", FORMAT_CHAMELEON, "out.cham", "out.chamm"},
 	{"-c", FORMAT_COMPER, "out.comp", "out.compm"},
 	{"-k", FORMAT_KOSINSKI, "out.kos", "out.kosm"},
@@ -69,9 +69,9 @@ int main(int argc, char *argv[])
 	--argc;
 	++argv;
 
-	Mode *mode = NULL;
-	char *in_filename = NULL;
-	char *out_filename = NULL;
+	const Mode *mode = NULL;
+	const char *in_filename = NULL;
+	const char *out_filename = NULL;
 	bool moduled = false;
 	size_t module_size = 0x1000;
 
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
 			const size_t file_size = ftell(in_file);
 			rewind(in_file);
 
-			unsigned char *file_buffer = malloc(file_size);
+			unsigned char *file_buffer = (unsigned char*)malloc(file_size);
 			fread(file_buffer, 1, file_size, in_file);
 			fclose(in_file);
 
@@ -198,14 +198,14 @@ int main(int argc, char *argv[])
 
 				case FORMAT_SAXMAN:
 					if (moduled)
-						compressed_buffer = ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, module_size, true);
+						compressed_buffer = ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, true, module_size);
 					else
 						compressed_buffer = SaxmanCompress(file_buffer, file_size, &compressed_size, true);
 					break;
 
 				case FORMAT_SAXMAN_NO_HEADER:
 					if (moduled)
-						compressed_buffer = ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, module_size, false);
+						compressed_buffer = ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, false, module_size);
 					else
 						compressed_buffer = SaxmanCompress(file_buffer, file_size, &compressed_size, false);
 					break;
