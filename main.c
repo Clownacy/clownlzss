@@ -165,51 +165,51 @@ int main(int argc, char *argv[])
 			{
 				case FORMAT_CHAMELEON:
 					if (moduled)
-						compressed_buffer = ModuledChameleonCompress(file_buffer, file_size, &compressed_size, module_size);
+						compressed_buffer = ClownLZSS_ModuledChameleonCompress(file_buffer, file_size, &compressed_size, module_size);
 					else
-						compressed_buffer = ChameleonCompress(file_buffer, file_size, &compressed_size);
+						compressed_buffer = ClownLZSS_ChameleonCompress(file_buffer, file_size, &compressed_size);
 					break;
 
 				case FORMAT_COMPER:
 					if (moduled)
-						compressed_buffer = ModuledComperCompress(file_buffer, file_size, &compressed_size, module_size);
+						compressed_buffer = ClownLZSS_ModuledComperCompress(file_buffer, file_size, &compressed_size, module_size);
 					else
-						compressed_buffer = ComperCompress(file_buffer, file_size, &compressed_size);
+						compressed_buffer = ClownLZSS_ComperCompress(file_buffer, file_size, &compressed_size);
 					break;
 
 				case FORMAT_KOSINSKI:
 					if (moduled)
-						compressed_buffer = ModuledKosinskiCompress(file_buffer, file_size, &compressed_size, module_size);
+						compressed_buffer = ClownLZSS_ModuledKosinskiCompress(file_buffer, file_size, &compressed_size, module_size);
 					else
-						compressed_buffer = KosinskiCompress(file_buffer, file_size, &compressed_size);
+						compressed_buffer = ClownLZSS_KosinskiCompress(file_buffer, file_size, &compressed_size);
 					break;
 
 				case FORMAT_KOSINSKIPLUS:
 					if (moduled)
-						compressed_buffer = ModuledKosinskiPlusCompress(file_buffer, file_size, &compressed_size, module_size);
+						compressed_buffer = ClownLZSS_ModuledKosinskiPlusCompress(file_buffer, file_size, &compressed_size, module_size);
 					else
-						compressed_buffer = KosinskiPlusCompress(file_buffer, file_size, &compressed_size);
+						compressed_buffer = ClownLZSS_KosinskiPlusCompress(file_buffer, file_size, &compressed_size);
 					break;
 
 				case FORMAT_ROCKET:
 					if (moduled)
-						compressed_buffer = ModuledRocketCompress(file_buffer, file_size, &compressed_size, module_size);
+						compressed_buffer = ClownLZSS_ModuledRocketCompress(file_buffer, file_size, &compressed_size, module_size);
 					else
-						compressed_buffer = RocketCompress(file_buffer, file_size, &compressed_size);
+						compressed_buffer = ClownLZSS_RocketCompress(file_buffer, file_size, &compressed_size);
 					break;
 
 				case FORMAT_SAXMAN:
 					if (moduled)
-						compressed_buffer = ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, true, module_size);
+						compressed_buffer = ClownLZSS_ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, true, module_size);
 					else
-						compressed_buffer = SaxmanCompress(file_buffer, file_size, &compressed_size, true);
+						compressed_buffer = ClownLZSS_SaxmanCompress(file_buffer, file_size, &compressed_size, true);
 					break;
 
 				case FORMAT_SAXMAN_NO_HEADER:
 					if (moduled)
-						compressed_buffer = ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, false, module_size);
+						compressed_buffer = ClownLZSS_ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, false, module_size);
 					else
-						compressed_buffer = SaxmanCompress(file_buffer, file_size, &compressed_size, false);
+						compressed_buffer = ClownLZSS_SaxmanCompress(file_buffer, file_size, &compressed_size, false);
 					break;
 			}
 

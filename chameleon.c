@@ -153,12 +153,12 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 	MemoryStream_Destroy(instance.match_stream);
 }
 
-unsigned char* ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* ClownLZSS_ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
 	return RegularWrapper(data, data_size, compressed_size, NULL, ChameleonCompressStream);
 }
 
-unsigned char* ModuledChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+unsigned char* ClownLZSS_ModuledChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, ChameleonCompressStream, module_size, 1);
 }

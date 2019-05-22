@@ -142,12 +142,12 @@ static void KosinskiCompressStream(unsigned char *data, size_t data_size, Memory
 	MemoryStream_Destroy(instance.match_stream);
 }
 
-unsigned char* KosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* ClownLZSS_KosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
 	return RegularWrapper(data, data_size, compressed_size, NULL, KosinskiCompressStream);
 }
 
-unsigned char* ModuledKosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+unsigned char* ClownLZSS_ModuledKosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, KosinskiCompressStream, module_size, 0x10);
 }
