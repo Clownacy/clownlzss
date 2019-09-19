@@ -74,13 +74,11 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 	node_meta_array[0].previous_node_index = (size_t)-1;\
 	node_meta_array[data_size].u.next_node_index = (size_t)-1;\
 \
-	/* Reverse the direction of the edges, so we can parse the LZSS graph
-	   from start to end */\
+	/* Reverse the direction of the edges, so we can parse the LZSS graph from start to end */\
 	for (size_t node_index = data_size; node_meta_array[node_index].previous_node_index != (size_t)-1; node_index = node_meta_array[node_index].previous_node_index)\
 		node_meta_array[node_meta_array[node_index].previous_node_index].u.next_node_index = node_index;\
 \
-	/* Go through our now-complete LZSS graph, and output the
-	   optimally-compressed file */\
+	/* Go through our now-complete LZSS graph, and output the optimally-compressed file */\
 	for (size_t node_index = 0; node_meta_array[node_index].u.next_node_index != (size_t)-1; node_index = node_meta_array[node_index].u.next_node_index)\
 	{\
 		const size_t next_index = node_meta_array[node_index].u.next_node_index;\
