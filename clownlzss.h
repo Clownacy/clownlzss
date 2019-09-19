@@ -87,7 +87,7 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 		const size_t length = node_meta_array[next_index].match_length;\
 		const size_t offset = node_meta_array[next_index].match_offset;\
 \
-		if (length)\
+		if (length != 0)\
 			MATCH_CALLBACK(next_index - length - offset, length, offset, user);\
 		else\
 			LITERAL_CALLBACK(data[node_index], user);\
