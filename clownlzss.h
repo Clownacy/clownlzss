@@ -24,10 +24,15 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 {\
 	ClownLZSS_GraphEdge *node_meta_array = (ClownLZSS_GraphEdge*)malloc((data_size + 1) * sizeof(ClownLZSS_GraphEdge));	/* +1 for the end-node */\
 \
+	/* Set costs to maximum possible value, so later comparisons work */\
 	node_meta_array[0].u.cost = 0;\
 	for (size_t i = 1; i < data_size + 1; ++i)\
 		node_meta_array[i].u.cost = UINT_MAX;\
 \
+	/* Search for matches, to populate the edges of the LZSS graph.
+	   Notably, while doing this, we're also using a shortest-path
+	   algorithm on the edges to find the best combination of matches
+	   to produce the smallest file. */\
 	for (size_t i = 0; i < data_size; ++i)\
 	{\
 		const size_t max_read_ahead = CLOWNLZSS_MIN(MAX_MATCH_LENGTH, data_size - i);\
@@ -56,6 +61,7 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 			}\
 		}\
 \
+		/* Insert a literal match if it's more efficient */\
 		if (node_meta_array[i + 1].u.cost >= node_meta_array[i].u.cost + LITERAL_COST)\
 		{\
 			node_meta_array[i + 1].u.cost = node_meta_array[i].u.cost + LITERAL_COST;\
@@ -64,11 +70,17 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 		}\
 	}\
 \
+	/* Mark start/end nodes for the following loops */\
 	node_meta_array[0].previous_node_index = (size_t)-1;\
 	node_meta_array[data_size].u.next_node_index = (size_t)-1;\
+\
+	/* Reverse the direction of the edges, so we can parse the LZSS graph
+	   from start to end */\
 	for (size_t node_index = data_size; node_meta_array[node_index].previous_node_index != (size_t)-1; node_index = node_meta_array[node_index].previous_node_index)\
 		node_meta_array[node_meta_array[node_index].previous_node_index].u.next_node_index = node_index;\
 \
+	/* Go through our now-complete LZSS graph, and output the
+	   optimally-compressed file */\
 	for (size_t node_index = 0; node_meta_array[node_index].u.next_node_index != (size_t)-1; node_index = node_meta_array[node_index].u.next_node_index)\
 	{\
 		const size_t next_index = node_meta_array[node_index].u.next_node_index;\
