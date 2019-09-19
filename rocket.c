@@ -126,12 +126,12 @@ static void RocketCompressStream(unsigned char *data, size_t data_size, MemorySt
 	buffer[file_offset + 3] = compressed_size & 0xFF;
 }
 
-unsigned char* RocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* ClownLZSS_RocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
 {
 	return RegularWrapper(data, data_size, compressed_size, NULL, RocketCompressStream);
 }
 
-unsigned char* ModuledRocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+unsigned char* ClownLZSS_ModuledRocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, RocketCompressStream, module_size, 1);
 }

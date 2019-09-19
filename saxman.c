@@ -150,12 +150,12 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 	}
 }
 
-unsigned char* SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, bool header)
+unsigned char* ClownLZSS_SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, bool header)
 {
 	return RegularWrapper(data, data_size, compressed_size, &header, SaxmanCompressStream);
 }
 
-unsigned char* ModuledSaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, bool header, size_t module_size)
+unsigned char* ClownLZSS_ModuledSaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, bool header, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, &header, SaxmanCompressStream, module_size, 1);
 }
