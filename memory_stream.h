@@ -14,7 +14,7 @@ enum MemoryStream_Origin
 	MEMORYSTREAM_END
 };
 
-MemoryStream* MemoryStream_Create(size_t growth, bool free_buffer_when_destroyed);
+MemoryStream* MemoryStream_Create(bool free_buffer_when_destroyed);
 void MemoryStream_Destroy(MemoryStream *memory_stream);
 void MemoryStream_WriteByte(MemoryStream *memory_stream, unsigned char byte);
 void MemoryStream_WriteBytes(MemoryStream *memory_stream, unsigned char *bytes, size_t byte_count);

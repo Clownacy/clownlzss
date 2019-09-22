@@ -99,7 +99,7 @@ static void ComperCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 	ComperInstance instance;
 	instance.output_stream = output_stream;
-	instance.match_stream = MemoryStream_Create(0x10, true);
+	instance.match_stream = MemoryStream_Create(true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	CompressData((unsigned short*)data, data_size / sizeof(unsigned short), &instance);

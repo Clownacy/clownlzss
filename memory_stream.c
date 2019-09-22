@@ -13,7 +13,6 @@ struct MemoryStream
 	size_t position;
 	size_t end;
 	size_t size;
-	size_t growth;
 	bool free_buffer_when_destroyed;
 };
 
@@ -21,7 +20,10 @@ static void ResizeIfNeeded(MemoryStream *memory_stream, size_t minimum_needed_si
 {
 	if (minimum_needed_size > memory_stream->size)
 	{
-		const size_t new_size = minimum_needed_size + memory_stream->growth - (minimum_needed_size % memory_stream->growth);
+		size_t new_size = memory_stream->size;
+		while (new_size < minimum_needed_size)
+			new_size <<= 1;
+
 		memory_stream->buffer = (unsigned char*)realloc(memory_stream->buffer, new_size);
 		memset(memory_stream->buffer + memory_stream->size, 0, new_size - memory_stream->size);
 		memory_stream->size = new_size;
@@ -31,14 +33,13 @@ static void ResizeIfNeeded(MemoryStream *memory_stream, size_t minimum_needed_si
 		memory_stream->end = minimum_needed_size;
 }
 
-MemoryStream* MemoryStream_Create(size_t growth, bool free_buffer_when_destroyed)
+MemoryStream* MemoryStream_Create(bool free_buffer_when_destroyed)
 {
 	MemoryStream *memory_stream = (MemoryStream*)malloc(sizeof(MemoryStream));
-	memory_stream->buffer = NULL;
+	memory_stream->buffer = (unsigned char*)malloc(1);
 	memory_stream->position = 0;
 	memory_stream->end = 0;
-	memory_stream->size = 0;
-	memory_stream->growth = growth;
+	memory_stream->size = 1;
 	memory_stream->free_buffer_when_destroyed = free_buffer_when_destroyed;
 	return memory_stream;
 }

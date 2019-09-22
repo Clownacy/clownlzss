@@ -7,7 +7,7 @@
 
 unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void *user_data, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data))
 {
-	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
+	MemoryStream *output_stream = MemoryStream_Create(false);
 
 	function(data, data_size, output_stream, user_data);
 
@@ -23,7 +23,7 @@ unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *com
 
 unsigned char* ModuledCompressionWrapper(unsigned char *data, size_t data_size, size_t *out_compressed_size, void *user_data, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data), size_t module_size, size_t module_alignment)
 {
-	MemoryStream *output_stream = MemoryStream_Create(0x1000, false);
+	MemoryStream *output_stream = MemoryStream_Create(false);
 
 	const unsigned short header = (unsigned short)((data_size % module_size) | ((data_size / module_size) << 12));
 

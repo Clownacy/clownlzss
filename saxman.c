@@ -120,7 +120,7 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 	SaxmanInstance instance;
 	instance.output_stream = output_stream;
-	instance.match_stream = MemoryStream_Create(0x10, true);
+	instance.match_stream = MemoryStream_Create(true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	const size_t file_offset = MemoryStream_GetPosition(output_stream);

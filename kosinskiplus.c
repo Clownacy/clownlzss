@@ -122,7 +122,7 @@ static void KosinskiPlusCompressStream(unsigned char *data, size_t data_size, Me
 
 	KosinskiPlusInstance instance;
 	instance.output_stream = output_stream;
-	instance.match_stream = MemoryStream_Create(0x10, true);
+	instance.match_stream = MemoryStream_Create(true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	CompressData(data, data_size, &instance);
