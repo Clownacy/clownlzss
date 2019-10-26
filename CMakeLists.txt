@@ -7,16 +7,25 @@ endif()
 project(clownlzss LANGUAGES C)
 
 add_executable(tool
-	"main.c"
-	"common.c"
-	"memory_stream.c"
 	"chameleon.c"
+	"chameleon.h"
+	"common.c"
+	"common.h"
 	"comper.c"
+	"comper.h"
 	"faxman.c"
+	"faxman.h"
 	"kosinski.c"
+	"kosinski.h"
 	"kosinskiplus.c"
+	"kosinskiplus.h"
+	"main.c"
+	"memory_stream.c"
+	"memory_stream.h"
 	"rocket.c"
+	"rocket.h"
 	"saxman.c"
+	"saxman.h"
 )
 
 set_target_properties(tool PROPERTIES
