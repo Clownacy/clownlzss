@@ -8,6 +8,7 @@
 
 #include "chameleon.h"
 #include "comper.h"
+#include "faxman.h"
 #include "kosinski.h"
 #include "kosinskiplus.h"
 #include "rocket.h"
@@ -21,7 +22,8 @@ typedef enum Format
 	FORMAT_KOSINSKIPLUS,
 	FORMAT_ROCKET,
 	FORMAT_SAXMAN,
-	FORMAT_SAXMAN_NO_HEADER
+	FORMAT_SAXMAN_NO_HEADER,
+	FORMAT_FAXMAN
 } Format;
 
 typedef struct Mode
@@ -40,6 +42,7 @@ static const Mode modes[] = {
 	{"-r", FORMAT_ROCKET, "out.rock", "out.rockm"},
 	{"-s", FORMAT_SAXMAN, "out.sax", "out.saxm"},
 	{"-sn", FORMAT_SAXMAN_NO_HEADER, "out.sax", "out.saxm"},
+	{"-f", FORMAT_FAXMAN, "out.fax", "out.faxm"},
 };
 
 static void PrintUsage(void)
@@ -59,6 +62,7 @@ static void PrintUsage(void)
 	"  -r     Compress in Rocket format\n"
 	"  -s     Compress in Saxman format\n"
 	"  -sn    Compress in Saxman format (with no header)\n"
+	"  -f     Compress in Faxman format\n"
 	"\n"
 	" Misc:\n"
 	"  -m[=MODULE_SIZE]  Compresses into modules\n"
@@ -210,6 +214,13 @@ int main(int argc, char *argv[])
 						compressed_buffer = ClownLZSS_ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, false, module_size);
 					else
 						compressed_buffer = ClownLZSS_SaxmanCompress(file_buffer, file_size, &compressed_size, false);
+					break;
+
+				case FORMAT_FAXMAN:
+					if (moduled)
+						compressed_buffer = ClownLZSS_ModuledFaxmanCompress(file_buffer, file_size, &compressed_size, module_size);
+					else
+						compressed_buffer = ClownLZSS_FaxmanCompress(file_buffer, file_size, &compressed_size);
 					break;
 			}
 

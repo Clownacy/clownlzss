@@ -12,6 +12,7 @@ add_executable(tool
 	"memory_stream.c"
 	"chameleon.c"
 	"comper.c"
+	"faxman.c"
 	"kosinski.c"
 	"kosinskiplus.c"
 	"rocket.c"
