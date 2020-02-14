@@ -40,7 +40,7 @@ static void ResizeIfNeeded(MemoryStream *memory_stream, size_t minimum_needed_si
 {
 	if (minimum_needed_size > memory_stream->size)
 	{
-		size_t new_size = memory_stream->size;
+		size_t new_size = 1;
 		while (new_size < minimum_needed_size)
 			new_size <<= 1;
 
@@ -56,10 +56,10 @@ static void ResizeIfNeeded(MemoryStream *memory_stream, size_t minimum_needed_si
 MemoryStream* MemoryStream_Create(bool free_buffer_when_destroyed)
 {
 	MemoryStream *memory_stream = (MemoryStream*)malloc(sizeof(MemoryStream));
-	memory_stream->buffer = (unsigned char*)malloc(1);
+	memory_stream->buffer = NULL;
 	memory_stream->position = 0;
 	memory_stream->end = 0;
-	memory_stream->size = 1;
+	memory_stream->size = 0;
 	memory_stream->free_buffer_when_destroyed = free_buffer_when_destroyed;
 	return memory_stream;
 }
