@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2019 Clownacy
+	(C) 2018-2020 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -31,6 +31,7 @@
 #include "faxman.h"
 #include "kosinski.h"
 #include "kosinskiplus.h"
+#include "rage.h"
 #include "rocket.h"
 #include "saxman.h"
 
@@ -40,6 +41,7 @@ typedef enum Format
 	FORMAT_COMPER,
 	FORMAT_KOSINSKI,
 	FORMAT_KOSINSKIPLUS,
+	FORMAT_RAGE,
 	FORMAT_ROCKET,
 	FORMAT_SAXMAN,
 	FORMAT_SAXMAN_NO_HEADER,
@@ -59,6 +61,7 @@ static const Mode modes[] = {
 	{"-c", FORMAT_COMPER, "out.comp", "out.compm"},
 	{"-k", FORMAT_KOSINSKI, "out.kos", "out.kosm"},
 	{"-kp", FORMAT_KOSINSKIPLUS, "out.kosp", "out.kospm"},
+	{"-ra", FORMAT_RAGE, "out.rage", "out.ragem"},
 	{"-r", FORMAT_ROCKET, "out.rock", "out.rockm"},
 	{"-s", FORMAT_SAXMAN, "out.sax", "out.saxm"},
 	{"-sn", FORMAT_SAXMAN_NO_HEADER, "out.sax", "out.saxm"},
@@ -79,6 +82,7 @@ static void PrintUsage(void)
 	"  -c     Compress in Comper format\n"
 	"  -k     Compress in Kosinski format\n"
 	"  -kp    Compress in Kosinski+ format\n"
+	"  -ra    Compress in Rage format\n"
 	"  -r     Compress in Rocket format\n"
 	"  -s     Compress in Saxman format\n"
 	"  -sn    Compress in Saxman format (with no header)\n"
@@ -213,6 +217,13 @@ int main(int argc, char *argv[])
 						compressed_buffer = ClownLZSS_ModuledKosinskiPlusCompress(file_buffer, file_size, &compressed_size, module_size);
 					else
 						compressed_buffer = ClownLZSS_KosinskiPlusCompress(file_buffer, file_size, &compressed_size);
+					break;
+
+				case FORMAT_RAGE:
+					if (moduled)
+						compressed_buffer = ClownLZSS_ModuledRageCompress(file_buffer, file_size, &compressed_size, module_size);
+					else
+						compressed_buffer = ClownLZSS_RageCompress(file_buffer, file_size, &compressed_size);
 					break;
 
 				case FORMAT_ROCKET:
