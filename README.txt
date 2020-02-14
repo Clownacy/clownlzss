@@ -13,6 +13,8 @@ Formats supported by the supplied utilities include:
 
 * Rocket - a format used by Rocket Knight Adventures
 
+* Rage - a format used by Streets of Rage 2
+
 * Kosinski+ - a modified version of Kosinski developed by the Sonic ROM-hacking
   community, which optimises the format for the Mega Drive's CPU, allowing
   better decompression speed at no cost to compression ratio
