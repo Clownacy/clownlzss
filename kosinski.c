@@ -34,7 +34,7 @@
 typedef struct KosinskiInstance
 {
 	MemoryStream *output_stream;
-	MemoryStream *match_stream;
+	MemoryStream match_stream;
 
 	unsigned short descriptor;
 	unsigned int descriptor_bits_remaining;
@@ -45,15 +45,15 @@ static void FlushData(KosinskiInstance *instance)
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor & 0xFF);
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor >> 8);
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(instance->match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(instance->match_stream);
+	const size_t match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
+	unsigned char *match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
 
-	MemoryStream_WriteBytes(instance->output_stream, match_buffer, match_buffer_size);
+	MemoryStream_Write(instance->output_stream, match_buffer, 1, match_buffer_size);
 }
 
 static void PutMatchByte(KosinskiInstance *instance, unsigned char byte)
 {
-	MemoryStream_WriteByte(instance->match_stream, byte);
+	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
 static void PutDescriptorBit(KosinskiInstance *instance, bool bit)
@@ -70,7 +70,7 @@ static void PutDescriptorBit(KosinskiInstance *instance, bool bit)
 		FlushData(instance);
 
 		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-		MemoryStream_Rewind(instance->match_stream);
+		MemoryStream_Rewind(&instance->match_stream);
 	}
 }
 
@@ -144,7 +144,7 @@ static void KosinskiCompressStream(unsigned char *data, size_t data_size, Memory
 
 	KosinskiInstance instance;
 	instance.output_stream = output_stream;
-	instance.match_stream = MemoryStream_Create(true);
+	MemoryStream_Create(&instance.match_stream, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	CompressData(data, data_size, &instance);
@@ -159,7 +159,7 @@ static void KosinskiCompressStream(unsigned char *data, size_t data_size, Memory
 	instance.descriptor >>= instance.descriptor_bits_remaining;
 	FlushData(&instance);
 
-	MemoryStream_Destroy(instance.match_stream);
+	MemoryStream_Destroy(&instance.match_stream);
 }
 
 unsigned char* ClownLZSS_KosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size)

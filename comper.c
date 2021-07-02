@@ -34,7 +34,7 @@
 typedef struct ComperInstance
 {
 	MemoryStream *output_stream;
-	MemoryStream *match_stream;
+	MemoryStream match_stream;
 
 	unsigned short descriptor;
 	unsigned int descriptor_bits_remaining;
@@ -45,15 +45,15 @@ static void FlushData(ComperInstance *instance)
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor >> 8);
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor & 0xFF);
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(instance->match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(instance->match_stream);
+	const size_t match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
+	unsigned char *match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
 
-	MemoryStream_WriteBytes(instance->output_stream, match_buffer, match_buffer_size);
+	MemoryStream_Write(instance->output_stream, match_buffer, 1, match_buffer_size);
 }
 
 static void PutMatchByte(ComperInstance *instance, unsigned char byte)
 {
-	MemoryStream_WriteByte(instance->match_stream, byte);
+	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
 static void PutDescriptorBit(ComperInstance *instance, bool bit)
@@ -63,7 +63,7 @@ static void PutDescriptorBit(ComperInstance *instance, bool bit)
 		FlushData(instance);
 
 		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-		MemoryStream_Rewind(instance->match_stream);
+		MemoryStream_Rewind(&instance->match_stream);
 	}
 
 	--instance->descriptor_bits_remaining;
@@ -119,7 +119,7 @@ static void ComperCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 	ComperInstance instance;
 	instance.output_stream = output_stream;
-	instance.match_stream = MemoryStream_Create(true);
+	MemoryStream_Create(&instance.match_stream, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	CompressData((unsigned short*)data, data_size / sizeof(unsigned short), &instance);
@@ -132,7 +132,7 @@ static void ComperCompressStream(unsigned char *data, size_t data_size, MemorySt
 	instance.descriptor <<= instance.descriptor_bits_remaining;
 	FlushData(&instance);
 
-	MemoryStream_Destroy(instance.match_stream);
+	MemoryStream_Destroy(&instance.match_stream);
 }
 
 unsigned char* ClownLZSS_ComperCompress(unsigned char *data, size_t data_size, size_t *compressed_size)

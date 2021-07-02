@@ -33,8 +33,8 @@
 
 typedef struct ChameleonInstance
 {
-	MemoryStream *match_stream;
-	MemoryStream *descriptor_stream;
+	MemoryStream match_stream;
+	MemoryStream descriptor_stream;
 
 	unsigned char descriptor;
 	unsigned int descriptor_bits_remaining;
@@ -42,14 +42,14 @@ typedef struct ChameleonInstance
 
 static void PutMatchByte(ChameleonInstance *instance, unsigned char byte)
 {
-	MemoryStream_WriteByte(instance->match_stream, byte);
+	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
 static void PutDescriptorBit(ChameleonInstance *instance, bool bit)
 {
 	if (instance->descriptor_bits_remaining == 0)
 	{
-		MemoryStream_WriteByte(instance->descriptor_stream, instance->descriptor);
+		MemoryStream_WriteByte(&instance->descriptor_stream, instance->descriptor);
 
 		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 	}
@@ -137,8 +137,8 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 	(void)user;
 
 	ChameleonInstance instance;
-	instance.match_stream = MemoryStream_Create(true);
-	instance.descriptor_stream = MemoryStream_Create(true);
+	MemoryStream_Create(&instance.match_stream, true);
+	MemoryStream_Create(&instance.descriptor_stream, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	CompressData(data, data_size, &instance);
@@ -154,23 +154,23 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 	PutDescriptorBit(&instance, 1);
 	PutMatchByte(&instance, 0);
 
-	MemoryStream_WriteByte(instance.descriptor_stream, instance.descriptor << instance.descriptor_bits_remaining);
+	MemoryStream_WriteByte(&instance.descriptor_stream, instance.descriptor << instance.descriptor_bits_remaining);
 
-	const size_t descriptor_buffer_size = MemoryStream_GetPosition(instance.descriptor_stream);
-	unsigned char *descriptor_buffer = MemoryStream_GetBuffer(instance.descriptor_stream);
+	const size_t descriptor_buffer_size = MemoryStream_GetPosition(&instance.descriptor_stream);
+	unsigned char *descriptor_buffer = MemoryStream_GetBuffer(&instance.descriptor_stream);
 
 	MemoryStream_WriteByte(output_stream, (descriptor_buffer_size >> 8) & 0xFF);
 	MemoryStream_WriteByte(output_stream, descriptor_buffer_size & 0xFF);
 
-	MemoryStream_WriteBytes(output_stream, descriptor_buffer, descriptor_buffer_size);
+	MemoryStream_Write(output_stream, descriptor_buffer, 1, descriptor_buffer_size);
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(instance.match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(instance.match_stream);
+	const size_t match_buffer_size = MemoryStream_GetPosition(&instance.match_stream);
+	unsigned char *match_buffer = MemoryStream_GetBuffer(&instance.match_stream);
 
-	MemoryStream_WriteBytes(output_stream, match_buffer, match_buffer_size);
+	MemoryStream_Write(output_stream, match_buffer, 1, match_buffer_size);
 
-	MemoryStream_Destroy(instance.descriptor_stream);
-	MemoryStream_Destroy(instance.match_stream);
+	MemoryStream_Destroy(&instance.descriptor_stream);
+	MemoryStream_Destroy(&instance.match_stream);
 }
 
 unsigned char* ClownLZSS_ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size)

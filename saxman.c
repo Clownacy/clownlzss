@@ -34,7 +34,7 @@
 typedef struct SaxmanInstance
 {
 	MemoryStream *output_stream;
-	MemoryStream *match_stream;
+	MemoryStream match_stream;
 
 	unsigned char descriptor;
 	unsigned int descriptor_bits_remaining;
@@ -44,15 +44,15 @@ static void FlushData(SaxmanInstance *instance)
 {
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor);
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(instance->match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(instance->match_stream);
+	const size_t match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
+	unsigned char *match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
 
-	MemoryStream_WriteBytes(instance->output_stream, match_buffer, match_buffer_size);
+	MemoryStream_Write(instance->output_stream, match_buffer, 1, match_buffer_size);
 }
 
 static void PutMatchByte(SaxmanInstance *instance, unsigned char byte)
 {
-	MemoryStream_WriteByte(instance->match_stream, byte);
+	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
 static void PutDescriptorBit(SaxmanInstance *instance, bool bit)
@@ -62,7 +62,7 @@ static void PutDescriptorBit(SaxmanInstance *instance, bool bit)
 		FlushData(instance);
 
 		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-		MemoryStream_Rewind(instance->match_stream);
+		MemoryStream_Rewind(&instance->match_stream);
 	}
 
 	--instance->descriptor_bits_remaining;
@@ -140,7 +140,7 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 	SaxmanInstance instance;
 	instance.output_stream = output_stream;
-	instance.match_stream = MemoryStream_Create(true);
+	MemoryStream_Create(&instance.match_stream, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	const size_t file_offset = MemoryStream_GetPosition(output_stream);
@@ -157,7 +157,7 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 	instance.descriptor >>= instance.descriptor_bits_remaining;
 	FlushData(&instance);
 
-	MemoryStream_Destroy(instance.match_stream);
+	MemoryStream_Destroy(&instance.match_stream);
 
 	if (header)
 	{
