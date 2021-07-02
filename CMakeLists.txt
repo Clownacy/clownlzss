@@ -22,6 +22,8 @@ add_executable(tool
 	"main.c"
 	"memory_stream.c"
 	"memory_stream.h"
+	"rage.c"
+	"rage.h"
 	"rocket.c"
 	"rocket.h"
 	"saxman.c"
