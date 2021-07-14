@@ -39,14 +39,3 @@ set_target_properties(tool PROPERTIES
 if(MSVC)
 	target_compile_definitions(tool PRIVATE _CRT_SECURE_NO_WARNINGS)	# Shut up those stupid warnings
 endif()
-
-# Enable link-time optimisation if available
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-	if((${CMAKE_VERSION} VERSION_EQUAL 3.9) OR (${CMAKE_VERSION} VERSION_GREATER 3.9))
-		include(CheckIPOSupported)
-		check_ipo_supported(RESULT result)
-		if(result)
-			set_target_properties(tool PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-		endif()
-	endif()
-endif()
