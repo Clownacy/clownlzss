@@ -104,7 +104,7 @@ size_t MemoryStream_Read(MemoryStream *memory_stream, void *output, size_t size,
 	return count;
 }
 
-void* MemoryStream_GetBuffer(MemoryStream *memory_stream)
+unsigned char* MemoryStream_GetBuffer(MemoryStream *memory_stream)
 {
 	return memory_stream->buffer;
 }
