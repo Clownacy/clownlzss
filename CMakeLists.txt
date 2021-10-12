@@ -9,6 +9,7 @@ project(clownlzss LANGUAGES C)
 add_executable(tool
 	"chameleon.c"
 	"chameleon.h"
+	"clownlzss.h"
 	"common.c"
 	"common.h"
 	"comper.c"
@@ -39,3 +40,23 @@ set_target_properties(tool PROPERTIES
 if(MSVC)
 	target_compile_definitions(tool PRIVATE _CRT_SECURE_NO_WARNINGS)	# Shut up those stupid warnings
 endif()
+
+
+#########
+# Tests #
+#########
+
+enable_testing()
+
+add_executable(test_kosinski
+	"test/test.c"
+	"clownlzss.h"
+	"common.c"
+	"common.h"
+	"kosinski.c"
+	"kosinski.h"
+	"memory_stream.c"
+	"memory_stream.h"
+)
+
+add_test(NAME test_kosinski COMMAND test_kosinski)
