@@ -53,6 +53,8 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 	   Notably, while doing this, we're also using a shortest-path
 	   algorithm on the edges to find the best combination of matches
 	   to produce the smallest file. */\
+\
+	/* Advance through the data one step at a time */\
 	for (size_t i = 0; i < data_size; ++i)\
 	{\
 		const size_t max_read_ahead = CLOWNLZSS_MIN(MAX_MATCH_LENGTH, data_size - i);\
@@ -60,16 +62,22 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 \
 		FIND_EXTRA_MATCHES(data, data_size, i, node_meta_array, user);\
 \
+		/* Search backwards from the current location, to figure out whether the data at the current location has appeared before */\
 		for (size_t j = i; j-- > max_read_behind;)\
 		{\
+			/* Search forwards from both locations... */\
 			for (size_t k = 0; k < max_read_ahead; ++k)\
 			{\
+				/* ...comparing their values to see if they match */\
 				if (data[i + k] == data[j + k])\
 				{\
+					/* Figure out how much it costs to encode the current run */\
 					const unsigned int cost = MATCH_COST_CALLBACK(i - j, k + 1, user);\
 \
+					/* Figure out if the cost is lower than that of any other runs that end at the same value as this one */\
 					if (cost && node_meta_array[i + k + 1].u.cost > node_meta_array[i].u.cost + cost)\
 					{\
+						/* Record this new best run in the graph edge assigned to the value at the end of the run */\
 						node_meta_array[i + k + 1].u.cost = node_meta_array[i].u.cost + cost;\
 						node_meta_array[i + k + 1].previous_node_index = i;\
 						node_meta_array[i + k + 1].match_length = k + 1;\
@@ -77,11 +85,14 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 					}\
 				}\
 				else\
+				{\
+					/* No match: give up on the current run and go back to searching backwards */\
 					break;\
+				}\
 			}\
 		}\
 \
-		/* Insert a literal match if it's more efficient */\
+		/* If a literal match is more efficient than all runs assigned to this value, then use that instead */\
 		if (node_meta_array[i + 1].u.cost >= node_meta_array[i].u.cost + LITERAL_COST)\
 		{\
 			node_meta_array[i + 1].u.cost = node_meta_array[i].u.cost + LITERAL_COST;\
@@ -89,6 +100,9 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 			node_meta_array[i + 1].match_length = 0;\
 		}\
 	}\
+\
+	/* At this point, the edges will have formed a shortest-path from the start to the end:
+	   You just have to start at the last edge, and follow it backwards all the way to the start. */\
 \
 	/* Mark start/end nodes for the following loops */\
 	node_meta_array[0].previous_node_index = (size_t)-1;\
