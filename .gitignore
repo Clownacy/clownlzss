@@ -1,0 +1,6 @@
+# CMake build directory
+/build
+
+# Makefile output
+/tool
+/tool.exe
