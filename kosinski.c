@@ -20,9 +20,6 @@
 
 #include "kosinski.h"
 
-#ifndef __cplusplus
-#include <stdbool.h>
-#endif
 #include <stddef.h>
 
 #include "clownlzss.h"
@@ -36,27 +33,30 @@ typedef struct KosinskiInstance
 	MemoryStream *output_stream;
 	MemoryStream match_stream;
 
-	unsigned short descriptor;
+	unsigned int descriptor;
 	unsigned int descriptor_bits_remaining;
 } KosinskiInstance;
 
 static void FlushData(KosinskiInstance *instance)
 {
-	MemoryStream_WriteByte(instance->output_stream, instance->descriptor & 0xFF);
-	MemoryStream_WriteByte(instance->output_stream, instance->descriptor >> 8);
+	size_t match_buffer_size;
+	unsigned char *match_buffer;
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
+	MemoryStream_WriteByte(instance->output_stream, (instance->descriptor >> 0) & 0xFF);
+	MemoryStream_WriteByte(instance->output_stream, (instance->descriptor >> 8) & 0xFF);
+
+	match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
+	match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
 
 	MemoryStream_Write(instance->output_stream, match_buffer, 1, match_buffer_size);
 }
 
-static void PutMatchByte(KosinskiInstance *instance, unsigned char byte)
+static void PutMatchByte(KosinskiInstance *instance, unsigned int byte)
 {
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(KosinskiInstance *instance, bool bit)
+static void PutDescriptorBit(KosinskiInstance *instance, unsigned int bit)
 {
 	--instance->descriptor_bits_remaining;
 
@@ -84,17 +84,17 @@ static void DoLiteral(unsigned char *value, void *user)
 
 static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
-	(void)offset;
-
 	KosinskiInstance *instance = (KosinskiInstance*)user;
 
-	if (length >= 2 && length <= 5 && distance <= 256)
+	(void)offset;
+
+	if (length >= 2 && length <= 5 && distance <= 0x100)
 	{
 		PutDescriptorBit(instance, 0);
 		PutDescriptorBit(instance, 0);
 		PutDescriptorBit(instance, (length - 2) & 2);
 		PutDescriptorBit(instance, (length - 2) & 1);
-		PutMatchByte(instance, (unsigned char)-distance);
+		PutMatchByte(instance, -distance & 0xFF);
 	}
 	else if (length >= 3 && length <= 9)
 	{
@@ -103,13 +103,13 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 		PutMatchByte(instance, -distance & 0xFF);
 		PutMatchByte(instance, ((-distance >> (8 - 3)) & 0xF8) | ((length - 2) & 7));
 	}
-	else //if (length >= 3)
+	else /*if (length >= 3)*/
 	{
 		PutDescriptorBit(instance, 0);
 		PutDescriptorBit(instance, 1);
 		PutMatchByte(instance, -distance & 0xFF);
 		PutMatchByte(instance, (-distance >> (8 - 3)) & 0xF8);
-		PutMatchByte(instance, (unsigned char)(length - 1));
+		PutMatchByte(instance, length - 1);
 	}
 }
 
@@ -117,14 +117,14 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 {
 	(void)user;
 
-	if (length >= 2 && length <= 5 && distance <= 256)
-		return 2 + 2 + 8;	// Descriptor bits, length bits, offset byte
+	if (length >= 2 && length <= 5 && distance <= 0x100)
+		return 2 + 2 + 8;  /* Descriptor bits, length bits, offset byte */
 	else if (length >= 3 && length <= 9)
-		return 2 + 16;		// Descriptor bits, offset/length bytes
+		return 2 + 16;     /* Descriptor bits, offset/length bytes */
 	else if (length >= 3)
-		return 2 + 16 + 8;	// Descriptor bits, offset bytes, length byte
+		return 2 + 16 + 8; /* Descriptor bits, offset bytes, length byte */
 	else
-		return 0; 		// In the event a match cannot be compressed
+		return 0;          /* In the event a match cannot be compressed */
 }
 
 static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
@@ -140,16 +140,17 @@ static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x100, 0x2000, FindE
 
 static void KosinskiCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
+	KosinskiInstance instance;
+
 	(void)user;
 
-	KosinskiInstance instance;
 	instance.output_stream = output_stream;
-	MemoryStream_Create(&instance.match_stream, true);
+	MemoryStream_Create(&instance.match_stream, cc_true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	CompressData(data, data_size, &instance);
 
-	// Terminator match
+	/* Terminator match */
 	PutDescriptorBit(&instance, 0);
 	PutDescriptorBit(&instance, 1);
 	PutMatchByte(&instance, 0x00);

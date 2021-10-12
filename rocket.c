@@ -20,9 +20,6 @@
 
 #include "rocket.h"
 
-#ifndef __cplusplus
-#include <stdbool.h>
-#endif
 #include <stddef.h>
 
 #include "clownlzss.h"
@@ -36,26 +33,29 @@ typedef struct RocketInstance
 	MemoryStream *output_stream;
 	MemoryStream match_stream;
 
-	unsigned char descriptor;
+	unsigned int descriptor;
 	unsigned int descriptor_bits_remaining;
 } RocketInstance;
 
 static void FlushData(RocketInstance *instance)
 {
+	size_t match_buffer_size;
+	unsigned char *match_buffer;
+
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor);
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
+	match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
+	match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
 
 	MemoryStream_Write(instance->output_stream, match_buffer, 1, match_buffer_size);
 }
 
-static void PutMatchByte(RocketInstance *instance, unsigned char byte)
+static void PutMatchByte(RocketInstance *instance, unsigned int byte)
 {
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(RocketInstance *instance, bool bit)
+static void PutDescriptorBit(RocketInstance *instance, cc_bool bit)
 {
 	if (instance->descriptor_bits_remaining == 0)
 	{
@@ -83,14 +83,14 @@ static void DoLiteral(unsigned char *value, void *user)
 
 static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
-	(void)distance;
-
 	RocketInstance *instance = (RocketInstance*)user;
 
 	const unsigned short offset_adjusted = (offset + 0x3C0) & 0x3FF;
 
+	(void)distance;
+
 	PutDescriptorBit(instance, 0);
-	PutMatchByte(instance, (unsigned char)(((offset_adjusted >> 8) & 3) | ((length - 1) << 2)));
+	PutMatchByte(instance, ((offset_adjusted >> 8) & 3) | ((length - 1) << 2));
 	PutMatchByte(instance, offset_adjusted & 0xFF);
 }
 
@@ -100,7 +100,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	(void)length;
 	(void)user;
 
-	return 1 + 16;	// Descriptor bit, offset/length bytes
+	return 1 + 16;	/* Descriptor bit, offset/length bytes */
 }
 
 static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
@@ -116,18 +116,24 @@ static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x40, 0x400, FindExt
 
 static void RocketCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
+	RocketInstance instance;
+
+	size_t file_offset;
+
+	unsigned char *buffer;
+	size_t compressed_size;
+
 	(void)user;
 
-	RocketInstance instance;
 	instance.output_stream = output_stream;
-	MemoryStream_Create(&instance.match_stream, true);
+	MemoryStream_Create(&instance.match_stream, cc_true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	const size_t file_offset = MemoryStream_GetPosition(output_stream);
+	file_offset = MemoryStream_GetPosition(output_stream);
 
-	// Incomplete header
+	/* Incomplete header */
 	MemoryStream_WriteByte(output_stream, (data_size >> 8) & 0xFF);
-	MemoryStream_WriteByte(output_stream, data_size & 0xFF);
+	MemoryStream_WriteByte(output_stream, (data_size >> 0) & 0xFF);
 	MemoryStream_WriteByte(output_stream, 0);
 	MemoryStream_WriteByte(output_stream, 0);
 
@@ -138,12 +144,12 @@ static void RocketCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 	MemoryStream_Destroy(&instance.match_stream);
 
-	unsigned char *buffer = MemoryStream_GetBuffer(output_stream);
-	const size_t compressed_size = MemoryStream_GetPosition(output_stream) - file_offset - 2;
+	buffer = MemoryStream_GetBuffer(output_stream);
+	compressed_size = MemoryStream_GetPosition(output_stream) - file_offset - 2;
 
-	// Finish header
+	/* Finish header */
 	buffer[file_offset + 2] = (compressed_size >> 8) & 0xFF;
-	buffer[file_offset + 3] = compressed_size & 0xFF;
+	buffer[file_offset + 3] = (compressed_size >> 0) & 0xFF;
 }
 
 unsigned char* ClownLZSS_RocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size)

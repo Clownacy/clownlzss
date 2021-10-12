@@ -77,15 +77,15 @@ static void PrintUsage(void)
 	"Options:\n"
 	"\n"
 	" Format:\n"
-	"  -ch    Compress in Chameleon format\n"
-	"  -c     Compress in Comper format\n"
-	"  -k     Compress in Kosinski format\n"
-	"  -kp    Compress in Kosinski+ format\n"
-	"  -ra    Compress in Rage format\n"
-	"  -r     Compress in Rocket format\n"
-	"  -s     Compress in Saxman format\n"
-	"  -sn    Compress in Saxman format (with no header)\n"
-	"  -f     Compress in Faxman format\n"
+	"  -ch    Chameleon\n"
+	"  -c     Comper\n"
+	"  -k     Kosinski\n"
+	"  -kp    Kosinski+\n"
+	"  -ra    Rage\n"
+	"  -r     Rocket\n"
+	"  -s     Saxman\n"
+	"  -sn    Saxman (with no header)\n"
+	"  -f     Faxman\n"
 	"\n"
 	" Misc:\n"
 	"  -m[=MODULE_SIZE]  Compresses into modules\n"
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 			{
 				char *argument = strchr(argv[i], '=');
 
-				moduled = true;
+				moduled = cc_true;
 
 				if (argument != NULL)
 				{
@@ -247,16 +247,16 @@ int main(int argc, char **argv)
 
 				case FORMAT_SAXMAN:
 					if (moduled)
-						compressed_buffer = ClownLZSS_ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, true, module_size);
+						compressed_buffer = ClownLZSS_ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, cc_true, module_size);
 					else
-						compressed_buffer = ClownLZSS_SaxmanCompress(file_buffer, file_size, &compressed_size, true);
+						compressed_buffer = ClownLZSS_SaxmanCompress(file_buffer, file_size, &compressed_size, cc_true);
 					break;
 
 				case FORMAT_SAXMAN_NO_HEADER:
 					if (moduled)
-						compressed_buffer = ClownLZSS_ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, false, module_size);
+						compressed_buffer = ClownLZSS_ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, cc_false, module_size);
 					else
-						compressed_buffer = ClownLZSS_SaxmanCompress(file_buffer, file_size, &compressed_size, false);
+						compressed_buffer = ClownLZSS_SaxmanCompress(file_buffer, file_size, &compressed_size, cc_false);
 					break;
 
 				case FORMAT_FAXMAN:

@@ -20,6 +20,7 @@
 
 #include "comper.h"
 
+#include <assert.h>
 #include <stddef.h>
 
 #include "clownlzss.h"
@@ -33,7 +34,7 @@ typedef struct ComperInstance
 	MemoryStream *output_stream;
 	MemoryStream match_stream;
 
-	unsigned short descriptor;
+	unsigned int descriptor;
 	unsigned int descriptor_bits_remaining;
 } ComperInstance;
 
@@ -51,13 +52,15 @@ static void FlushData(ComperInstance *instance)
 	MemoryStream_Write(instance->output_stream, match_buffer, 1, match_buffer_size);
 }
 
-static void PutMatchByte(ComperInstance *instance, unsigned char byte)
+static void PutMatchByte(ComperInstance *instance, unsigned int byte)
 {
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
 static void PutDescriptorBit(ComperInstance *instance, unsigned int bit)
 {
+	assert(bit == 0 || bit == 1);
+
 	if (instance->descriptor_bits_remaining == 0)
 	{
 		FlushData(instance);
@@ -70,7 +73,7 @@ static void PutDescriptorBit(ComperInstance *instance, unsigned int bit)
 
 	instance->descriptor <<= 1;
 
-	instance->descriptor |= !!bit;
+	instance->descriptor |= bit;
 }
 
 static void DoLiteral(unsigned char *value, void *user)
@@ -89,8 +92,8 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 	(void)offset;
 
 	PutDescriptorBit(instance, 1);
-	PutMatchByte(instance, (unsigned char)-distance);
-	PutMatchByte(instance, (unsigned char)(length - 1));
+	PutMatchByte(instance, -distance & 0xFF);
+	PutMatchByte(instance, length - 1);
 }
 
 static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
@@ -99,7 +102,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	(void)length;
 	(void)user;
 
-	return 1 + 16;	// Descriptor bit, offset/length bytes
+	return 1 + 16;	/* Descriptor bit, offset/length bytes */
 }
 
 static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
@@ -120,12 +123,12 @@ static void ComperCompressStream(unsigned char *data, size_t data_size, MemorySt
 	(void)user;
 
 	instance.output_stream = output_stream;
-	MemoryStream_Create(&instance.match_stream, true);
+	MemoryStream_Create(&instance.match_stream, cc_true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	CompressData(data, data_size, &instance);
 
-	// Terminator match
+	/* Terminator match */
 	PutDescriptorBit(&instance, 1);
 	PutMatchByte(&instance, 0);
 	PutMatchByte(&instance, 0);

@@ -20,9 +20,6 @@
 
 #include "faxman.h"
 
-#ifndef __cplusplus
-#include <stdbool.h>
-#endif
 #include <stddef.h>
 
 #include "clownlzss.h"
@@ -36,27 +33,30 @@ typedef struct FaxmanInstance
 	MemoryStream *output_stream;
 	MemoryStream match_stream;
 
-	unsigned char descriptor;
+	unsigned int descriptor;
 	unsigned int descriptor_bits_remaining;
-	unsigned short descriptor_bits_total;
+	unsigned int descriptor_bits_total;
 } FaxmanInstance;
 
 static void FlushData(FaxmanInstance *instance)
 {
+	size_t match_buffer_size;
+	unsigned char *match_buffer;
+
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor);
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
+	match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
+	match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
 
 	MemoryStream_Write(instance->output_stream, match_buffer, 1, match_buffer_size);
 }
 
-static void PutMatchByte(FaxmanInstance *instance, unsigned char byte)
+static void PutMatchByte(FaxmanInstance *instance, unsigned int byte)
 {
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(FaxmanInstance *instance, bool bit)
+static void PutDescriptorBit(FaxmanInstance *instance, unsigned int bit)
 {
 	++instance->descriptor_bits_total;
 
@@ -95,11 +95,11 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 	{
 		PutDescriptorBit(instance, 0);
 		PutDescriptorBit(instance, 0);
-		PutMatchByte(instance, -distance);
+		PutMatchByte(instance, -distance & 0xFF);
 		PutDescriptorBit(instance, (length - 2) & 2);
 		PutDescriptorBit(instance, (length - 2) & 1);
 	}
-	else //if (length >= 3)
+	else /*if (length >= 3) */
 	{
 		PutDescriptorBit(instance, 0);
 		PutDescriptorBit(instance, 1);
@@ -115,7 +115,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	if (length >= 2 && length <= 5 && distance <= 0x100)
 		return 2 + 8 + 2;
 	else if (length >= 3)
-		return 2 + 16;	// Descriptor bit, offset/length bits
+		return 2 + 16; /* Descriptor bit, offset/length bits */
 	else
 		return 0;
 }
@@ -126,9 +126,11 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 	if (offset < 0x800)
 	{
+		size_t k;
+
 		const size_t max_read_ahead = CLOWNLZSS_MIN(0x1F + 3, data_size - offset);
 
-		for (size_t k = 0; k < max_read_ahead; ++k)
+		for (k = 0; k < max_read_ahead; ++k)
 		{
 			if (data[offset + k] == 0)
 			{
@@ -143,7 +145,9 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 				}
 			}
 			else
+			{
 				break;
+			}
 		}
 	}
 }
@@ -152,17 +156,22 @@ static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x1F + 3, 0x800, Fin
 
 static void FaxmanCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
+	FaxmanInstance instance;
+
+	size_t file_offset;
+
+	unsigned char *buffer;
+
 	(void)user;
 
-	const size_t file_offset = MemoryStream_GetPosition(output_stream);
+	file_offset = MemoryStream_GetPosition(output_stream);
 
-	FaxmanInstance instance;
 	instance.output_stream = output_stream;
-	MemoryStream_Create(&instance.match_stream, true);
+	MemoryStream_Create(&instance.match_stream, cc_true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 	instance.descriptor_bits_total = 0;
 
-	// Blank header
+	/* Blank header */
 	MemoryStream_WriteByte(output_stream, 0);
 	MemoryStream_WriteByte(output_stream, 0);
 
@@ -173,11 +182,11 @@ static void FaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 	MemoryStream_Destroy(&instance.match_stream);
 
-	unsigned char *buffer = MemoryStream_GetBuffer(output_stream);
+	buffer = MemoryStream_GetBuffer(output_stream);
 
-	// Fill in header
-	buffer[file_offset + 0] = instance.descriptor_bits_total & 0xFF;
-	buffer[file_offset + 1] = instance.descriptor_bits_total >> 8;
+	/* Fill in header */
+	buffer[file_offset + 0] = (instance.descriptor_bits_total >> 0) & 0xFF;
+	buffer[file_offset + 1] = (instance.descriptor_bits_total >> 8) & 0xFF;
 }
 
 unsigned char* ClownLZSS_FaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size)

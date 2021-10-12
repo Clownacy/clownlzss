@@ -43,13 +43,16 @@ typedef struct ClownLZSS_GraphEdge
 #define CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(NAME, BYTES_PER_VALUE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
 void NAME(unsigned char *data, size_t data_size, void *user)\
 {\
+	ClownLZSS_GraphEdge *node_meta_array;\
+	size_t i;\
+\
 	data_size /= BYTES_PER_VALUE;\
 \
-	ClownLZSS_GraphEdge *node_meta_array = (ClownLZSS_GraphEdge*)malloc((data_size + 1) * sizeof(ClownLZSS_GraphEdge));	/* +1 for the end-node */\
+	node_meta_array = (ClownLZSS_GraphEdge*)malloc((data_size + 1) * sizeof(ClownLZSS_GraphEdge));	/* +1 for the end-node */\
 \
 	/* Set costs to maximum possible value, so later comparisons work */\
 	node_meta_array[0].u.cost = 0;\
-	for (size_t i = 1; i < data_size + 1; ++i)\
+	for (i = 1; i < data_size + 1; ++i)\
 		node_meta_array[i].u.cost = UINT_MAX;\
 \
 	/* Search for matches, to populate the edges of the LZSS graph.
@@ -58,18 +61,22 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 	   to produce the smallest file. */\
 \
 	/* Advance through the data one step at a time */\
-	for (size_t i = 0; i < data_size; ++i)\
+	for (i = 0; i < data_size; ++i)\
 	{\
+		size_t j;\
+\
 		const size_t max_read_ahead = CLOWNLZSS_MIN(MAX_MATCH_LENGTH, data_size - i);\
 		const size_t max_read_behind = MAX_MATCH_DISTANCE > i ? 0 : i - MAX_MATCH_DISTANCE;\
 \
 		FIND_EXTRA_MATCHES(data, data_size, i, node_meta_array, user);\
 \
 		/* Search backwards from the current location, to figure out whether the data at the current location has appeared before */\
-		for (size_t j = i; j-- > max_read_behind;)\
+		for (j = i; j-- > max_read_behind;)\
 		{\
+			size_t k;\
+\
 			/* Search forwards from both locations... */\
-			for (size_t k = 0; k < max_read_ahead; ++k)\
+			for (k = 0; k < max_read_ahead; ++k)\
 			{\
 				/* ...comparing their values to see if they match */\
 				unsigned int mismatch = 0;\
@@ -118,18 +125,18 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 	node_meta_array[data_size].u.next_node_index = (size_t)-1;\
 \
 	/* Reverse the direction of the edges, so we can parse the LZSS graph from start to end */\
-	for (size_t node_index = data_size; node_meta_array[node_index].previous_node_index != (size_t)-1; node_index = node_meta_array[node_index].previous_node_index)\
-		node_meta_array[node_meta_array[node_index].previous_node_index].u.next_node_index = node_index;\
+	for (i = data_size; node_meta_array[i].previous_node_index != (size_t)-1; i = node_meta_array[i].previous_node_index)\
+		node_meta_array[node_meta_array[i].previous_node_index].u.next_node_index = i;\
 \
 	/* Go through our now-complete LZSS graph, and output the optimally-compressed file */\
-	for (size_t node_index = 0; node_meta_array[node_index].u.next_node_index != (size_t)-1; node_index = node_meta_array[node_index].u.next_node_index)\
+	for (i = 0; node_meta_array[i].u.next_node_index != (size_t)-1; i = node_meta_array[i].u.next_node_index)\
 	{\
-		const size_t next_index = node_meta_array[node_index].u.next_node_index;\
+		const size_t next_index = node_meta_array[i].u.next_node_index;\
 		const size_t length = node_meta_array[next_index].match_length;\
 		const size_t offset = node_meta_array[next_index].match_offset;\
 \
 		if (length == 0)\
-			LITERAL_CALLBACK(&data[node_index * BYTES_PER_VALUE], user);\
+			LITERAL_CALLBACK(&data[i * BYTES_PER_VALUE], user);\
 		else\
 			MATCH_CALLBACK(next_index - length - offset, length, offset, user);\
 	}\

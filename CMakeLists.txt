@@ -32,7 +32,7 @@ add_executable(tool
 )
 
 set_target_properties(tool PROPERTIES
-	C_STANDARD 99
+	C_STANDARD 90
 	C_EXTENSIONS OFF
 )
 
