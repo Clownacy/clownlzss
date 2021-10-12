@@ -48,20 +48,38 @@ endif()
 
 enable_testing()
 
-add_executable(test_kosinski
-	"test/test.c"
-	"clownlzss.h"
-	"common.c"
-	"common.h"
-	"kosinski.c"
-	"kosinski.h"
-	"memory_stream.c"
-	"memory_stream.h"
-)
+# Chameleon
+add_test(NAME test_chameleon_run COMMAND tool -ch "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_chameleon_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/chameleon" "temp")
 
-set_target_properties(test_kosinski PROPERTIES
-	C_STANDARD 99
-	C_EXTENSIONS OFF
-)
+# Comper
+add_test(NAME test_comper_run COMMAND tool -c "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_comper_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/comper" "temp")
 
-add_test(NAME test_kosinski COMMAND test_kosinski)
+# Kosinski
+add_test(NAME test_kosinski_run COMMAND tool -k "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_kosinski_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/kosinski" "temp")
+
+# Kosinski+
+add_test(NAME test_kosinskiplus_run COMMAND tool -kp "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_kosinskiplus_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/kosinskiplus" "temp")
+
+# Rage
+add_test(NAME test_rage_run COMMAND tool -ra "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_rage_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/rage" "temp")
+
+# Rocket
+add_test(NAME test_rocket_run COMMAND tool -r "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_rocket_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/rocket" "temp")
+
+# Saxman
+add_test(NAME test_saxman_run COMMAND tool -s "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_saxman_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/saxman" "temp")
+
+# Saxman (no header)
+add_test(NAME test_saxman_no_header_run COMMAND tool -sn "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_saxman_no_header_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/saxman_no_header" "temp")
+
+# Faxman
+add_test(NAME test_faxman_run COMMAND tool -f "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_faxman_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/faxman" "temp")
