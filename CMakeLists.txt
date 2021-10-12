@@ -59,4 +59,9 @@ add_executable(test_kosinski
 	"memory_stream.h"
 )
 
+set_target_properties(test_kosinski PROPERTIES
+	C_STANDARD 99
+	C_EXTENSIONS OFF
+)
+
 add_test(NAME test_kosinski COMMAND test_kosinski)
