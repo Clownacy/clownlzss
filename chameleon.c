@@ -165,7 +165,7 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 	MemoryStream_WriteByte(&instance.descriptor_stream, (instance.descriptor << instance.descriptor_bits_remaining) & 0xFF);
 
 	descriptor_buffer_size = MemoryStream_GetPosition(&instance.descriptor_stream);
-	descriptor_buffer = (unsigned char*)MemoryStream_GetBuffer(&instance.descriptor_stream);
+	descriptor_buffer = MemoryStream_GetBuffer(&instance.descriptor_stream);
 
 	MemoryStream_WriteByte(output_stream, (descriptor_buffer_size >> 8) & 0xFF);
 	MemoryStream_WriteByte(output_stream, (descriptor_buffer_size >> 0) & 0xFF);
@@ -173,7 +173,7 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 	MemoryStream_Write(output_stream, descriptor_buffer, 1, descriptor_buffer_size);
 
 	match_buffer_size = MemoryStream_GetPosition(&instance.match_stream);
-	match_buffer = (unsigned char*)MemoryStream_GetBuffer(&instance.match_stream);
+	match_buffer = MemoryStream_GetBuffer(&instance.match_stream);
 
 	MemoryStream_Write(output_stream, match_buffer, 1, match_buffer_size);
 
