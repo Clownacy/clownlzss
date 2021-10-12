@@ -23,6 +23,8 @@
 #include <assert.h>
 #include <stddef.h>
 
+#include "clowncommon.h"
+
 #include "clownlzss.h"
 #include "common.h"
 #include "memory_stream.h"
@@ -56,7 +58,7 @@ static void PutMatchByte(KosinskiPlusInstance *instance, unsigned int byte)
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(KosinskiPlusInstance *instance, unsigned int bit)
+static void PutDescriptorBit(KosinskiPlusInstance *instance, cc_bool bit)
 {
 	assert(bit == 0 || bit == 1);
 

@@ -20,6 +20,7 @@
 
 #include "saxman.h"
 
+#include <assert.h>
 #include <stddef.h>
 
 #include "clowncommon.h"
@@ -59,6 +60,8 @@ static void PutMatchByte(SaxmanInstance *instance, unsigned int byte)
 
 static void PutDescriptorBit(SaxmanInstance *instance, cc_bool bit)
 {
+	assert(bit == 0 || bit == 1);
+
 	if (instance->descriptor_bits_remaining == 0)
 	{
 		FlushData(instance);

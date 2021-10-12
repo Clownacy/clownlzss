@@ -20,7 +20,10 @@
 
 #include "faxman.h"
 
+#include <assert.h>
 #include <stddef.h>
+
+#include "clowncommon.h"
 
 #include "clownlzss.h"
 #include "common.h"
@@ -56,8 +59,10 @@ static void PutMatchByte(FaxmanInstance *instance, unsigned int byte)
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(FaxmanInstance *instance, unsigned int bit)
+static void PutDescriptorBit(FaxmanInstance *instance, cc_bool bit)
 {
+	assert(bit == 0 || bit == 1);
+
 	++instance->descriptor_bits_total;
 
 	if (instance->descriptor_bits_remaining == 0)
@@ -96,8 +101,8 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 		PutDescriptorBit(instance, 0);
 		PutDescriptorBit(instance, 0);
 		PutMatchByte(instance, -distance & 0xFF);
-		PutDescriptorBit(instance, (length - 2) & 2);
-		PutDescriptorBit(instance, (length - 2) & 1);
+		PutDescriptorBit(instance, !!((length - 2) & 2));
+		PutDescriptorBit(instance, !!((length - 2) & 1));
 	}
 	else /*if (length >= 3) */
 	{
