@@ -111,7 +111,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 {
 	(void)user;
 
-	if (length >= 2 && length <= 3 && distance < 256)
+	if (length >= 2 && length <= 3 && distance < 0x100)
 		return 2 + 8 + 1;         /* Descriptor bits, offset byte, length bit */
 	else if (length >= 3 && length <= 5)
 		return 2 + 3 + 8 + 2;     /* Descriptor bits, offset bits, offset byte, length bits */
