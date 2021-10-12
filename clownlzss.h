@@ -24,8 +24,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#define CLOWNLZSS_MIN(a, b) (a) < (b) ? (a) : (b)
-#define CLOWNLZSS_MAX(a, b) (a) > (b) ? (a) : (b)
+#define CLOWNLZSS_MIN(a, b) ((a) < (b) ? (a) : (b))
+#define CLOWNLZSS_MAX(a, b) ((a) > (b) ? (a) : (b))
 
 typedef struct ClownLZSS_GraphEdge
 {
