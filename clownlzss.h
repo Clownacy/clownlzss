@@ -32,7 +32,7 @@ typedef struct ClownLZSS_GraphEdge
 {
 	union
 	{
-		unsigned int cost;
+		size_t cost;
 		size_t next_node_index;
 	} u;
 	size_t previous_node_index;
