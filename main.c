@@ -279,6 +279,8 @@ int main(int argc, char **argv)
 						break;
 				}
 
+				free(file_buffer);
+
 				if (compressed_buffer != NULL)
 				{
 					FILE *out_file = fopen(out_filename, "wb");

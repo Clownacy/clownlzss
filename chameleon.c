@@ -49,7 +49,7 @@ static void PutDescriptorBit(ChameleonInstance *instance, unsigned int bit)
 
 	if (instance->descriptor_bits_remaining == 0)
 	{
-		MemoryStream_WriteByte(&instance->descriptor_stream, instance->descriptor);
+		MemoryStream_WriteByte(&instance->descriptor_stream, instance->descriptor & 0xFF);
 
 		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 	}
@@ -162,7 +162,7 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 	PutDescriptorBit(&instance, 1);
 	PutMatchByte(&instance, 0);
 
-	MemoryStream_WriteByte(&instance.descriptor_stream, instance.descriptor << instance.descriptor_bits_remaining);
+	MemoryStream_WriteByte(&instance.descriptor_stream, (instance.descriptor << instance.descriptor_bits_remaining) & 0xFF);
 
 	descriptor_buffer_size = MemoryStream_GetPosition(&instance.descriptor_stream);
 	descriptor_buffer = MemoryStream_GetBuffer(&instance.descriptor_stream);

@@ -43,7 +43,7 @@ static void FlushData(KosinskiPlusInstance *instance)
 	size_t match_buffer_size;
 	unsigned char *match_buffer;
 
-	MemoryStream_WriteByte(instance->output_stream, instance->descriptor);
+	MemoryStream_WriteByte(instance->output_stream, instance->descriptor & 0xFF);
 
 	match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
 	match_buffer = MemoryStream_GetBuffer(&instance->match_stream);

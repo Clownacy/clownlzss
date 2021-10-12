@@ -43,8 +43,8 @@ static void FlushData(ComperInstance *instance)
 	size_t match_buffer_size;
 	unsigned char *match_buffer;
 
-	MemoryStream_WriteByte(instance->output_stream, instance->descriptor >> 8);
-	MemoryStream_WriteByte(instance->output_stream, instance->descriptor & 0xFF);
+	MemoryStream_WriteByte(instance->output_stream, (instance->descriptor >> 8) & 0xFF);
+	MemoryStream_WriteByte(instance->output_stream, (instance->descriptor >> 0) & 0xFF);
 
 	match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
 	match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
