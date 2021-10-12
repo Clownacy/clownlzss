@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2019 Clownacy
+	(C) 2018-2021 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -20,9 +20,6 @@
 
 #include "chameleon.h"
 
-#ifndef __cplusplus
-#include <stdbool.h>
-#endif
 #include <stddef.h>
 
 #include "clownlzss.h"
@@ -45,7 +42,7 @@ static void PutMatchByte(ChameleonInstance *instance, unsigned char byte)
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(ChameleonInstance *instance, bool bit)
+static void PutDescriptorBit(ChameleonInstance *instance, unsigned int bit)
 {
 	if (instance->descriptor_bits_remaining == 0)
 	{
@@ -58,7 +55,7 @@ static void PutDescriptorBit(ChameleonInstance *instance, bool bit)
 
 	instance->descriptor <<= 1;
 
-	instance->descriptor |= bit;
+	instance->descriptor |= !!bit;
 }
 
 static void DoLiteral(unsigned char value, void *user)
@@ -71,9 +68,9 @@ static void DoLiteral(unsigned char value, void *user)
 
 static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
-	(void)offset;
-
 	ChameleonInstance *instance = (ChameleonInstance*)user;
+
+	(void)offset;
 
 	if (length >= 2 && length <= 3 && distance < 256)
 	{
@@ -134,9 +131,16 @@ static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0xFF, 0x
 
 static void ChameleonCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
+	ChameleonInstance instance;
+
+	size_t descriptor_buffer_size;
+	unsigned char *descriptor_buffer;
+
+	size_t match_buffer_size;
+	unsigned char *match_buffer;
+
 	(void)user;
 
-	ChameleonInstance instance;
 	MemoryStream_Create(&instance.match_stream, true);
 	MemoryStream_Create(&instance.descriptor_stream, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
@@ -156,16 +160,16 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 
 	MemoryStream_WriteByte(&instance.descriptor_stream, instance.descriptor << instance.descriptor_bits_remaining);
 
-	const size_t descriptor_buffer_size = MemoryStream_GetPosition(&instance.descriptor_stream);
-	unsigned char *descriptor_buffer = MemoryStream_GetBuffer(&instance.descriptor_stream);
+	descriptor_buffer_size = MemoryStream_GetPosition(&instance.descriptor_stream);
+	descriptor_buffer = MemoryStream_GetBuffer(&instance.descriptor_stream);
 
 	MemoryStream_WriteByte(output_stream, (descriptor_buffer_size >> 8) & 0xFF);
 	MemoryStream_WriteByte(output_stream, descriptor_buffer_size & 0xFF);
 
 	MemoryStream_Write(output_stream, descriptor_buffer, 1, descriptor_buffer_size);
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(&instance.match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(&instance.match_stream);
+	match_buffer_size = MemoryStream_GetPosition(&instance.match_stream);
+	match_buffer = MemoryStream_GetBuffer(&instance.match_stream);
 
 	MemoryStream_Write(output_stream, match_buffer, 1, match_buffer_size);
 

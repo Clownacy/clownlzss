@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2019 Clownacy
+	(C) 2018-2021 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -18,7 +18,8 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
+#ifndef CLOWNLZSS_H
+#define CLOWNLZSS_H
 
 #include <limits.h>
 #include <stddef.h>
@@ -127,3 +128,5 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 \
 	free(node_meta_array);\
 }
+
+#endif /* CLOWNLZSS_H */

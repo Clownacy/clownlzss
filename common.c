@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2019 Clownacy
+	(C) 2018-2021 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -28,13 +28,15 @@
 unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void *user_data, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data))
 {
 	MemoryStream output_stream;
+	unsigned char *out_buffer;
+
 	MemoryStream_Create(&output_stream, false);
 
 	function(data, data_size, &output_stream, user_data);
 
-	unsigned char *out_buffer = MemoryStream_GetBuffer(&output_stream);
+	out_buffer = MemoryStream_GetBuffer(&output_stream);
 
-	if (compressed_size)
+	if (compressed_size != NULL)
 		*compressed_size = MemoryStream_GetPosition(&output_stream);
 
 	MemoryStream_Destroy(&output_stream);
@@ -44,28 +46,38 @@ unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *com
 
 unsigned char* ModuledCompressionWrapper(unsigned char *data, size_t data_size, size_t *out_compressed_size, void *user_data, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data), size_t module_size, size_t module_alignment)
 {
+	size_t header;
+	size_t compressed_size, i;
+	unsigned char *out_buffer;
+
 	MemoryStream output_stream;
 	MemoryStream_Create(&output_stream, false);
 
-	const unsigned short header = (unsigned short)((data_size % module_size) | ((data_size / module_size) << 12));
+	header = (data_size % module_size) | ((data_size / module_size) << 12);
 
-	MemoryStream_WriteByte(&output_stream, header >> 8);
-	MemoryStream_WriteByte(&output_stream, header & 0xFF);
+	MemoryStream_WriteByte(&output_stream, (header >> 8) & 0xFF);
+	MemoryStream_WriteByte(&output_stream, (header >> 0) & 0xFF);
 
-	for (size_t compressed_size = 0, i = 0; i < data_size; i += module_size)
+	for (compressed_size = 0, i = 0; i < data_size; i += module_size)
 	{
-		if (compressed_size % module_alignment)
-			for (unsigned int i = 0; i < module_alignment - (compressed_size % module_alignment); ++i)
-				MemoryStream_WriteByte(&output_stream, 0);
+		size_t start;
 
-		const size_t start = MemoryStream_GetPosition(&output_stream);
+		if (compressed_size % module_alignment != 0)
+		{
+			size_t j;
+
+			for (j = 0; j < module_alignment - (compressed_size % module_alignment); ++j)
+				MemoryStream_WriteByte(&output_stream, 0);
+		}
+
+		start = MemoryStream_GetPosition(&output_stream);
 		function(data + i, module_size < data_size - i ? module_size : data_size - i, &output_stream, user_data);
 		compressed_size = MemoryStream_GetPosition(&output_stream) - start;
 	}
 
-	unsigned char *out_buffer = MemoryStream_GetBuffer(&output_stream);
+	out_buffer = MemoryStream_GetBuffer(&output_stream);
 
-	if (out_compressed_size)
+	if (out_compressed_size != NULL)
 		*out_compressed_size = MemoryStream_GetPosition(&output_stream);
 
 	MemoryStream_Destroy(&output_stream);

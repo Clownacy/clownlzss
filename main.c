@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2020 Clownacy
+	(C) 2018-2021 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -18,13 +18,12 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef __cplusplus
-#include <stdbool.h>
-#endif
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "clowncommon.h"
 
 #include "chameleon.h"
 #include "comper.h"
@@ -70,7 +69,7 @@ static const Mode modes[] = {
 
 static void PrintUsage(void)
 {
-	printf(
+	fputs(
 	"Clownacy's compression tool thingy\n"
 	"\n"
 	"Usage: tool [options] [in-filename] [out-filename]"
@@ -90,22 +89,26 @@ static void PrintUsage(void)
 	"\n"
 	" Misc:\n"
 	"  -m[=MODULE_SIZE]  Compresses into modules\n"
-	"                    MODULE_SIZE controls the module size (defaults to 0x1000)\n"
+	"                    MODULE_SIZE controls the module size (defaults to 0x1000)\n",
+	stdout
 	);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-	--argc;
-	++argv;
+	int i;
 
 	const Mode *mode = NULL;
 	const char *in_filename = NULL;
 	const char *out_filename = NULL;
-	bool moduled = false;
+	cc_bool moduled = cc_false;
 	size_t module_size = 0x1000;
 
-	for (int i = 0; i < argc; ++i)
+	/* Skip past the executable name */
+	--argc;
+	++argv;
+
+	for (i = 0; i < argc; ++i)
 	{
 		if (argv[i][0] == '-')
 		{
@@ -115,18 +118,18 @@ int main(int argc, char *argv[])
 			}
 			else if (!strncmp(argv[i], "-m", 2))
 			{
-				moduled = true;
-
 				char *argument = strchr(argv[i], '=');
 
-				if (argument)
+				moduled = true;
+
+				if (argument != NULL)
 				{
 					char *end;
 					unsigned long result = strtoul(argument + 1, &end, 0);
 
 					if (*end != '\0')
 					{
-						printf("Invalid parameter to -m\n");
+						fputs("Invalid parameter to -m\n", stderr);
 						return -1;
 					}
 					else
@@ -134,13 +137,15 @@ int main(int argc, char *argv[])
 						module_size = result;
 
 						if (module_size > 0x1000)
-							printf("Warning: the moduled format header does not fully support sizes greater than\n 0x1000 - header will likely be invalid!");
+							fputs("Warning: the moduled format header does not fully support sizes greater than\n 0x1000 - header will likely be invalid!\n", stderr);
 					}
 				}
 			}
 			else
 			{
-				for (size_t j = 0; j < sizeof(modes) / sizeof(modes[0]); ++j)
+				size_t j;
+
+				for (j = 0; j < CC_COUNT_OF(modes); ++j)
 				{
 					if (!strcmp(argv[i], modes[j].command))
 					{
@@ -152,42 +157,49 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			if (!in_filename)
+			if (in_filename == NULL)
 				in_filename = argv[i];
 			else
 				out_filename = argv[i];
 		}
 	}
 
-	if (!in_filename)
+	if (in_filename == NULL)
 	{
-		printf("Error: Input file not specified\n\n");
+		fputs("Error: Input file not specified\n\n", stderr);
 		PrintUsage();
 	}
-	else if (!mode)
+	else if (mode == NULL)
 	{
-		printf("Error: Format not specified\n\n");
+		fputs("Error: Format not specified\n\n", stderr);
 		PrintUsage();
 	}
 	else
 	{
-		if (!out_filename)
+		FILE *in_file;
+
+		if (out_filename == NULL)
 			out_filename = moduled ? mode->moduled_default_filename : mode->normal_default_filename;
 
-		FILE *in_file = fopen(in_filename, "rb");
+		in_file = fopen(in_filename, "rb");
 
-		if (in_file)
+		if (in_file != NULL)
 		{
+			size_t file_size;
+			unsigned char *file_buffer;
+
+			size_t compressed_size;
+			unsigned char *compressed_buffer;
+
 			fseek(in_file, 0, SEEK_END);
-			const size_t file_size = ftell(in_file);
+			file_size = ftell(in_file);
 			rewind(in_file);
 
-			unsigned char *file_buffer = (unsigned char*)malloc(file_size);
+			file_buffer = (unsigned char*)malloc(file_size);
 			fread(file_buffer, 1, file_size, in_file);
 			fclose(in_file);
 
-			size_t compressed_size;
-			unsigned char *compressed_buffer = NULL;
+			compressed_buffer = NULL;
 
 			switch (mode->format)
 			{
@@ -255,11 +267,11 @@ int main(int argc, char *argv[])
 					break;
 			}
 
-			if (compressed_buffer)
+			if (compressed_buffer != NULL)
 			{
 				FILE *out_file = fopen(out_filename, "wb");
 
-				if (out_file)
+				if (out_file != NULL)
 				{
 					fwrite(compressed_buffer, compressed_size, 1, out_file);
 					free(compressed_buffer);
