@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2019 Clownacy
+	(C) 2018-2021 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -20,9 +20,6 @@
 
 #include "comper.h"
 
-#ifndef __cplusplus
-#include <stdbool.h>
-#endif
 #include <stddef.h>
 
 #include "clownlzss.h"
@@ -42,11 +39,14 @@ typedef struct ComperInstance
 
 static void FlushData(ComperInstance *instance)
 {
+	size_t match_buffer_size;
+	unsigned char *match_buffer;
+
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor >> 8);
 	MemoryStream_WriteByte(instance->output_stream, instance->descriptor & 0xFF);
 
-	const size_t match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
-	unsigned char *match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
+	match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
+	match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
 
 	MemoryStream_Write(instance->output_stream, match_buffer, 1, match_buffer_size);
 }
@@ -56,7 +56,7 @@ static void PutMatchByte(ComperInstance *instance, unsigned char byte)
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(ComperInstance *instance, bool bit)
+static void PutDescriptorBit(ComperInstance *instance, unsigned int bit)
 {
 	if (instance->descriptor_bits_remaining == 0)
 	{
@@ -70,23 +70,23 @@ static void PutDescriptorBit(ComperInstance *instance, bool bit)
 
 	instance->descriptor <<= 1;
 
-	instance->descriptor |= bit;
+	instance->descriptor |= !!bit;
 }
 
-static void DoLiteral(unsigned short value, void *user)
+static void DoLiteral(unsigned char *value, void *user)
 {
 	ComperInstance *instance = (ComperInstance*)user;
 
 	PutDescriptorBit(instance, 0);
-	PutMatchByte(instance, value & 0xFF);
-	PutMatchByte(instance, value >> 8);
+	PutMatchByte(instance, value[0]);
+	PutMatchByte(instance, value[1]);
 }
 
 static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
-	(void)offset;
-
 	ComperInstance *instance = (ComperInstance*)user;
+
+	(void)offset;
 
 	PutDescriptorBit(instance, 1);
 	PutMatchByte(instance, (unsigned char)-distance);
@@ -102,7 +102,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	return 1 + 16;	// Descriptor bit, offset/length bytes
 }
 
-static void FindExtraMatches(unsigned short *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
+static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
 {
 	(void)data;
 	(void)data_size;
@@ -111,18 +111,19 @@ static void FindExtraMatches(unsigned short *data, size_t data_size, size_t offs
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned short, 0x100, 0x100, FindExtraMatches, 1 + 16, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 2, 0x100, 0x100, FindExtraMatches, 1 + 16, DoLiteral, GetMatchCost, DoMatch)
 
 static void ComperCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
+	ComperInstance instance;
+
 	(void)user;
 
-	ComperInstance instance;
 	instance.output_stream = output_stream;
 	MemoryStream_Create(&instance.match_stream, true);
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	CompressData((unsigned short*)data, data_size / sizeof(unsigned short), &instance);
+	CompressData(data, data_size, &instance);
 
 	// Terminator match
 	PutDescriptorBit(&instance, 1);

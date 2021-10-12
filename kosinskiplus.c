@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2019 Clownacy
+	(C) 2018-2021 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -72,12 +72,12 @@ static void PutDescriptorBit(KosinskiPlusInstance *instance, bool bit)
 	instance->descriptor |= bit;
 }
 
-static void DoLiteral(unsigned char value, void *user)
+static void DoLiteral(unsigned char *value, void *user)
 {
 	KosinskiPlusInstance *instance = (KosinskiPlusInstance*)user;
 
 	PutDescriptorBit(instance, 1);
-	PutMatchByte(instance, value);
+	PutMatchByte(instance, value[0]);
 }
 
 static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
@@ -134,7 +134,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0x100 + 8, 0x2000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x100 + 8, 0x2000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
 static void KosinskiPlusCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {

@@ -1,5 +1,5 @@
 /*
-	(C) 2020 Clownacy
+	(C) 2020-2021 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -18,7 +18,7 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-// This is the worst thing I've ever written - it uses clownlzss to compress 
+// This is the worst thing I've ever written - it uses clownlzss to compress
 // files in Streets of Rage 2's 'Rage' format... which is RLE.
 
 #include "rage.h"
@@ -45,7 +45,7 @@ static void PutMatchByte(RageInstance *instance, unsigned char byte)
 	MemoryStream_WriteByte(instance->output_stream, byte);
 }
 
-static void DoLiteral(unsigned char value, void *user)
+static void DoLiteral(unsigned char *value, void *user)
 {
 	(void)value;
 	(void)user;
@@ -177,7 +177,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	}
 }
 
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, DoLiteral, GetMatchCost, DoMatch)
 
 static void RageCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {

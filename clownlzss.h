@@ -40,9 +40,11 @@ typedef struct ClownLZSS_GraphEdge
 	size_t match_offset;
 } ClownLZSS_GraphEdge;
 
-#define CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(NAME, TYPE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
-void NAME(TYPE *data, size_t data_size, void *user)\
+#define CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(NAME, BYTES_PER_VALUE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
+void NAME(unsigned char *data, size_t data_size, void *user)\
 {\
+	data_size /= BYTES_PER_VALUE;\
+\
 	ClownLZSS_GraphEdge *node_meta_array = (ClownLZSS_GraphEdge*)malloc((data_size + 1) * sizeof(ClownLZSS_GraphEdge));	/* +1 for the end-node */\
 \
 	/* Set costs to maximum possible value, so later comparisons work */\
@@ -70,7 +72,13 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 			for (size_t k = 0; k < max_read_ahead; ++k)\
 			{\
 				/* ...comparing their values to see if they match */\
-				if (data[i + k] == data[j + k])\
+				unsigned int mismatch = 0;\
+				unsigned int l;\
+\
+				for (l = 0; l < BYTES_PER_VALUE; ++l)\
+					mismatch |= data[(i + k) * BYTES_PER_VALUE + l] != data[(j + k) * BYTES_PER_VALUE + l];\
+\
+				if (!mismatch)\
 				{\
 					/* Figure out how much it costs to encode the current run */\
 					const unsigned int cost = MATCH_COST_CALLBACK(i - j, k + 1, user);\
@@ -121,7 +129,7 @@ void NAME(TYPE *data, size_t data_size, void *user)\
 		const size_t offset = node_meta_array[next_index].match_offset;\
 \
 		if (length == 0)\
-			LITERAL_CALLBACK(data[node_index], user);\
+			LITERAL_CALLBACK(&data[node_index * BYTES_PER_VALUE], user);\
 		else\
 			MATCH_CALLBACK(next_index - length - offset, length, offset, user);\
 	}\

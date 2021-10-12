@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2019 Clownacy
+	(C) 2018-2021 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -18,9 +18,12 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
+#ifndef CLOWNLZSS_COMPER_H
+#define CLOWNLZSS_COMPER_H
 
 #include <stddef.h>
 
 unsigned char* ClownLZSS_ComperCompress(unsigned char *data, size_t data_size, size_t *compressed_size);
 unsigned char* ClownLZSS_ModuledComperCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
+
+#endif /* CLOWNLZSS_COMPER_H */

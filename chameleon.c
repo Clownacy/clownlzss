@@ -58,12 +58,12 @@ static void PutDescriptorBit(ChameleonInstance *instance, unsigned int bit)
 	instance->descriptor |= !!bit;
 }
 
-static void DoLiteral(unsigned char value, void *user)
+static void DoLiteral(unsigned char *value, void *user)
 {
 	ChameleonInstance *instance = (ChameleonInstance*)user;
 
 	PutDescriptorBit(instance, 1);
-	PutMatchByte(instance, value);
+	PutMatchByte(instance, value[0]);
 }
 
 static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
@@ -127,7 +127,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, unsigned char, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
 static void ChameleonCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {

@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2019 Clownacy
+	(C) 2018-2021 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -18,7 +18,8 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
+#ifndef COMMON_H
+#define COMMON_H
 
 #include <stddef.h>
 
@@ -26,3 +27,5 @@
 
 unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void *user_data, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data));
 unsigned char* ModuledCompressionWrapper(unsigned char *data, size_t data_size, size_t *compressed_size, void *user_data, void (*function)(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data), size_t module_size, size_t module_alignment);
+
+#endif /* COMMON_H */
