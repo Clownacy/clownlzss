@@ -83,3 +83,39 @@ add_test(NAME test_saxman_no_header_compare COMMAND ${CMAKE_COMMAND} -E compare_
 # Faxman
 add_test(NAME test_faxman_run COMMAND tool -f "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
 add_test(NAME test_faxman_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/faxman" "temp")
+
+# Chameleon (moduled)
+add_test(NAME test_moduled_chameleon_run COMMAND tool -m -ch "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_moduled_chameleon_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_chameleon" "temp")
+
+# Comper (moduled)
+add_test(NAME test_moduled_comper_run COMMAND tool -m -c "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_moduled_comper_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_comper" "temp")
+
+# Kosinski (moduled)
+add_test(NAME test_moduled_kosinski_run COMMAND tool -m -k "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_moduled_kosinski_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_kosinski" "temp")
+
+# Kosinski+ (moduled)
+add_test(NAME test_moduled_kosinskiplus_run COMMAND tool -m -kp "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_moduled_kosinskiplus_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_kosinskiplus" "temp")
+
+# Rage (moduled)
+add_test(NAME test_moduled_rage_run COMMAND tool -m -ra "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_moduled_rage_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_rage" "temp")
+
+# Rocket (moduled)
+add_test(NAME test_moduled_rocket_run COMMAND tool -m -r "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_moduled_rocket_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_rocket" "temp")
+
+# Saxman (moduled)
+add_test(NAME test_moduled_saxman_run COMMAND tool -m -s "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_moduled_saxman_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_saxman" "temp")
+
+# Saxman (no header) (moduled)
+add_test(NAME test_moduled_saxman_no_header_run COMMAND tool -m -sn "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_moduled_saxman_no_header_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_saxman_no_header" "temp")
+
+# Faxman (moduled)
+add_test(NAME test_moduled_faxman_run COMMAND tool -m -f "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+add_test(NAME test_moduled_faxman_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_faxman" "temp")
