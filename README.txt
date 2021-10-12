@@ -27,11 +27,11 @@ Formats supported by the supplied utilities include:
   cost to compression ratio
 
 This framework utilises graph theory to perform optimal compression: naive
-compressors prefer to compress the longest runs possible, but this does not
-guarantee the best compression ratio. Graph-based compressors resolve this by
-creating an "LZSS graph" - a weighted directed acyclic graph where each node is
-a value in the uncompressed file, and each edge is an LZSS match. By using a
-shortest-path algorithm, this graph can be used to compute the ideal
-combination of matches needed to produce the smallest file.
+"greedy algorithm" compressors prefer to compress the longest runs possible, but
+this does not guarantee the best compression ratio. Graph-based compressors
+resolve this by creating an "LZSS graph" - a weighted directed acyclic graph
+where each node is a value in the uncompressed file, and each edge is an LZSS
+match. By using a shortest-path algorithm, this graph can be used to compute the
+ideal combination of matches needed to produce the smallest file.
 
 This project is under the zlib licence.
