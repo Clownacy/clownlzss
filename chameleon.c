@@ -146,6 +146,7 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 
 	MemoryStream_Create(&instance.match_stream, cc_true);
 	MemoryStream_Create(&instance.descriptor_stream, cc_true);
+	instance.descriptor = 0;
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	CompressData(data, data_size, &instance);

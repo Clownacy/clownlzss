@@ -124,6 +124,7 @@ static void ComperCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 	instance.output_stream = output_stream;
 	MemoryStream_Create(&instance.match_stream, cc_true);
+	instance.descriptor = 0;
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	CompressData(data, data_size, &instance);

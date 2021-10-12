@@ -148,6 +148,7 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 
 	instance.output_stream = output_stream;
 	MemoryStream_Create(&instance.match_stream, cc_true);
+	instance.descriptor = 0;
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	file_offset = MemoryStream_GetPosition(output_stream);
