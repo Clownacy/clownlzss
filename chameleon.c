@@ -45,7 +45,7 @@ static void PutMatchByte(ChameleonInstance *instance, unsigned int byte)
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(ChameleonInstance *instance, cc_bool bit)
+static void PutDescriptorBit(ChameleonInstance *instance, cc_bool_fast bit)
 {
 	assert(bit == 0 || bit == 1);
 
@@ -146,8 +146,8 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 
 	(void)user;
 
-	MemoryStream_Create(&instance.match_stream, cc_true);
-	MemoryStream_Create(&instance.descriptor_stream, cc_true);
+	MemoryStream_Create(&instance.match_stream, CC_TRUE);
+	MemoryStream_Create(&instance.descriptor_stream, CC_TRUE);
 	instance.descriptor = 0;
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 

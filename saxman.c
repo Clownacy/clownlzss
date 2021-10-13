@@ -58,7 +58,7 @@ static void PutMatchByte(SaxmanInstance *instance, unsigned int byte)
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(SaxmanInstance *instance, cc_bool bit)
+static void PutDescriptorBit(SaxmanInstance *instance, cc_bool_fast bit)
 {
 	assert(bit == 0 || bit == 1);
 
@@ -143,14 +143,14 @@ static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x12, 0x1000, FindEx
 
 static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
-	const cc_bool header = *(cc_bool*)user;
+	const cc_bool_fast header = *(cc_bool_fast*)user;
 
 	SaxmanInstance instance;
 
 	size_t file_offset;
 
 	instance.output_stream = output_stream;
-	MemoryStream_Create(&instance.match_stream, cc_true);
+	MemoryStream_Create(&instance.match_stream, CC_TRUE);
 	instance.descriptor = 0;
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
@@ -181,12 +181,12 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 	}
 }
 
-unsigned char* ClownLZSS_SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool header)
+unsigned char* ClownLZSS_SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool_fast header)
 {
 	return RegularWrapper(data, data_size, compressed_size, &header, SaxmanCompressStream);
 }
 
-unsigned char* ClownLZSS_ModuledSaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool header, size_t module_size)
+unsigned char* ClownLZSS_ModuledSaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool_fast header, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, &header, SaxmanCompressStream, module_size, 1);
 }

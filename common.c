@@ -30,7 +30,7 @@ unsigned char* RegularWrapper(unsigned char *data, size_t data_size, size_t *com
 	MemoryStream output_stream;
 	unsigned char *out_buffer;
 
-	MemoryStream_Create(&output_stream, cc_false);
+	MemoryStream_Create(&output_stream, CC_FALSE);
 
 	function(data, data_size, &output_stream, user_data);
 
@@ -51,7 +51,7 @@ unsigned char* ModuledCompressionWrapper(unsigned char *data, size_t data_size, 
 	unsigned char *out_buffer;
 
 	MemoryStream output_stream;
-	MemoryStream_Create(&output_stream, cc_false);
+	MemoryStream_Create(&output_stream, CC_FALSE);
 
 	header = (data_size % module_size) | ((data_size / module_size) << 12);
 

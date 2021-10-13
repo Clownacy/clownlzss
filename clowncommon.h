@@ -22,11 +22,12 @@
 #define CLOWNCOMMON_H
 
 /* Boolean */
-typedef unsigned char cc_bool;
+typedef unsigned char cc_bool_small;
+typedef unsigned int cc_bool_fast;
 enum
 {
-	cc_false = 0,
-	cc_true = 1
+	CC_FALSE = 0,
+	CC_TRUE = 1
 };
 
 /* Common macros */

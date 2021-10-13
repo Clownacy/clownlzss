@@ -58,7 +58,7 @@ static void PutMatchByte(KosinskiPlusInstance *instance, unsigned int byte)
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(KosinskiPlusInstance *instance, cc_bool bit)
+static void PutDescriptorBit(KosinskiPlusInstance *instance, cc_bool_fast bit)
 {
 	assert(bit == 0 || bit == 1);
 
@@ -148,7 +148,7 @@ static void KosinskiPlusCompressStream(unsigned char *data, size_t data_size, Me
 	(void)user;
 
 	instance.output_stream = output_stream;
-	MemoryStream_Create(&instance.match_stream, cc_true);
+	MemoryStream_Create(&instance.match_stream, CC_TRUE);
 	instance.descriptor = 0;
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 

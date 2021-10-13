@@ -59,7 +59,7 @@ static void PutMatchByte(FaxmanInstance *instance, unsigned int byte)
 	MemoryStream_WriteByte(&instance->match_stream, byte);
 }
 
-static void PutDescriptorBit(FaxmanInstance *instance, cc_bool bit)
+static void PutDescriptorBit(FaxmanInstance *instance, cc_bool_fast bit)
 {
 	assert(bit == 0 || bit == 1);
 
@@ -172,7 +172,7 @@ static void FaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 	file_offset = MemoryStream_GetPosition(output_stream);
 
 	instance.output_stream = output_stream;
-	MemoryStream_Create(&instance.match_stream, cc_true);
+	MemoryStream_Create(&instance.match_stream, CC_TRUE);
 	instance.descriptor = 0;
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 	instance.descriptor_bits_total = 0;

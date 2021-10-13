@@ -31,7 +31,7 @@ typedef struct MemoryStream
 	size_t position;
 	size_t end;
 	size_t size;
-	cc_bool free_buffer_when_destroyed;
+	cc_bool_small free_buffer_when_destroyed;
 } MemoryStream;
 
 typedef struct ROMemoryStream
@@ -50,21 +50,21 @@ enum MemoryStream_Origin
 extern "C" {
 #endif
 
-void MemoryStream_Create(MemoryStream *memory_stream, cc_bool free_buffer_when_destroyed);
+void MemoryStream_Create(MemoryStream *memory_stream, cc_bool_fast free_buffer_when_destroyed);
 void MemoryStream_Destroy(MemoryStream *memory_stream);
-cc_bool MemoryStream_WriteByte(MemoryStream *memory_stream, unsigned int byte);
-cc_bool MemoryStream_Write(MemoryStream *memory_stream, const void *data, size_t size, size_t count);
+cc_bool_fast MemoryStream_WriteByte(MemoryStream *memory_stream, unsigned int byte);
+cc_bool_fast MemoryStream_Write(MemoryStream *memory_stream, const void *data, size_t size, size_t count);
 size_t MemoryStream_Read(MemoryStream *memory_stream, void *output, size_t size, size_t count);
 unsigned char* MemoryStream_GetBuffer(MemoryStream *memory_stream);
 size_t MemoryStream_GetPosition(MemoryStream *memory_stream);
-cc_bool MemoryStream_SetPosition(MemoryStream *memory_stream, ptrdiff_t offset, enum MemoryStream_Origin origin);
+cc_bool_fast MemoryStream_SetPosition(MemoryStream *memory_stream, ptrdiff_t offset, enum MemoryStream_Origin origin);
 void MemoryStream_Rewind(MemoryStream *memory_stream);
 
 void ROMemoryStream_Create(ROMemoryStream *ro_memory_stream, const void *data, size_t size);
 void ROMemoryStream_Destroy(ROMemoryStream *ro_memory_stream);
 size_t ROMemoryStream_Read(ROMemoryStream *ro_memory_stream, void *output, size_t size, size_t count);
 size_t ROMemoryStream_GetPosition(ROMemoryStream *ro_memory_stream);
-cc_bool ROMemoryStream_SetPosition(ROMemoryStream *ro_memory_stream, ptrdiff_t offset, enum MemoryStream_Origin origin);
+cc_bool_fast ROMemoryStream_SetPosition(ROMemoryStream *ro_memory_stream, ptrdiff_t offset, enum MemoryStream_Origin origin);
 void ROMemoryStream_Rewind(ROMemoryStream *ro_memory_stream);
 
 #ifdef __cplusplus
