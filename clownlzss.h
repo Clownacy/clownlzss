@@ -46,6 +46,8 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 	ClownLZSS_GraphEdge *node_meta_array;\
 	size_t i;\
 \
+	const size_t total_values = data_size / BYTES_PER_VALUE;\
+\
 	/* String list stuff */\
 	unsigned int next[MAX_MATCH_DISTANCE + 0x100];\
 	unsigned int prev[MAX_MATCH_DISTANCE];\
@@ -60,13 +62,11 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 	for (i = 0; i < MAX_MATCH_DISTANCE; ++i)\
 		prev[i] = NIL;\
 \
-	data_size /= BYTES_PER_VALUE; /* TODO - variable-ise */\
-\
-	node_meta_array = (ClownLZSS_GraphEdge*)malloc((data_size + 1) * sizeof(ClownLZSS_GraphEdge));	/* +1 for the end-node */\
+	node_meta_array = (ClownLZSS_GraphEdge*)malloc((total_values + 1) * sizeof(ClownLZSS_GraphEdge));	/* +1 for the end-node */\
 \
 	/* Set costs to maximum possible value, so later comparisons work */\
 	node_meta_array[0].u.cost = 0;\
-	for (i = 1; i < data_size + 1; ++i)\
+	for (i = 1; i < total_values + 1; ++i)\
 		node_meta_array[i].u.cost = UINT_MAX;\
 \
 	/* Search for matches, to populate the edges of the LZSS graph.
@@ -75,14 +75,14 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 	   to produce the smallest file. */\
 \
 	/* Advance through the data one step at a time */\
-	for (i = 0; i < data_size; ++i)\
+	for (i = 0; i < total_values; ++i)\
 	{\
 		unsigned int searched_string_list_node;\
 \
 		unsigned int current_string_list_head = MAX_MATCH_DISTANCE + (data[i * BYTES_PER_VALUE] & 0xFF);\
 		unsigned int current_string_list_node = i % MAX_MATCH_DISTANCE;\
 \
-		FIND_EXTRA_MATCHES(data, data_size, i * BYTES_PER_VALUE, node_meta_array, user);\
+		FIND_EXTRA_MATCHES(data, total_values, i * BYTES_PER_VALUE, node_meta_array, user);\
 \
 		/* `current_string_list_head` points to a linked-list of strings in the LZSS sliding window that match at least
 		   one byte with the current string: iterate over it and generate every possible match for this string */\
@@ -94,7 +94,7 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 			const unsigned char *searched_bytes = bytes[searched_string_list_node];\
 \
 			/* If `BYTES_PER_VALUE` is not 1, then we have to re-evaluate the first value, otherwise we can skip it */\
-			for (j = BYTES_PER_VALUE == 1; j < CLOWNLZSS_MIN(MAX_MATCH_LENGTH, data_size - i); ++j)\
+			for (j = BYTES_PER_VALUE == 1; j < CLOWNLZSS_MIN(MAX_MATCH_LENGTH, total_values - i); ++j)\
 			{\
 				unsigned int values_do_not_match = 0;\
 				unsigned int l;\
@@ -160,10 +160,10 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 \
 	/* Mark start/end nodes for the following loops */\
 	node_meta_array[0].previous_node_index = (size_t)-1;\
-	node_meta_array[data_size].u.next_node_index = (size_t)-1;\
+	node_meta_array[total_values].u.next_node_index = (size_t)-1;\
 \
 	/* Reverse the direction of the edges, so we can parse the LZSS graph from start to end */\
-	for (i = data_size; node_meta_array[i].previous_node_index != (size_t)-1; i = node_meta_array[i].previous_node_index)\
+	for (i = total_values; node_meta_array[i].previous_node_index != (size_t)-1; i = node_meta_array[i].previous_node_index)\
 		node_meta_array[node_meta_array[i].previous_node_index].u.next_node_index = i;\
 \
 	/* Go through our now-complete LZSS graph, and output the optimally-compressed file */\
