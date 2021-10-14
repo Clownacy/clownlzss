@@ -173,13 +173,13 @@ int main(int argc, char **argv)
 		if (in_filename == NULL)
 		{
 			exit_code = EXIT_FAILURE;
-			fputs("Error: Input file not specified\n", stderr);
+			fputs("Error: Input file not specified\n\n", stderr);
 			PrintUsage();
 		}
 		else if (mode == NULL)
 		{
 			exit_code = EXIT_FAILURE;
-			fputs("Error: Format not specified\n", stderr);
+			fputs("Error: Format not specified\n\n", stderr);
 			PrintUsage();
 		}
 		else
