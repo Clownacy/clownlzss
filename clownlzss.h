@@ -96,7 +96,8 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 			const unsigned char *current_bytes = &data[i * BYTES_PER_VALUE];\
 			const unsigned char *searched_bytes = searched_string_list_node->bytes;\
 \
-			for (j = 0; j < CLOWNLZSS_MIN(MAX_MATCH_LENGTH, data_size - i); ++j)\
+			/* If `BYTES_PER_VALUE` is not 1, then we have to re-evaluate the first value, otherwise we can skip it */\
+			for (j = BYTES_PER_VALUE == 1; j < CLOWNLZSS_MIN(MAX_MATCH_LENGTH, data_size - i); ++j)\
 			{\
 				unsigned int mismatch = 0;\
 				unsigned int l;\
