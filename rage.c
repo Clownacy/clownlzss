@@ -179,6 +179,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 	}
 }
 
+/* TODO - Shouldn't the distance limit be 0x2000? */
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, DoLiteral, GetMatchCost, DoMatch)
 
 static void RageCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
