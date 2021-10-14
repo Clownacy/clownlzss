@@ -50,7 +50,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 	/* String list stuff */\
 	unsigned int next[MAX_MATCH_DISTANCE + 0x100];\
 	unsigned int prev[MAX_MATCH_DISTANCE];\
-	const unsigned char *bytes[MAX_MATCH_DISTANCE];\
+	size_t bytes[MAX_MATCH_DISTANCE];\
 	const unsigned int NIL = -1;\
 \
 	/* Initialise the string list heads */\
@@ -90,7 +90,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 			size_t j;\
 \
 			const unsigned char *current_bytes = &data[i * BYTES_PER_VALUE];\
-			const unsigned char *match_bytes = bytes[match_string];\
+			const unsigned char *match_bytes = &data[bytes[match_string] * BYTES_PER_VALUE];\
 \
 			/* If `BYTES_PER_VALUE` is not 1, then we have to re-evaluate the first value, otherwise we can skip it */\
 			for (j = BYTES_PER_VALUE == 1; j < CLOWNLZSS_MIN(MAX_MATCH_LENGTH, total_values - i); ++j)\
@@ -118,7 +118,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 						node_meta_array[i + j + 1].u.cost = node_meta_array[i].u.cost + cost;\
 						node_meta_array[i + j + 1].previous_node_index = i;\
 						node_meta_array[i + j + 1].match_length = j + 1;\
-						node_meta_array[i + j + 1].match_offset = (match_bytes - data) / BYTES_PER_VALUE;\
+						node_meta_array[i + j + 1].match_offset = bytes[match_string];\
 					}\
 				}\
 			}\
@@ -144,7 +144,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 		}\
 \
 		/* Replace the old node with this new one, and insert it at the start of its matching list */\
-		bytes[current_string] = &data[i * BYTES_PER_VALUE];\
+		bytes[current_string] = i;\
 		prev[current_string] = string_list_head;\
 		next[current_string] = next[string_list_head];\
 \
