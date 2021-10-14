@@ -90,7 +90,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 			size_t j;\
 \
 			const unsigned char *current_bytes = &data[i * BYTES_PER_VALUE];\
-			const unsigned char *searched_bytes = bytes[match_string];\
+			const unsigned char *match_bytes = bytes[match_string];\
 \
 			/* If `BYTES_PER_VALUE` is not 1, then we have to re-evaluate the first value, otherwise we can skip it */\
 			for (j = BYTES_PER_VALUE == 1; j < CLOWNLZSS_MIN(MAX_MATCH_LENGTH, total_values - i); ++j)\
@@ -99,7 +99,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 				unsigned int l;\
 \
 				for (l = 0; l < BYTES_PER_VALUE; ++l)\
-					values_do_not_match |= current_bytes[j * BYTES_PER_VALUE + l] != searched_bytes[j * BYTES_PER_VALUE + l];\
+					values_do_not_match |= current_bytes[j * BYTES_PER_VALUE + l] != match_bytes[j * BYTES_PER_VALUE + l];\
 \
 				if (values_do_not_match)\
 				{\
@@ -109,7 +109,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 				else\
 				{\
 					/* Figure out how much it costs to encode the current run */\
-					const unsigned int cost = MATCH_COST_CALLBACK(current_bytes - searched_bytes, j + 1, user);\
+					const unsigned int cost = MATCH_COST_CALLBACK(current_bytes - match_bytes, j + 1, user);\
 \
 					/* Figure out if the cost is lower than that of any other runs that end at the same value as this one */\
 					if (cost && node_meta_array[i + j + 1].u.cost > node_meta_array[i].u.cost + cost)\
@@ -118,7 +118,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 						node_meta_array[i + j + 1].u.cost = node_meta_array[i].u.cost + cost;\
 						node_meta_array[i + j + 1].previous_node_index = i;\
 						node_meta_array[i + j + 1].match_length = j + 1;\
-						node_meta_array[i + j + 1].match_offset = (searched_bytes - data) / BYTES_PER_VALUE;\
+						node_meta_array[i + j + 1].match_offset = (match_bytes - data) / BYTES_PER_VALUE;\
 					}\
 				}\
 			}\
