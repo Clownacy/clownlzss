@@ -70,9 +70,9 @@ static const Mode modes[] = {
 static void PrintUsage(void)
 {
 	fputs(
-		"Clownacy's compression tool thingy\n"
+		"Clownacy's LZSS compression tool\n"
 		"\n"
-		"Usage: tool [options] [in-filename] [out-filename]"
+		"Usage: clownlzss [options] [in-filename] [out-filename]"
 		"\n"
 		"Options:\n"
 		"\n"
