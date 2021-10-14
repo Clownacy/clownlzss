@@ -1,0 +1,4 @@
+Add Comper-X
+Add support for Rocket's Saxman-style 0x20 thingy
+Check if Rocket and Rage's length/distance values are correct
+Add decompressors
