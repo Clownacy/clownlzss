@@ -48,10 +48,10 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 	const size_t total_values = data_size / BYTES_PER_VALUE;\
 \
 	/* String list stuff */\
-	unsigned int next[MAX_MATCH_DISTANCE + 0x100];\
-	unsigned int prev[MAX_MATCH_DISTANCE];\
+	size_t next[MAX_MATCH_DISTANCE + 0x100];\
+	size_t prev[MAX_MATCH_DISTANCE];\
 	size_t bytes[MAX_MATCH_DISTANCE];\
-	const unsigned int NIL = -1;\
+	const size_t NIL = -1;\
 \
 	/* Initialise the string list heads */\
 	for (i = 0; i < 0x100; ++i)\
@@ -76,10 +76,10 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 	/* Advance through the data one step at a time */\
 	for (i = 0; i < total_values; ++i)\
 	{\
-		unsigned int match_string;\
+		size_t match_string;\
 \
-		const unsigned int string_list_head = MAX_MATCH_DISTANCE + (data[i * BYTES_PER_VALUE] & 0xFF);\
-		const unsigned int current_string = i % MAX_MATCH_DISTANCE;\
+		const size_t string_list_head = MAX_MATCH_DISTANCE + (data[i * BYTES_PER_VALUE] & 0xFF);\
+		const size_t current_string = i % MAX_MATCH_DISTANCE;\
 \
 		FIND_EXTRA_MATCHES(data, total_values, i * BYTES_PER_VALUE, node_meta_array, user);\
 \
@@ -96,7 +96,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 			for (j = BYTES_PER_VALUE == 1; j < CLOWNLZSS_MIN(MAX_MATCH_LENGTH, total_values - i); ++j)\
 			{\
 				unsigned int values_do_not_match = 0;\
-				unsigned int l;\
+				size_t l;\
 \
 				for (l = 0; l < BYTES_PER_VALUE; ++l)\
 					values_do_not_match |= current_bytes[j * BYTES_PER_VALUE + l] != match_bytes[j * BYTES_PER_VALUE + l];\
@@ -109,7 +109,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 				else\
 				{\
 					/* Figure out how much it costs to encode the current run */\
-					const unsigned int cost = MATCH_COST_CALLBACK(current_bytes - match_bytes, j + 1, user);\
+					const size_t cost = MATCH_COST_CALLBACK(current_bytes - match_bytes, j + 1, user);\
 \
 					/* Figure out if the cost is lower than that of any other runs that end at the same value as this one */\
 					if (cost && node_meta_array[i + j + 1].u.cost > node_meta_array[i].u.cost + cost)\

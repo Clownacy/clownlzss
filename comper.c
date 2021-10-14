@@ -98,7 +98,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 	PutMatchByte(instance, length - 1);
 }
 
-static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
+static size_t GetMatchCost(size_t distance, size_t length, void *user)
 {
 	(void)distance;
 	(void)length;
