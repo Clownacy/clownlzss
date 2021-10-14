@@ -21,7 +21,6 @@
 #ifndef CLOWNLZSS_H
 #define CLOWNLZSS_H
 
-#include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -52,7 +51,7 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 	unsigned int next[MAX_MATCH_DISTANCE + 0x100];\
 	unsigned int prev[MAX_MATCH_DISTANCE];\
 	const unsigned char *bytes[MAX_MATCH_DISTANCE];\
-	const unsigned int NIL = sizeof(next) / sizeof(next[0]);\
+	const unsigned int NIL = -1;\
 \
 	/* Initialise the string list heads */\
 	for (i = 0; i < 0x100; ++i)\
@@ -67,7 +66,7 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 	/* Set costs to maximum possible value, so later comparisons work */\
 	node_meta_array[0].u.cost = 0;\
 	for (i = 1; i < total_values + 1; ++i)\
-		node_meta_array[i].u.cost = UINT_MAX;\
+		node_meta_array[i].u.cost = -1;\
 \
 	/* Search for matches, to populate the edges of the LZSS graph.
 	   Notably, while doing this, we're also using a shortest-path
@@ -159,8 +158,8 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 	   You just have to start at the last edge, and follow it backwards all the way to the start. */\
 \
 	/* Mark start/end nodes for the following loops */\
-	node_meta_array[0].previous_node_index = (size_t)-1;\
-	node_meta_array[total_values].u.next_node_index = (size_t)-1;\
+	node_meta_array[0].previous_node_index = -1;\
+	node_meta_array[total_values].u.next_node_index = -1;\
 \
 	/* Reverse the direction of the edges, so we can parse the LZSS graph from start to end */\
 	for (i = total_values; node_meta_array[i].previous_node_index != (size_t)-1; i = node_meta_array[i].previous_node_index)\
