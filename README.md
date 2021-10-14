@@ -6,7 +6,8 @@ Formats supported by the supplied utilities include:
 * Kosinski - a compression format common to first-party Sega Mega Drive games
 
 * Saxman - a format used by Sonic the Hedgehog 2, to compress its sound engine
-  and music data
+  and music data (is actually a lightly-modified version of Haruhiko Okumura's
+  1989 LZSS format)
 
 * Chameleon - a format that saw use in Kid Chameleon and Sonic the Hedgehog 2's
   "Nick Arcade" prototype
