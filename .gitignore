@@ -2,5 +2,5 @@
 /build
 
 # Makefile output
-/tool
-/tool.exe
+/clownlzss
+/clownlzss.exe
