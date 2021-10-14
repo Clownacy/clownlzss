@@ -78,7 +78,7 @@ static void PutDescriptorBit(SaxmanInstance *instance, cc_bool_fast bit)
 		instance->descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
 }
 
-static void DoLiteral(unsigned char *value, void *user)
+static void DoLiteral(const unsigned char *value, void *user)
 {
 	SaxmanInstance *instance = (SaxmanInstance*)user;
 
@@ -109,7 +109,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 		return 0;
 }
 
-static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
+static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
 {
 	(void)user;
 
@@ -141,7 +141,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x12, 0x1000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+static void SaxmanCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
 	const cc_bool_fast header = *(cc_bool_fast*)user;
 
@@ -181,12 +181,12 @@ static void SaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 	}
 }
 
-unsigned char* ClownLZSS_SaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool_fast header)
+unsigned char* ClownLZSS_SaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool_fast header)
 {
 	return RegularWrapper(data, data_size, compressed_size, &header, SaxmanCompressStream);
 }
 
-unsigned char* ClownLZSS_ModuledSaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool_fast header, size_t module_size)
+unsigned char* ClownLZSS_ModuledSaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool_fast header, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, &header, SaxmanCompressStream, module_size, 1);
 }

@@ -23,7 +23,7 @@
 
 #include <stddef.h>
 
-unsigned char* ClownLZSS_RageCompress(unsigned char *data, size_t data_size, size_t *compressed_size);
-unsigned char* ClownLZSS_ModuledRageCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
+unsigned char* ClownLZSS_RageCompress(const unsigned char *data, size_t data_size, size_t *compressed_size);
+unsigned char* ClownLZSS_ModuledRageCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
 
 #endif /* CLOWNLZSS_RAGE_H */

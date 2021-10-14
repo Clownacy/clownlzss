@@ -78,7 +78,7 @@ static void PutDescriptorBit(ComperInstance *instance, cc_bool_fast bit)
 	instance->descriptor |= bit;
 }
 
-static void DoLiteral(unsigned char *value, void *user)
+static void DoLiteral(const unsigned char *value, void *user)
 {
 	ComperInstance *instance = (ComperInstance*)user;
 
@@ -107,7 +107,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	return 1 + 16;	/* Descriptor bit, offset/length bytes */
 }
 
-static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
+static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
 {
 	(void)data;
 	(void)data_size;
@@ -118,7 +118,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 2, 0x100, 0x100, FindExtraMatches, 1 + 16, DoLiteral, GetMatchCost, DoMatch)
 
-static void ComperCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+static void ComperCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
 	ComperInstance instance;
 
@@ -142,12 +142,12 @@ static void ComperCompressStream(unsigned char *data, size_t data_size, MemorySt
 	MemoryStream_Destroy(&instance.match_stream);
 }
 
-unsigned char* ClownLZSS_ComperCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* ClownLZSS_ComperCompress(const unsigned char *data, size_t data_size, size_t *compressed_size)
 {
 	return RegularWrapper(data, data_size, compressed_size, NULL, ComperCompressStream);
 }
 
-unsigned char* ClownLZSS_ModuledComperCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+unsigned char* ClownLZSS_ModuledComperCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, ComperCompressStream, module_size, 1);
 }

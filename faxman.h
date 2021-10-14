@@ -23,7 +23,7 @@
 
 #include <stddef.h>
 
-unsigned char* ClownLZSS_FaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size);
-unsigned char* ClownLZSS_ModuledFaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
+unsigned char* ClownLZSS_FaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size);
+unsigned char* ClownLZSS_ModuledFaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
 
 #endif /* CLOWNLZSS_FAXMAN_H */

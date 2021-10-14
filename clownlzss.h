@@ -40,7 +40,7 @@ typedef struct ClownLZSS_GraphEdge
 } ClownLZSS_GraphEdge;
 
 #define CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(NAME, BYTES_PER_VALUE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
-void NAME(unsigned char *data, size_t data_size, void *user)\
+void NAME(const unsigned char *data, size_t data_size, void *user)\
 {\
 	ClownLZSS_GraphEdge *node_meta_array;\
 	size_t i;\
@@ -76,21 +76,21 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 	/* Advance through the data one step at a time */\
 	for (i = 0; i < total_values; ++i)\
 	{\
-		unsigned int searched_string_list_node;\
+		unsigned int match_string;\
 \
-		unsigned int current_string_list_head = MAX_MATCH_DISTANCE + (data[i * BYTES_PER_VALUE] & 0xFF);\
-		unsigned int current_string_list_node = i % MAX_MATCH_DISTANCE;\
+		const unsigned int string_list_head = MAX_MATCH_DISTANCE + (data[i * BYTES_PER_VALUE] & 0xFF);\
+		const unsigned int current_string = i % MAX_MATCH_DISTANCE;\
 \
 		FIND_EXTRA_MATCHES(data, total_values, i * BYTES_PER_VALUE, node_meta_array, user);\
 \
-		/* `current_string_list_head` points to a linked-list of strings in the LZSS sliding window that match at least
+		/* `string_list_head` points to a linked-list of strings in the LZSS sliding window that match at least
 		   one byte with the current string: iterate over it and generate every possible match for this string */\
-		for (searched_string_list_node = next[current_string_list_head]; searched_string_list_node != NIL; searched_string_list_node = next[searched_string_list_node])\
+		for (match_string = next[string_list_head]; match_string != NIL; match_string = next[match_string])\
 		{\
 			size_t j;\
 \
 			const unsigned char *current_bytes = &data[i * BYTES_PER_VALUE];\
-			const unsigned char *searched_bytes = bytes[searched_string_list_node];\
+			const unsigned char *searched_bytes = bytes[match_string];\
 \
 			/* If `BYTES_PER_VALUE` is not 1, then we have to re-evaluate the first value, otherwise we can skip it */\
 			for (j = BYTES_PER_VALUE == 1; j < CLOWNLZSS_MIN(MAX_MATCH_LENGTH, total_values - i); ++j)\
@@ -135,23 +135,23 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 		/* Replace the oldest string in the list with the new string, since it's about to be pushed out of the LZSS sliding window */\
 \
 		/* Detach the old node in this slot */\
-		if (prev[current_string_list_node] != NIL)\
+		if (prev[current_string] != NIL)\
 		{\
-			next[prev[current_string_list_node]] = next[current_string_list_node];\
+			next[prev[current_string]] = next[current_string];\
 \
-			if (next[current_string_list_node] != NIL)\
-				prev[next[current_string_list_node]] = prev[current_string_list_node];\
+			if (next[current_string] != NIL)\
+				prev[next[current_string]] = prev[current_string];\
 		}\
 \
 		/* Replace the old node with this new one, and insert it at the start of its matching list */\
-		bytes[current_string_list_node] = &data[i * BYTES_PER_VALUE];\
-		prev[current_string_list_node] = current_string_list_head;\
-		next[current_string_list_node] = next[current_string_list_head];\
+		bytes[current_string] = &data[i * BYTES_PER_VALUE];\
+		prev[current_string] = string_list_head;\
+		next[current_string] = next[string_list_head];\
 \
-		if (next[current_string_list_head] != NIL)\
-			prev[next[current_string_list_head]] = current_string_list_node;\
+		if (next[string_list_head] != NIL)\
+			prev[next[string_list_head]] = current_string;\
 \
-		next[current_string_list_head] = current_string_list_node;\
+		next[string_list_head] = current_string;\
 	}\
 \
 	/* At this point, the edges will have formed a shortest-path from the start to the end:

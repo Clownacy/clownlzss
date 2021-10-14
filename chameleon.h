@@ -23,7 +23,7 @@
 
 #include <stddef.h>
 
-unsigned char* ClownLZSS_ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size);
-unsigned char* ClownLZSS_ModuledChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
+unsigned char* ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size, size_t *compressed_size);
+unsigned char* ClownLZSS_ModuledChameleonCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
 
 #endif /* CLOWNLZSS_CHAMELEON_H */

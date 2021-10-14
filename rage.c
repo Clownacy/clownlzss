@@ -34,7 +34,7 @@
 typedef struct RageInstance
 {
 	MemoryStream *output_stream;
-	unsigned char *data;
+	const unsigned char *data;
 } RageInstance;
 
 static void PutMatchByte(RageInstance *instance, unsigned int byte)
@@ -42,7 +42,7 @@ static void PutMatchByte(RageInstance *instance, unsigned int byte)
 	MemoryStream_WriteByte(instance->output_stream, byte);
 }
 
-static void DoLiteral(unsigned char *value, void *user)
+static void DoLiteral(const unsigned char *value, void *user)
 {
 	(void)value;
 	(void)user;
@@ -129,7 +129,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 		return 0;
 }
 
-static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
+static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
 {
 	size_t max_read_ahead;
 	size_t k;
@@ -182,7 +182,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 /* TODO - Shouldn't the distance limit be 0x2000? */
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, DoLiteral, GetMatchCost, DoMatch)
 
-static void RageCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+static void RageCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
 	RageInstance instance;
 
@@ -212,12 +212,12 @@ static void RageCompressStream(unsigned char *data, size_t data_size, MemoryStre
 	buffer[file_offset + 1] = (compressed_size >> 8) & 0xFF;
 }
 
-unsigned char* ClownLZSS_RageCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* ClownLZSS_RageCompress(const unsigned char *data, size_t data_size, size_t *compressed_size)
 {
 	return RegularWrapper(data, data_size, compressed_size, NULL, RageCompressStream);
 }
 
-unsigned char* ClownLZSS_ModuledRageCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+unsigned char* ClownLZSS_ModuledRageCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, RageCompressStream, module_size, 1);
 }

@@ -81,7 +81,7 @@ static void PutDescriptorBit(FaxmanInstance *instance, cc_bool_fast bit)
 		instance->descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
 }
 
-static void DoLiteral(unsigned char *value, void *user)
+static void DoLiteral(const unsigned char *value, void *user)
 {
 	FaxmanInstance *instance = (FaxmanInstance*)user;
 
@@ -125,7 +125,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 		return 0;
 }
 
-static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
+static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
 {
 	(void)user;
 
@@ -159,7 +159,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x1F + 3, 0x800, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void FaxmanCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+static void FaxmanCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
 	FaxmanInstance instance;
 
@@ -195,12 +195,12 @@ static void FaxmanCompressStream(unsigned char *data, size_t data_size, MemorySt
 	buffer[file_offset + 1] = (instance.descriptor_bits_total >> 8) & 0xFF;
 }
 
-unsigned char* ClownLZSS_FaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* ClownLZSS_FaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size)
 {
 	return RegularWrapper(data, data_size, compressed_size, NULL, FaxmanCompressStream);
 }
 
-unsigned char* ClownLZSS_ModuledFaxmanCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+unsigned char* ClownLZSS_ModuledFaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, FaxmanCompressStream, module_size, 1);
 }

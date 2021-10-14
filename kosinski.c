@@ -79,7 +79,7 @@ static void PutDescriptorBit(KosinskiInstance *instance, cc_bool_fast bit)
 	}
 }
 
-static void DoLiteral(unsigned char *value, void *user)
+static void DoLiteral(const unsigned char *value, void *user)
 {
 	KosinskiInstance *instance = (KosinskiInstance*)user;
 
@@ -132,7 +132,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 		return 0;          /* In the event a match cannot be compressed */
 }
 
-static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
+static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
 {
 	(void)data;
 	(void)data_size;
@@ -143,7 +143,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x100, 0x2000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void KosinskiCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+static void KosinskiCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
 	KosinskiInstance instance;
 
@@ -169,12 +169,12 @@ static void KosinskiCompressStream(unsigned char *data, size_t data_size, Memory
 	MemoryStream_Destroy(&instance.match_stream);
 }
 
-unsigned char* ClownLZSS_KosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* ClownLZSS_KosinskiCompress(const unsigned char *data, size_t data_size, size_t *compressed_size)
 {
 	return RegularWrapper(data, data_size, compressed_size, NULL, KosinskiCompressStream);
 }
 
-unsigned char* ClownLZSS_ModuledKosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+unsigned char* ClownLZSS_ModuledKosinskiCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, KosinskiCompressStream, module_size, 0x10);
 }

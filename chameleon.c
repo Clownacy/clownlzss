@@ -63,7 +63,7 @@ static void PutDescriptorBit(ChameleonInstance *instance, cc_bool_fast bit)
 	instance->descriptor |= bit;
 }
 
-static void DoLiteral(unsigned char *value, void *user)
+static void DoLiteral(const unsigned char *value, void *user)
 {
 	ChameleonInstance *instance = (ChameleonInstance*)user;
 
@@ -123,7 +123,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 		return 0;                 /* In the event a match cannot be compressed */
 }
 
-static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
+static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
 {
 	(void)data;
 	(void)data_size;
@@ -135,7 +135,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 /* TODO - Shouldn't the length limit be 0x100, and the distance limit be 0x800? */
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void ChameleonCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+static void ChameleonCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
 	ChameleonInstance instance;
 
@@ -184,12 +184,12 @@ static void ChameleonCompressStream(unsigned char *data, size_t data_size, Memor
 	MemoryStream_Destroy(&instance.match_stream);
 }
 
-unsigned char* ClownLZSS_ChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size, size_t *compressed_size)
 {
 	return RegularWrapper(data, data_size, compressed_size, NULL, ChameleonCompressStream);
 }
 
-unsigned char* ClownLZSS_ModuledChameleonCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+unsigned char* ClownLZSS_ModuledChameleonCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, ChameleonCompressStream, module_size, 1);
 }

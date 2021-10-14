@@ -78,7 +78,7 @@ static void PutDescriptorBit(RocketInstance *instance, cc_bool_fast bit)
 		instance->descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
 }
 
-static void DoLiteral(unsigned char *value, void *user)
+static void DoLiteral(const unsigned char *value, void *user)
 {
 	RocketInstance *instance = (RocketInstance*)user;
 
@@ -108,7 +108,7 @@ static unsigned int GetMatchCost(size_t distance, size_t length, void *user)
 	return 1 + 16;	/* Descriptor bit, offset/length bytes */
 }
 
-static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
+static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
 {
 	(void)data;
 	(void)data_size;
@@ -119,7 +119,7 @@ static void FindExtraMatches(unsigned char *data, size_t data_size, size_t offse
 
 static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x40, 0x400, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
 
-static void RocketCompressStream(unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+static void RocketCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
 {
 	RocketInstance instance;
 
@@ -158,12 +158,12 @@ static void RocketCompressStream(unsigned char *data, size_t data_size, MemorySt
 	buffer[file_offset + 3] = (compressed_size >> 0) & 0xFF;
 }
 
-unsigned char* ClownLZSS_RocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size)
+unsigned char* ClownLZSS_RocketCompress(const unsigned char *data, size_t data_size, size_t *compressed_size)
 {
 	return RegularWrapper(data, data_size, compressed_size, NULL, RocketCompressStream);
 }
 
-unsigned char* ClownLZSS_ModuledRocketCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
+unsigned char* ClownLZSS_ModuledRocketCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
 {
 	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, RocketCompressStream, module_size, 1);
 }

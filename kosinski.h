@@ -23,7 +23,7 @@
 
 #include <stddef.h>
 
-unsigned char* ClownLZSS_KosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size);
-unsigned char* ClownLZSS_ModuledKosinskiCompress(unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
+unsigned char* ClownLZSS_KosinskiCompress(const unsigned char *data, size_t data_size, size_t *compressed_size);
+unsigned char* ClownLZSS_ModuledKosinskiCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
 
 #endif /* CLOWNLZSS_KOSINSKI_H */
