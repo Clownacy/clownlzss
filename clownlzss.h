@@ -40,11 +40,28 @@ typedef struct ClownLZSS_GraphEdge
 	size_t match_offset;
 } ClownLZSS_GraphEdge;
 
+typedef struct ClownLZSS_StringListNode
+{
+	const unsigned char *bytes;
+	struct ClownLZSS_StringListNode *prev;
+	struct ClownLZSS_StringListNode *next;
+} ClownLZSS_StringListNode;
+
 #define CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(NAME, BYTES_PER_VALUE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
 void NAME(unsigned char *data, size_t data_size, void *user)\
 {\
 	ClownLZSS_GraphEdge *node_meta_array;\
 	size_t i;\
+	ClownLZSS_StringListNode string_list_nodes[MAX_MATCH_DISTANCE];\
+	ClownLZSS_StringListNode string_list_heads[0x100];\
+\
+	/* Initialise the string list heads */\
+	for (i = 0; i < sizeof(string_list_heads) / sizeof(string_list_heads[0]); ++i)\
+		string_list_heads[i].next = NULL;\
+\
+	/* Initialise the string list nodes */\
+	for (i = 0; i < sizeof(string_list_nodes) / sizeof(string_list_nodes[0]); ++i)\
+		string_list_nodes[i].prev = NULL;\
 \
 	data_size /= BYTES_PER_VALUE;\
 \
@@ -63,41 +80,43 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 	/* Advance through the data one step at a time */\
 	for (i = 0; i < data_size; ++i)\
 	{\
-		size_t j;\
+		ClownLZSS_StringListNode *searched_string_list_node;\
 \
-		const size_t max_read_ahead = CLOWNLZSS_MIN(MAX_MATCH_LENGTH, data_size - i);\
-		const size_t max_read_behind = MAX_MATCH_DISTANCE > i ? 0 : i - MAX_MATCH_DISTANCE;\
+		ClownLZSS_StringListNode *current_string_list_head = &string_list_heads[data[i * BYTES_PER_VALUE] & 0xFF];\
+		ClownLZSS_StringListNode *current_string_list_node = &string_list_nodes[i % MAX_MATCH_DISTANCE];\
 \
-		FIND_EXTRA_MATCHES(data, data_size, i, node_meta_array, user);\
+		FIND_EXTRA_MATCHES(data, data_size, i * BYTES_PER_VALUE, node_meta_array, user);\
 \
-		/* Search backwards from the current location, to figure out whether the data at the current location has appeared before */\
-		for (j = i; j-- > max_read_behind;)\
+		/* `current_string_list_head` points to a linked-list of strings in the LZSS sliding window that match at least
+		   one byte with the current string: iterate over it and generate every possible match for this string */\
+		for (searched_string_list_node = current_string_list_head->next; searched_string_list_node != NULL; searched_string_list_node = searched_string_list_node->next)\
 		{\
-			size_t k;\
+			size_t j;\
 \
-			/* Search forwards from both locations... */\
-			for (k = 0; k < max_read_ahead; ++k)\
+			const unsigned char *current_bytes = &data[i * BYTES_PER_VALUE];\
+			const unsigned char *searched_bytes = searched_string_list_node->bytes;\
+\
+			for (j = 0; j < CLOWNLZSS_MIN(MAX_MATCH_LENGTH, data_size - i); ++j)\
 			{\
-				/* ...comparing their values to see if they match */\
 				unsigned int mismatch = 0;\
 				unsigned int l;\
 \
 				for (l = 0; l < BYTES_PER_VALUE; ++l)\
-					mismatch |= data[(i + k) * BYTES_PER_VALUE + l] != data[(j + k) * BYTES_PER_VALUE + l];\
+					mismatch |= current_bytes[j * BYTES_PER_VALUE + l] != searched_bytes[j * BYTES_PER_VALUE + l];\
 \
 				if (!mismatch)\
 				{\
 					/* Figure out how much it costs to encode the current run */\
-					const unsigned int cost = MATCH_COST_CALLBACK(i - j, k + 1, user);\
+					const unsigned int cost = MATCH_COST_CALLBACK(current_bytes - searched_bytes, j + 1, user);\
 \
 					/* Figure out if the cost is lower than that of any other runs that end at the same value as this one */\
-					if (cost && node_meta_array[i + k + 1].u.cost > node_meta_array[i].u.cost + cost)\
+					if (cost && node_meta_array[i + j + 1].u.cost > node_meta_array[i].u.cost + cost)\
 					{\
 						/* Record this new best run in the graph edge assigned to the value at the end of the run */\
-						node_meta_array[i + k + 1].u.cost = node_meta_array[i].u.cost + cost;\
-						node_meta_array[i + k + 1].previous_node_index = i;\
-						node_meta_array[i + k + 1].match_length = k + 1;\
-						node_meta_array[i + k + 1].match_offset = j;\
+						node_meta_array[i + j + 1].u.cost = node_meta_array[i].u.cost + cost;\
+						node_meta_array[i + j + 1].previous_node_index = i;\
+						node_meta_array[i + j + 1].match_length = j + 1;\
+						node_meta_array[i + j + 1].match_offset = (searched_bytes - data) / BYTES_PER_VALUE;\
 					}\
 				}\
 				else\
@@ -115,6 +134,27 @@ void NAME(unsigned char *data, size_t data_size, void *user)\
 			node_meta_array[i + 1].previous_node_index = i;\
 			node_meta_array[i + 1].match_length = 0;\
 		}\
+\
+		/* Replace the oldest string in the list with the new string, since it's about to be pushed out of the LZSS sliding window */\
+\
+		/* Detach the old node in this slot */\
+		if (current_string_list_node->prev != NULL)\
+		{\
+			current_string_list_node->prev->next = current_string_list_node->next;\
+\
+			if (current_string_list_node->next != NULL)\
+				current_string_list_node->next->prev = current_string_list_node->prev;\
+		}\
+\
+		/* Replace the old node with this new one, and insert it at the start of its matching list */\
+		current_string_list_node->bytes = &data[i * BYTES_PER_VALUE];\
+		current_string_list_node->prev = current_string_list_head;\
+		current_string_list_node->next = current_string_list_head->next;\
+\
+		if (current_string_list_head->next != NULL)\
+			current_string_list_head->next->prev = current_string_list_node;\
+\
+		current_string_list_head->next = current_string_list_node;\
 	}\
 \
 	/* At this point, the edges will have formed a shortest-path from the start to the end:
