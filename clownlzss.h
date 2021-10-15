@@ -46,27 +46,27 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 	size_t i;\
 \
 	const size_t total_values = data_size / BYTES_PER_VALUE;\
+	const size_t DUMMY = -1;\
 \
 	/* String list stuff */\
 	size_t next[MAX_MATCH_DISTANCE + 0x100];\
 	size_t prev[MAX_MATCH_DISTANCE];\
 	size_t bytes[MAX_MATCH_DISTANCE];\
-	const size_t NIL = -1;\
 \
 	/* Initialise the string list heads */\
 	for (i = 0; i < 0x100; ++i)\
-		next[MAX_MATCH_DISTANCE + i] = NIL;\
+		next[MAX_MATCH_DISTANCE + i] = DUMMY;\
 \
 	/* Initialise the string list nodes */\
 	for (i = 0; i < MAX_MATCH_DISTANCE; ++i)\
-		prev[i] = NIL;\
+		prev[i] = DUMMY;\
 \
 	node_meta_array = (ClownLZSS_GraphEdge*)malloc((total_values + 1) * sizeof(ClownLZSS_GraphEdge));	/* +1 for the end-node */\
 \
 	/* Set costs to maximum possible value, so later comparisons work */\
 	node_meta_array[0].u.cost = 0;\
 	for (i = 1; i < total_values + 1; ++i)\
-		node_meta_array[i].u.cost = -1;\
+		node_meta_array[i].u.cost = DUMMY;\
 \
 	/* Search for matches, to populate the edges of the LZSS graph.
 	   Notably, while doing this, we're also using a shortest-path
@@ -85,7 +85,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 \
 		/* `string_list_head` points to a linked-list of strings in the LZSS sliding window that match at least
 		   one byte with the current string: iterate over it and generate every possible match for this string */\
-		for (match_string = next[string_list_head]; match_string != NIL; match_string = next[match_string])\
+		for (match_string = next[string_list_head]; match_string != DUMMY; match_string = next[match_string])\
 		{\
 			size_t j;\
 \
@@ -135,11 +135,11 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 		/* Replace the oldest string in the list with the new string, since it's about to be pushed out of the LZSS sliding window */\
 \
 		/* Detach the old node in this slot */\
-		if (prev[current_string] != NIL)\
+		if (prev[current_string] != DUMMY)\
 		{\
 			next[prev[current_string]] = next[current_string];\
 \
-			if (next[current_string] != NIL)\
+			if (next[current_string] != DUMMY)\
 				prev[next[current_string]] = prev[current_string];\
 		}\
 \
@@ -148,7 +148,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 		prev[current_string] = string_list_head;\
 		next[current_string] = next[string_list_head];\
 \
-		if (next[string_list_head] != NIL)\
+		if (next[string_list_head] != DUMMY)\
 			prev[next[string_list_head]] = current_string;\
 \
 		next[string_list_head] = current_string;\
@@ -158,15 +158,15 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 	   You just have to start at the last edge, and follow it backwards all the way to the start. */\
 \
 	/* Mark start/end nodes for the following loops */\
-	node_meta_array[0].previous_node_index = -1;\
-	node_meta_array[total_values].u.next_node_index = -1;\
+	node_meta_array[0].previous_node_index = DUMMY;\
+	node_meta_array[total_values].u.next_node_index = DUMMY;\
 \
 	/* Reverse the direction of the edges, so we can parse the LZSS graph from start to end */\
-	for (i = total_values; node_meta_array[i].previous_node_index != (size_t)-1; i = node_meta_array[i].previous_node_index)\
+	for (i = total_values; node_meta_array[i].previous_node_index != DUMMY; i = node_meta_array[i].previous_node_index)\
 		node_meta_array[node_meta_array[i].previous_node_index].u.next_node_index = i;\
 \
 	/* Go through our now-complete LZSS graph, and output the optimally-compressed file */\
-	for (i = 0; node_meta_array[i].u.next_node_index != (size_t)-1; i = node_meta_array[i].u.next_node_index)\
+	for (i = 0; node_meta_array[i].u.next_node_index != DUMMY; i = node_meta_array[i].u.next_node_index)\
 	{\
 		const size_t next_index = node_meta_array[i].u.next_node_index;\
 		const size_t length = node_meta_array[next_index].match_length;\
