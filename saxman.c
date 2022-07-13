@@ -115,26 +115,21 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 
 	if (offset < 0x1000)
 	{
-		size_t k;
+		size_t i;
 
 		const size_t max_read_ahead = CLOWNLZSS_MIN(0x12, data_size - offset);
 
-		for (k = 0; k < max_read_ahead; ++k)
+		for (i = 0; i < max_read_ahead && data[offset + i] == 0; ++i)
 		{
-			if (data[offset + k] == 0)
-			{
-				const unsigned int cost = GetMatchCost(0, k + 1, user);
+			const unsigned int cost = GetMatchCost(0, i + 1, user);
 
-				if (cost && node_meta_array[offset + k + 1].u.cost > node_meta_array[offset].u.cost + cost)
-				{
-					node_meta_array[offset + k + 1].u.cost = node_meta_array[offset].u.cost + cost;
-					node_meta_array[offset + k + 1].previous_node_index = offset;
-					node_meta_array[offset + k + 1].match_length = k + 1;
-					node_meta_array[offset + k + 1].match_offset = 0xFFF;
-				}
+			if (cost && node_meta_array[offset + i + 1].u.cost > node_meta_array[offset].u.cost + cost)
+			{
+				node_meta_array[offset + i + 1].u.cost = node_meta_array[offset].u.cost + cost;
+				node_meta_array[offset + i + 1].previous_node_index = offset;
+				node_meta_array[offset + i + 1].match_length = i + 1;
+				node_meta_array[offset + i + 1].match_offset = 0xFFF;
 			}
-			else
-				break;
 		}
 	}
 }
