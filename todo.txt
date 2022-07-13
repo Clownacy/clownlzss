@@ -3,3 +3,8 @@ Add support for Rocket's Saxman-style 0x20 thingy
 Check if Rocket and Rage's length/distance values are correct
 Add decompressors
 Dynamically-allocate state and/or leave it to the user
+Add actual sliding window buffer?
+- Supports Saxman's "zero-fill mode" the 'proper' way
+- Supports Rockets's "0x20-fill mode" the 'proper' way
+- May make string comparison faster as the length of the comparison does not have to be capped near the end of the file buffer
+- Makes it unnecessary to have the whole file loaded into memory
