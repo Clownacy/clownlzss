@@ -25,7 +25,7 @@
 
 #include "clowncommon.h"
 
-unsigned char* ClownLZSS_SaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool_fast header);
-unsigned char* ClownLZSS_ModuledSaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool_fast header, size_t module_size);
+unsigned char* ClownLZSS_SaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool header);
+unsigned char* ClownLZSS_ModuledSaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool header, size_t module_size);
 
 #endif /* CLOWNLZSS_SAXMAN_H */

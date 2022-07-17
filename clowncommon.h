@@ -1,39 +1,23 @@
-/*
-	(C) 2021 Clownacy
-
-	This software is provided 'as-is', without any express or implied
-	warranty.  In no event will the authors be held liable for any damages
-	arising from the use of this software.
-
-	Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-	1. The origin of this software must not be misrepresented; you must not
-	   claim that you wrote the original software. If you use this software
-	   in a product, an acknowledgment in the product documentation would be
-	   appreciated but is not required.
-	2. Altered source versions must be plainly marked as such, and must not be
-	   misrepresented as being the original software.
-	3. This notice may not be removed or altered from any source distribution.
-*/
-
 #ifndef CLOWNCOMMON_H
 #define CLOWNCOMMON_H
 
-/* Boolean */
-typedef unsigned char cc_bool_small;
-typedef unsigned int cc_bool_fast;
+/* Boolean. */
+typedef unsigned char cc_bool;
 enum
 {
-	CC_FALSE = 0,
-	CC_TRUE = 1
+	cc_false = 0,
+	cc_true = 1
 };
 
-/* Common macros */
+/* Common macros. */
 #define CC_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define CC_MAX(a, b) ((a) > (b) ? (a) : (b))
-#define CC_CLAMP(x, min, max) (CC_MIN((max), CC_MAX((min), (x))))
-#define CC_COUNT_OF(array) (sizeof(array) / sizeof(*array))
+#define CC_CLAMP(min, max, x) (CC_MAX((min), CC_MIN((max), (x))))
+#define CC_COUNT_OF(array) (sizeof(array) / sizeof(*(array)))
+#define CC_DIVIDE_ROUND(a, b) (((a) + (b / 2)) / (b))
+#define CC_DIVIDE_CEILING(a, b) (((a) + (b - 1)) / (b))
+
+/* Common constants. */
+#define CC_PI 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679
 
 #endif /* CLOWNCOMMON_H */

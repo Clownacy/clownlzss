@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 	const Mode *mode = NULL;
 	const char *in_filename = NULL;
 	const char *out_filename = NULL;
-	cc_bool_fast moduled = CC_FALSE;
+	cc_bool moduled = cc_false;
 	size_t module_size = 0x1000;
 
 	/* Skip past the executable name */
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 			{
 				char *argument = strchr(argv[i], '=');
 
-				moduled = CC_TRUE;
+				moduled = cc_true;
 
 				if (argument != NULL)
 				{
@@ -277,16 +277,16 @@ int main(int argc, char **argv)
 
 						case FORMAT_SAXMAN:
 							if (moduled)
-								compressed_buffer = ClownLZSS_ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, CC_TRUE, module_size);
+								compressed_buffer = ClownLZSS_ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, cc_true, module_size);
 							else
-								compressed_buffer = ClownLZSS_SaxmanCompress(file_buffer, file_size, &compressed_size, CC_TRUE);
+								compressed_buffer = ClownLZSS_SaxmanCompress(file_buffer, file_size, &compressed_size, cc_true);
 							break;
 
 						case FORMAT_SAXMAN_NO_HEADER:
 							if (moduled)
-								compressed_buffer = ClownLZSS_ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, CC_FALSE, module_size);
+								compressed_buffer = ClownLZSS_ModuledSaxmanCompress(file_buffer, file_size, &compressed_size, cc_false, module_size);
 							else
-								compressed_buffer = ClownLZSS_SaxmanCompress(file_buffer, file_size, &compressed_size, CC_FALSE);
+								compressed_buffer = ClownLZSS_SaxmanCompress(file_buffer, file_size, &compressed_size, cc_false);
 							break;
 					}
 
