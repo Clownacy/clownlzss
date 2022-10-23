@@ -104,7 +104,10 @@ static size_t GetMatchCost(size_t distance, size_t length, void *user)
 	(void)length;
 	(void)user;
 
-	return 1 + 16;	/* Descriptor bit, offset/length bytes */
+	if (length == 1)
+		return 0;       /* Dictionary matches with a length of 1 are reserved for indicating the end of the file. Not that a dictionary match for 1 value would ever be worth it. */
+	else
+		return 1 + 16;	/* Descriptor bit, offset/length bytes */
 }
 
 static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
