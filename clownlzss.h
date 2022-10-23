@@ -45,20 +45,20 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 	ClownLZSS_GraphEdge *node_meta_array;\
 	size_t i;\
 \
-	const size_t total_values = data_size / BYTES_PER_VALUE;\
+	const size_t total_values = data_size / (BYTES_PER_VALUE);\
 	const size_t DUMMY = -1;\
 \
 	/* String list stuff */\
-	size_t next[MAX_MATCH_DISTANCE + 0x100];\
-	size_t prev[MAX_MATCH_DISTANCE];\
-	size_t bytes[MAX_MATCH_DISTANCE];\
+	size_t next[(MAX_MATCH_DISTANCE) + 0x100];\
+	size_t prev[(MAX_MATCH_DISTANCE)];\
+	size_t bytes[(MAX_MATCH_DISTANCE)];\
 \
 	/* Initialise the string list heads */\
 	for (i = 0; i < 0x100; ++i)\
-		next[MAX_MATCH_DISTANCE + i] = DUMMY;\
+		next[(MAX_MATCH_DISTANCE) + i] = DUMMY;\
 \
 	/* Initialise the string list nodes */\
-	for (i = 0; i < MAX_MATCH_DISTANCE; ++i)\
+	for (i = 0; i < (MAX_MATCH_DISTANCE); ++i)\
 		prev[i] = DUMMY;\
 \
 	node_meta_array = (ClownLZSS_GraphEdge*)malloc((total_values + 1) * sizeof(ClownLZSS_GraphEdge));	/* +1 for the end-node */\
@@ -78,10 +78,10 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 	{\
 		size_t match_string;\
 \
-		const size_t string_list_head = MAX_MATCH_DISTANCE + (data[i * BYTES_PER_VALUE] & 0xFF);\
-		const size_t current_string = i % MAX_MATCH_DISTANCE;\
+		const size_t string_list_head = (MAX_MATCH_DISTANCE) + (data[i * (BYTES_PER_VALUE)] & 0xFF);\
+		const size_t current_string = i % (MAX_MATCH_DISTANCE);\
 \
-		FIND_EXTRA_MATCHES(data, total_values, i * BYTES_PER_VALUE, node_meta_array, user);\
+		FIND_EXTRA_MATCHES(data, total_values, i * (BYTES_PER_VALUE), node_meta_array, user);\
 \
 		/* `string_list_head` points to a linked-list of strings in the LZSS sliding window that match at least
 		   one byte with the current string: iterate over it and generate every possible match for this string */\
@@ -89,17 +89,17 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 		{\
 			size_t j;\
 \
-			const unsigned char *current_bytes = &data[i * BYTES_PER_VALUE];\
-			const unsigned char *match_bytes = &data[bytes[match_string] * BYTES_PER_VALUE];\
+			const unsigned char *current_bytes = &data[i * (BYTES_PER_VALUE)];\
+			const unsigned char *match_bytes = &data[bytes[match_string] * (BYTES_PER_VALUE)];\
 \
 			/* If `BYTES_PER_VALUE` is not 1, then we have to re-evaluate the first value, otherwise we can skip it */\
-			for (j = BYTES_PER_VALUE == 1; j < CLOWNLZSS_MIN(MAX_MATCH_LENGTH, total_values - i); ++j)\
+			for (j = (BYTES_PER_VALUE) == 1; j < CLOWNLZSS_MIN((MAX_MATCH_LENGTH), total_values - i); ++j)\
 			{\
 				unsigned int values_do_not_match = 0;\
 				size_t l;\
 \
-				for (l = 0; l < BYTES_PER_VALUE; ++l)\
-					values_do_not_match |= current_bytes[j * BYTES_PER_VALUE + l] != match_bytes[j * BYTES_PER_VALUE + l];\
+				for (l = 0; l < (BYTES_PER_VALUE); ++l)\
+					values_do_not_match |= current_bytes[j * (BYTES_PER_VALUE) + l] != match_bytes[j * (BYTES_PER_VALUE) + l];\
 \
 				if (values_do_not_match)\
 				{\
@@ -125,9 +125,9 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 		}\
 \
 		/* If a literal match is more efficient than all runs assigned to this value, then use that instead */\
-		if (node_meta_array[i + 1].u.cost >= node_meta_array[i].u.cost + LITERAL_COST)\
+		if (node_meta_array[i + 1].u.cost >= node_meta_array[i].u.cost + (LITERAL_COST))\
 		{\
-			node_meta_array[i + 1].u.cost = node_meta_array[i].u.cost + LITERAL_COST;\
+			node_meta_array[i + 1].u.cost = node_meta_array[i].u.cost + (LITERAL_COST);\
 			node_meta_array[i + 1].previous_node_index = i;\
 			node_meta_array[i + 1].match_length = 0;\
 		}\
@@ -173,7 +173,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 		const size_t offset = node_meta_array[next_index].match_offset;\
 \
 		if (length == 0)\
-			LITERAL_CALLBACK(&data[i * BYTES_PER_VALUE], user);\
+			LITERAL_CALLBACK(&data[i * (BYTES_PER_VALUE)], user);\
 		else\
 			MATCH_CALLBACK(next_index - length - offset, length, offset, user);\
 	}\
