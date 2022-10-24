@@ -109,7 +109,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 				else\
 				{\
 					/* Figure out how much it costs to encode the current run */\
-					const size_t cost = MATCH_COST_CALLBACK(current_bytes - match_bytes, j + 1, user);\
+					const size_t cost = MATCH_COST_CALLBACK((current_bytes - match_bytes) / (BYTES_PER_VALUE), j + 1, user);\
 \
 					/* Figure out if the cost is lower than that of any other runs that end at the same value as this one */\
 					if (cost && node_meta_array[i + j + 1].u.cost > node_meta_array[i].u.cost + cost)\
