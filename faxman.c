@@ -93,7 +93,7 @@ static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
 {
 	FaxmanInstance *instance = (FaxmanInstance*)user;
 
-	if (offset == (size_t)-1)
+	if (distance == 0)
 		distance = 0x800;
 
 	if (length >= 2 && length <= 5 && distance <= 0x100)
@@ -145,8 +145,7 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 				{
 					node_meta_array[offset + k + 1].u.cost = node_meta_array[offset].u.cost + cost;
 					node_meta_array[offset + k + 1].previous_node_index = offset;
-					node_meta_array[offset + k + 1].match_length = k + 1;
-					node_meta_array[offset + k + 1].match_offset = (size_t)-1;
+					node_meta_array[offset + k + 1].match_offset = offset;
 				}
 			}
 			else

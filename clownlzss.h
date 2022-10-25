@@ -35,7 +35,6 @@ typedef struct ClownLZSS_GraphEdge
 		size_t next_node_index;
 	} u;
 	size_t previous_node_index;
-	size_t match_length;
 	size_t match_offset;
 } ClownLZSS_GraphEdge;
 
@@ -117,7 +116,6 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 						/* Record this new best run in the graph edge assigned to the value at the end of the run */\
 						node_meta_array[i + j + 1].u.cost = node_meta_array[i].u.cost + cost;\
 						node_meta_array[i + j + 1].previous_node_index = i;\
-						node_meta_array[i + j + 1].match_length = j + 1;\
 						node_meta_array[i + j + 1].match_offset = bytes[match_string];\
 					}\
 				}\
@@ -129,7 +127,7 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 		{\
 			node_meta_array[i + 1].u.cost = node_meta_array[i].u.cost + (LITERAL_COST);\
 			node_meta_array[i + 1].previous_node_index = i;\
-			node_meta_array[i + 1].match_length = 0;\
+			node_meta_array[i + 1].match_offset = DUMMY;\
 		}\
 \
 		/* Replace the oldest string in the list with the new string, since it's about to be pushed out of the LZSS sliding window */\
@@ -169,13 +167,12 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 	for (i = 0; node_meta_array[i].u.next_node_index != DUMMY; i = node_meta_array[i].u.next_node_index)\
 	{\
 		const size_t next_index = node_meta_array[i].u.next_node_index;\
-		const size_t length = node_meta_array[next_index].match_length;\
 		const size_t offset = node_meta_array[next_index].match_offset;\
 \
-		if (length == 0)\
+		if (offset == DUMMY)\
 			LITERAL_CALLBACK(&data[i * (BYTES_PER_VALUE)], user);\
 		else\
-			MATCH_CALLBACK(next_index - length - offset, length, offset, user);\
+			MATCH_CALLBACK(i - offset, next_index - i, offset, user);\
 	}\
 \
 	free(node_meta_array);\

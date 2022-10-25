@@ -154,7 +154,6 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 			{
 				node_meta_array[offset + k + 1].u.cost = node_meta_array[offset].u.cost + cost;
 				node_meta_array[offset + k + 1].previous_node_index = offset;
-				node_meta_array[offset + k + 1].match_length = k + 1;
 				node_meta_array[offset + k + 1].match_offset = 0xFFFFFF00 | data[offset];	/* Horrible hack, like the rest of this compressor */
 			}
 		}
@@ -173,7 +172,6 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 		{
 			node_meta_array[offset + k + 1].u.cost = node_meta_array[offset].u.cost + cost;
 			node_meta_array[offset + k + 1].previous_node_index = offset;
-			node_meta_array[offset + k + 1].match_length = k + 1;
 			node_meta_array[offset + k + 1].match_offset = offset;	/* Points at itself */
 		}
 	}

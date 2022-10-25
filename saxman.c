@@ -127,7 +127,6 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 			{
 				node_meta_array[offset + i + 1].u.cost = node_meta_array[offset].u.cost + cost;
 				node_meta_array[offset + i + 1].previous_node_index = offset;
-				node_meta_array[offset + i + 1].match_length = i + 1;
 				node_meta_array[offset + i + 1].match_offset = 0xFFF;
 			}
 		}
