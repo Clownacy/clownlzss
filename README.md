@@ -35,4 +35,4 @@ node is a value in the uncompressed file, and each edge is an LZSS match. By
 using a shortest-path algorithm, this graph can be used to compute the ideal
 combination of matches needed to produce the smallest file.
 
-This project is under the zlib licence.
+This project is under the 0BSD licence.
