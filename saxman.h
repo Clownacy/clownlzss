@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2021 Clownacy
+	(C) 2018-2022 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -25,7 +25,9 @@
 
 #include "clowncommon.h"
 
-unsigned char* ClownLZSS_SaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool header);
-unsigned char* ClownLZSS_ModuledSaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool header, size_t module_size);
+#include "common.h"
+
+cc_bool ClownLZSS_SaxmanCompressWithHeader(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks);
+cc_bool ClownLZSS_SaxmanCompressWithoutHeader(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks);
 
 #endif /* CLOWNLZSS_SAXMAN_H */

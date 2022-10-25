@@ -21,8 +21,6 @@ add_executable(clownlzss
 	"kosinskiplus.c"
 	"kosinskiplus.h"
 	"main.c"
-	"memory_stream.c"
-	"memory_stream.h"
 	"rage.c"
 	"rage.h"
 	"rocket.c"

@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2021 Clownacy
+	(C) 2018-2022 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -27,86 +27,26 @@
 
 #include "clownlzss.h"
 #include "common.h"
-#include "memory_stream.h"
 
 #define TOTAL_DESCRIPTOR_BITS 16
 
 typedef struct ComperInstance
 {
-	MemoryStream *output_stream;
-	MemoryStream match_stream;
+	const ClownLZSS_Callbacks *callbacks;
+
+	size_t descriptor_position;
 
 	unsigned int descriptor;
 	unsigned int descriptor_bits_remaining;
 } ComperInstance;
 
-static void FlushData(ComperInstance *instance)
-{
-	size_t match_buffer_size;
-	unsigned char *match_buffer;
-
-	MemoryStream_WriteByte(instance->output_stream, (instance->descriptor >> 8) & 0xFF);
-	MemoryStream_WriteByte(instance->output_stream, (instance->descriptor >> 0) & 0xFF);
-
-	match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
-	match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
-
-	MemoryStream_Write(instance->output_stream, match_buffer, 1, match_buffer_size);
-}
-
-static void PutMatchByte(ComperInstance *instance, unsigned int byte)
-{
-	MemoryStream_WriteByte(&instance->match_stream, byte);
-}
-
-static void PutDescriptorBit(ComperInstance *instance, cc_bool bit)
-{
-	assert(bit == 0 || bit == 1);
-
-	if (instance->descriptor_bits_remaining == 0)
-	{
-		FlushData(instance);
-
-		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-		MemoryStream_Rewind(&instance->match_stream);
-	}
-
-	--instance->descriptor_bits_remaining;
-
-	instance->descriptor <<= 1;
-
-	instance->descriptor |= bit;
-}
-
-static void DoLiteral(const unsigned char *value, void *user)
-{
-	ComperInstance *instance = (ComperInstance*)user;
-
-	PutDescriptorBit(instance, 0);
-	PutMatchByte(instance, value[0]);
-	PutMatchByte(instance, value[1]);
-}
-
-static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
-{
-	ComperInstance *instance = (ComperInstance*)user;
-
-	(void)offset;
-
-	PutDescriptorBit(instance, 1);
-	PutMatchByte(instance, -distance & 0xFF);
-	PutMatchByte(instance, length - 1);
-}
-
 static size_t GetMatchCost(size_t distance, size_t length, void *user)
 {
 	(void)distance;
+	(void)length;
 	(void)user;
 
-	if (length == 1)
-		return 0;       /* Dictionary matches with a length of 1 are reserved for indicating the end of the file. Not that a dictionary match for 1 value would ever be worth it. */
-	else
-		return 1 + 16;	/* Descriptor bit, offset/length bytes */
+	return 1 + 16;	/* Descriptor bit, offset/length bytes */
 }
 
 static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
@@ -118,38 +58,109 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 2, 0x100, 0x100, FindExtraMatches, 1 + 16, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 2, 0x100, 0x100, FindExtraMatches, 1 + 16, GetMatchCost)
 
-static void ComperCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+static void BeginDescriptorField(ComperInstance *instance)
+{
+	const ClownLZSS_Callbacks* const callbacks = instance->callbacks;
+
+	/* Log the placement of the descriptor field. */
+	instance->descriptor_position = callbacks->tell(callbacks->user_data);
+
+	/* Insert a placeholder. */
+	callbacks->write(callbacks->user_data, 0);
+	callbacks->write(callbacks->user_data, 0);
+}
+
+static void FinishDescriptorField(ComperInstance *instance)
+{
+	const ClownLZSS_Callbacks* const callbacks = instance->callbacks;
+
+	/* Back up current position. */
+	const size_t current_position = callbacks->tell(callbacks->user_data);
+
+	/* Go back to the descriptor field. */
+	callbacks->seek(callbacks->user_data, instance->descriptor_position);
+
+	/* Write the complete descriptor field. */
+	callbacks->write(callbacks->user_data, (instance->descriptor >> (8 * 1)) & 0xFF);
+	callbacks->write(callbacks->user_data, (instance->descriptor >> (8 * 0)) & 0xFF);
+
+	/* Seek back to where we were before. */
+	callbacks->seek(callbacks->user_data, current_position);
+}
+
+static void PutDescriptorBit(ComperInstance *instance, cc_bool bit)
+{
+	assert(bit == 0 || bit == 1);
+
+	if (instance->descriptor_bits_remaining == 0)
+	{
+		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
+
+		FinishDescriptorField(instance);
+		BeginDescriptorField(instance);
+	}
+
+	--instance->descriptor_bits_remaining;
+
+	instance->descriptor <<= 1;
+
+	instance->descriptor |= bit;
+}
+
+cc_bool ClownLZSS_ComperCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks)
 {
 	ComperInstance instance;
+	ClownLZSS_Match *matches;
+	size_t total_matches;
+	size_t i;
 
-	(void)user;
-
-	instance.output_stream = output_stream;
-	MemoryStream_Create(&instance.match_stream, cc_true);
+	/* Set up the state. */
+	instance.callbacks = callbacks;
 	instance.descriptor = 0;
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	CompressData(data, data_size, &instance);
+	/* Produce a series of LZSS compression matches. */
+	if (!CompressData(data, data_size, &matches, &total_matches, &instance))
+		return cc_false;
 
-	/* Terminator match */
+	/* Begin first descriptor field. */
+	BeginDescriptorField(&instance);
+
+	/* Produce Comper-formatted data. */
+	for (i = 0; i < total_matches; ++i)
+	{
+		if (CLOWNLZSS_MATCH_IS_LITERAL(matches[i]))
+		{
+			PutDescriptorBit(&instance, 0);
+			callbacks->write(callbacks->user_data, data[matches[i].destination * 2 + 0]);
+			callbacks->write(callbacks->user_data, data[matches[i].destination * 2 + 1]);
+		}
+		else
+		{
+			const size_t distance = matches[i].destination - matches[i].source;
+			const size_t length = matches[i].length;
+
+			PutDescriptorBit(&instance, 1);
+			callbacks->write(callbacks->user_data, -distance & 0xFF);
+			callbacks->write(callbacks->user_data, length - 1);
+		}
+	}
+
+	/* We don't need the matches anymore. */
+	free(matches);
+
+	/* Add the terminator match. */
 	PutDescriptorBit(&instance, 1);
-	PutMatchByte(&instance, 0);
-	PutMatchByte(&instance, 0);
+	callbacks->write(callbacks->user_data, 0);
+	callbacks->write(callbacks->user_data, 0);
 
+	/* The descriptor field may be incomplete, so move the bits into their proper place. */
 	instance.descriptor <<= instance.descriptor_bits_remaining;
-	FlushData(&instance);
 
-	MemoryStream_Destroy(&instance.match_stream);
-}
+	/* Finish last descriptor field. */
+	FinishDescriptorField(&instance);
 
-unsigned char* ClownLZSS_ComperCompress(const unsigned char *data, size_t data_size, size_t *compressed_size)
-{
-	return RegularWrapper(data, data_size, compressed_size, NULL, ComperCompressStream);
-}
-
-unsigned char* ClownLZSS_ModuledComperCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
-{
-	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, ComperCompressStream, module_size, 1);
+	return cc_true;
 }

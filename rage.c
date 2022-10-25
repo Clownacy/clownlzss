@@ -1,5 +1,5 @@
 /*
-	(C) 2020-2021 Clownacy
+	(C) 2020-2022 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -27,95 +27,8 @@
 
 #include "clownlzss.h"
 #include "common.h"
-#include "memory_stream.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
-
-typedef struct RageInstance
-{
-	MemoryStream *output_stream;
-	const unsigned char *data;
-} RageInstance;
-
-static void PutMatchByte(RageInstance *instance, unsigned int byte)
-{
-	MemoryStream_WriteByte(instance->output_stream, byte);
-}
-
-static void DoLiteral(const unsigned char *value, void *user)
-{
-	(void)value;
-	(void)user;
-
-	/* This should never be ran */
-}
-
-static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
-{
-	RageInstance *instance = (RageInstance*)user;
-
-	(void)distance;
-
-	if (distance == 0)
-	{
-		size_t i;
-
-		/* Uncompressed run */
-		if (length > 0x1F)
-		{
-			PutMatchByte(instance, 0x20 | ((length >> 8) & 0x1F));
-			PutMatchByte(instance, length & 0xFF);
-		}
-		else
-		{
-			PutMatchByte(instance, length);
-		}
-
-		for (i = 0; i < length; ++i)
-			PutMatchByte(instance, instance->data[offset + i]);
-	}
-	else if ((offset & 0xFFFFFF00) == 0xFFFFFF00)
-	{
-		/* RLE-match */
-		length -= 4;
-
-		if (length > 0xF)
-		{
-			PutMatchByte(instance, 0x40 | 0x10 | ((length >> 8) & 0xF));
-			PutMatchByte(instance, length & 0xFF);
-		}
-		else
-		{
-			PutMatchByte(instance, 0x40 | (length & 0xF));
-		}
-
-		PutMatchByte(instance, offset & 0xFF);
-	}
-	else
-	{
-		size_t thing;
-
-		/* Dictionary-match */
-		length -= 4;
-
-		/* The first match can only encode 7 bytes */
-		thing = length > 3 ? 3 : length;
-
-		PutMatchByte(instance, 0x80 | (thing << 5) | ((distance >> 8) & 0x1F));
-		PutMatchByte(instance, distance & 0xFF);
-
-		length -= thing;
-
-		/* If there are still more bytes in this match, do them in blocks of 0x1F bytes */
-		while (length != 0)
-		{
-			thing = length > 0x1F ? 0x1F : length;
-
-			PutMatchByte(instance, 0x60 | thing);
-			length -= thing;
-		}
-	}
-}
 
 static size_t GetMatchCost(size_t distance, size_t length, void *user)
 {
@@ -178,44 +91,112 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 }
 
 /* TODO - Shouldn't the distance limit be 0x2000? */
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost)
 
-static void RageCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+cc_bool ClownLZSS_RageCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks)
 {
-	RageInstance instance;
+	ClownLZSS_Match *matches;
+	size_t total_matches;
+	size_t header_position, end_position;
+	size_t i;
 
-	size_t file_offset;
+	/* Produce a series of LZSS compression matches. */
+	if (!CompressData(data, data_size, &matches, &total_matches, NULL))
+		return cc_false;
 
-	unsigned char *buffer;
-	size_t compressed_size;
+	/* Track the location of the header... */
+	header_position = callbacks->tell(callbacks->user_data);
 
-	(void)user;
+	/* ...and insert a placeholder there. */
+	callbacks->write(callbacks->user_data, 0);
+	callbacks->write(callbacks->user_data, 0);
 
-	instance.output_stream = output_stream;
-	instance.data = data;
+	/* Produce Rage-formatted data. */
+	for (i = 0; i < total_matches; ++i)
+	{
+		const size_t distance = matches[i].destination - matches[i].source;
+		const size_t offset = matches[i].source;
 
-	file_offset = MemoryStream_GetPosition(output_stream);
+		size_t length;
 
-	/* Blank header */
-	MemoryStream_WriteByte(output_stream, 0);
-	MemoryStream_WriteByte(output_stream, 0);
+		length = matches[i].length;
 
-	CompressData(data, data_size, &instance);
+		if (distance == 0)
+		{
+			size_t i;
 
-	buffer = MemoryStream_GetBuffer(output_stream);
-	compressed_size = MemoryStream_GetPosition(output_stream) - file_offset;
+			/* Uncompressed run */
+			if (length > 0x1F)
+			{
+				callbacks->write(callbacks->user_data, 0x20 | ((length >> 8) & 0x1F));
+				callbacks->write(callbacks->user_data, length & 0xFF);
+			}
+			else
+			{
+				callbacks->write(callbacks->user_data, length);
+			}
 
-	/* Fill in header */
-	buffer[file_offset + 0] = (compressed_size >> 0) & 0xFF;
-	buffer[file_offset + 1] = (compressed_size >> 8) & 0xFF;
-}
+			for (i = 0; i < length; ++i)
+				callbacks->write(callbacks->user_data, data[offset + i]);
+		}
+		else if ((offset & 0xFFFFFF00) == 0xFFFFFF00)
+		{
+			/* RLE-match */
+			length -= 4;
 
-unsigned char* ClownLZSS_RageCompress(const unsigned char *data, size_t data_size, size_t *compressed_size)
-{
-	return RegularWrapper(data, data_size, compressed_size, NULL, RageCompressStream);
-}
+			if (length > 0xF)
+			{
+				callbacks->write(callbacks->user_data, 0x40 | 0x10 | ((length >> 8) & 0xF));
+				callbacks->write(callbacks->user_data, length & 0xFF);
+			}
+			else
+			{
+				callbacks->write(callbacks->user_data, 0x40 | (length & 0xF));
+			}
 
-unsigned char* ClownLZSS_ModuledRageCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
-{
-	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, RageCompressStream, module_size, 1);
+			callbacks->write(callbacks->user_data, offset & 0xFF);
+		}
+		else
+		{
+			size_t thing;
+
+			/* Dictionary-match */
+			length -= 4;
+
+			/* The first match can only encode 7 bytes */
+			thing = length > 3 ? 3 : length;
+
+			callbacks->write(callbacks->user_data, 0x80 | (thing << 5) | ((distance >> 8) & 0x1F));
+			callbacks->write(callbacks->user_data, distance & 0xFF);
+
+			length -= thing;
+
+			/* If there are still more bytes in this match, do them in blocks of 0x1F bytes */
+			while (length != 0)
+			{
+				thing = length > 0x1F ? 0x1F : length;
+
+				callbacks->write(callbacks->user_data, 0x60 | thing);
+				length -= thing;
+			}
+		}
+	}
+
+	/* We don't need the matches anymore. */
+	free(matches);
+
+	/* Grab the current position for later. */
+	end_position = callbacks->tell(callbacks->user_data);
+
+	/* Rewind to the header... */
+	callbacks->seek(callbacks->user_data, header_position);
+
+	/* ...and complete it. */
+	callbacks->write(callbacks->user_data, ((end_position - header_position) >> (8 * 0)) & 0xFF);
+	callbacks->write(callbacks->user_data, ((end_position - header_position) >> (8 * 1)) & 0xFF);
+
+	/* Seek back to the end of the file just as the caller might expect us to do. */
+	callbacks->seek(callbacks->user_data, end_position);
+
+	return cc_true;
 }

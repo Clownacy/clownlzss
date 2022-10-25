@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2021 Clownacy
+	(C) 2018-2022 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -38,19 +38,38 @@ typedef struct ClownLZSS_GraphEdge
 	size_t match_offset;
 } ClownLZSS_GraphEdge;
 
-#define CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(NAME, BYTES_PER_VALUE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, LITERAL_CALLBACK, MATCH_COST_CALLBACK, MATCH_CALLBACK)\
-void NAME(const unsigned char *data, size_t data_size, void *user)\
+typedef struct ClownLZSS_Match
+{
+	size_t source;
+	size_t destination;
+	size_t length;
+} ClownLZSS_Match;
+
+#define CLOWNLZSS_MATCH_IS_LITERAL(match) ((match).source == (size_t)-1)
+
+#define CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(NAME, BYTES_PER_VALUE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, MATCH_COST_CALLBACK)\
+int NAME(const unsigned char *data, size_t data_size, ClownLZSS_Match **_matches, size_t *_total_matches, void *user)\
 {\
 	ClownLZSS_GraphEdge *node_meta_array;\
 	size_t i;\
-\
-	const size_t total_values = data_size / (BYTES_PER_VALUE);\
-	const size_t DUMMY = -1;\
+	ClownLZSS_Match *matches;\
+	size_t total_matches;\
 \
 	/* String list stuff */\
 	size_t next[(MAX_MATCH_DISTANCE) + 0x100];\
 	size_t prev[(MAX_MATCH_DISTANCE)];\
 	size_t bytes[(MAX_MATCH_DISTANCE)];\
+\
+	const size_t total_values = data_size / (BYTES_PER_VALUE);\
+	const size_t DUMMY = -1;\
+\
+	/* Handle the edge-case where the data is empty. */\
+	if (total_values == 0)\
+	{\
+		*_matches = NULL;\
+		*_total_matches = 0;\
+		return 1;\
+	}\
 \
 	/* Initialise the string list heads */\
 	for (i = 0; i < 0x100; ++i)\
@@ -62,120 +81,144 @@ void NAME(const unsigned char *data, size_t data_size, void *user)\
 \
 	node_meta_array = (ClownLZSS_GraphEdge*)malloc((total_values + 1) * sizeof(ClownLZSS_GraphEdge));	/* +1 for the end-node */\
 \
-	/* Set costs to maximum possible value, so later comparisons work */\
-	node_meta_array[0].u.cost = 0;\
-	for (i = 1; i < total_values + 1; ++i)\
-		node_meta_array[i].u.cost = DUMMY;\
-\
-	/* Search for matches, to populate the edges of the LZSS graph.
-	   Notably, while doing this, we're also using a shortest-path
-	   algorithm on the edges to find the best combination of matches
-	   to produce the smallest file. */\
-\
-	/* Advance through the data one step at a time */\
-	for (i = 0; i < total_values; ++i)\
+	if (node_meta_array != NULL)\
 	{\
-		size_t match_string;\
+		/* Set costs to maximum possible value, so later comparisons work */\
+		node_meta_array[0].u.cost = 0;\
+		for (i = 1; i < total_values + 1; ++i)\
+			node_meta_array[i].u.cost = DUMMY;\
 \
-		const size_t string_list_head = (MAX_MATCH_DISTANCE) + (data[i * (BYTES_PER_VALUE)] & 0xFF);\
-		const size_t current_string = i % (MAX_MATCH_DISTANCE);\
+		/* Search for matches, to populate the edges of the LZSS graph.
+		   Notably, while doing this, we're also using a shortest-path
+		   algorithm on the edges to find the best combination of matches
+		   to produce the smallest file. */\
 \
-		FIND_EXTRA_MATCHES(data, total_values, i * (BYTES_PER_VALUE), node_meta_array, user);\
-\
-		/* `string_list_head` points to a linked-list of strings in the LZSS sliding window that match at least
-		   one byte with the current string: iterate over it and generate every possible match for this string */\
-		for (match_string = next[string_list_head]; match_string != DUMMY; match_string = next[match_string])\
+		/* Advance through the data one step at a time */\
+		for (i = 0; i < total_values; ++i)\
 		{\
-			size_t j;\
+			size_t match_string;\
 \
-			const unsigned char *current_bytes = &data[i * (BYTES_PER_VALUE)];\
-			const unsigned char *match_bytes = &data[bytes[match_string] * (BYTES_PER_VALUE)];\
+			const size_t string_list_head = (MAX_MATCH_DISTANCE) + data[i * (BYTES_PER_VALUE)];\
+			const size_t current_string = i % (MAX_MATCH_DISTANCE);\
 \
-			/* If `BYTES_PER_VALUE` is not 1, then we have to re-evaluate the first value, otherwise we can skip it */\
-			for (j = (BYTES_PER_VALUE) == 1; j < CLOWNLZSS_MIN((MAX_MATCH_LENGTH), total_values - i); ++j)\
+			FIND_EXTRA_MATCHES(data, total_values, i, node_meta_array, user);\
+\
+			/* `string_list_head` points to a linked-list of strings in the LZSS sliding window that match at least
+			   one byte with the current string: iterate over it and generate every possible match for this string */\
+			for (match_string = next[string_list_head]; match_string != DUMMY; match_string = next[match_string])\
 			{\
-				unsigned int values_do_not_match = 0;\
-				size_t l;\
+				size_t j;\
 \
-				for (l = 0; l < (BYTES_PER_VALUE); ++l)\
-					values_do_not_match |= current_bytes[j * (BYTES_PER_VALUE) + l] != match_bytes[j * (BYTES_PER_VALUE) + l];\
+				const unsigned char *current_bytes = &data[i * (BYTES_PER_VALUE)];\
+				const unsigned char *match_bytes = &data[bytes[match_string] * (BYTES_PER_VALUE)];\
 \
-				if (values_do_not_match)\
+				/* If `BYTES_PER_VALUE` is not 1, then we have to re-evaluate the first value, otherwise we can skip it */\
+				for (j = (BYTES_PER_VALUE) == 1; j < CLOWNLZSS_MIN((MAX_MATCH_LENGTH), total_values - i); ++j)\
 				{\
-					/* No match: give up on the current run */\
-					break;\
-				}\
-				else\
-				{\
-					/* Figure out how much it costs to encode the current run */\
-					const size_t cost = MATCH_COST_CALLBACK((current_bytes - match_bytes) / (BYTES_PER_VALUE), j + 1, user);\
+					unsigned int values_do_not_match = 0;\
+					size_t l;\
 \
-					/* Figure out if the cost is lower than that of any other runs that end at the same value as this one */\
-					if (cost && node_meta_array[i + j + 1].u.cost > node_meta_array[i].u.cost + cost)\
+					for (l = 0; l < (BYTES_PER_VALUE); ++l)\
+						values_do_not_match |= current_bytes[j * (BYTES_PER_VALUE) + l] != match_bytes[j * (BYTES_PER_VALUE) + l];\
+\
+					if (values_do_not_match)\
 					{\
-						/* Record this new best run in the graph edge assigned to the value at the end of the run */\
-						node_meta_array[i + j + 1].u.cost = node_meta_array[i].u.cost + cost;\
-						node_meta_array[i + j + 1].previous_node_index = i;\
-						node_meta_array[i + j + 1].match_offset = bytes[match_string];\
+						/* No match: give up on the current run */\
+						break;\
+					}\
+					else\
+					{\
+						/* Figure out how much it costs to encode the current run */\
+						const size_t cost = MATCH_COST_CALLBACK((current_bytes - match_bytes) / (BYTES_PER_VALUE), j + 1, user);\
+\
+						/* Figure out if the cost is lower than that of any other runs that end at the same value as this one */\
+						if (cost != 0 && node_meta_array[i + j + 1].u.cost > node_meta_array[i].u.cost + cost)\
+						{\
+							/* Record this new best run in the graph edge assigned to the value at the end of the run */\
+							node_meta_array[i + j + 1].u.cost = node_meta_array[i].u.cost + cost;\
+							node_meta_array[i + j + 1].previous_node_index = i;\
+							node_meta_array[i + j + 1].match_offset = bytes[match_string];\
+						}\
 					}\
 				}\
 			}\
+\
+			/* If a literal match is more efficient than all runs assigned to this value, then use that instead */\
+			if (node_meta_array[i + 1].u.cost >= node_meta_array[i].u.cost + (LITERAL_COST))\
+			{\
+				node_meta_array[i + 1].u.cost = node_meta_array[i].u.cost + (LITERAL_COST);\
+				node_meta_array[i + 1].previous_node_index = i;\
+				node_meta_array[i + 1].match_offset = DUMMY;\
+			}\
+\
+			/* Replace the oldest string in the list with the new string, since it's about to be pushed out of the LZSS sliding window */\
+\
+			/* Detach the old node in this slot */\
+			if (prev[current_string] != DUMMY)\
+			{\
+				next[prev[current_string]] = next[current_string];\
+\
+				if (next[current_string] != DUMMY)\
+					prev[next[current_string]] = prev[current_string];\
+			}\
+\
+			/* Replace the old node with this new one, and insert it at the start of its matching list */\
+			bytes[current_string] = i;\
+			prev[current_string] = string_list_head;\
+			next[current_string] = next[string_list_head];\
+\
+			if (next[string_list_head] != DUMMY)\
+				prev[next[string_list_head]] = current_string;\
+\
+			next[string_list_head] = current_string;\
 		}\
 \
-		/* If a literal match is more efficient than all runs assigned to this value, then use that instead */\
-		if (node_meta_array[i + 1].u.cost >= node_meta_array[i].u.cost + (LITERAL_COST))\
+		/* At this point, the edges will have formed a shortest-path from the start to the end:
+		   You just have to start at the last edge, and follow it backwards all the way to the start. */\
+\
+		/* Mark start/end nodes for the following loops */\
+		node_meta_array[0].previous_node_index = DUMMY;\
+		node_meta_array[total_values].u.next_node_index = DUMMY;\
+\
+		/* Reverse the direction of the edges, so we can parse the LZSS graph from start to end */\
+		for (i = total_values; node_meta_array[i].previous_node_index != DUMMY; i = node_meta_array[i].previous_node_index)\
+			node_meta_array[node_meta_array[i].previous_node_index].u.next_node_index = i;\
+\
+		/* Produce an array of LZSS matches for the caller to process. It's safe to overwrite the LZSS graph to do this. */\
+		matches = (ClownLZSS_Match*)node_meta_array;\
+		total_matches = 0;\
+\
+		i = 0;\
+		while (node_meta_array[i].u.next_node_index != DUMMY)\
 		{\
-			node_meta_array[i + 1].u.cost = node_meta_array[i].u.cost + (LITERAL_COST);\
-			node_meta_array[i + 1].previous_node_index = i;\
-			node_meta_array[i + 1].match_offset = DUMMY;\
+			const size_t next_index = node_meta_array[i].u.next_node_index;\
+			const size_t offset = node_meta_array[next_index].match_offset;\
+\
+			matches[total_matches].source = offset;\
+			matches[total_matches].destination = i;\
+			matches[total_matches].length = next_index - i;\
+\
+			++total_matches;\
+\
+			i = next_index;\
 		}\
 \
-		/* Replace the oldest string in the list with the new string, since it's about to be pushed out of the LZSS sliding window */\
+		/* Shrink the allocated buffer since we don't need the extra space. */\
+		matches = (ClownLZSS_Match*)realloc(node_meta_array, total_matches * sizeof(ClownLZSS_Match));\
 \
-		/* Detach the old node in this slot */\
-		if (prev[current_string] != DUMMY)\
+		if (matches == NULL)\
 		{\
-			next[prev[current_string]] = next[current_string];\
-\
-			if (next[current_string] != DUMMY)\
-				prev[next[current_string]] = prev[current_string];\
+			free(node_meta_array);\
 		}\
-\
-		/* Replace the old node with this new one, and insert it at the start of its matching list */\
-		bytes[current_string] = i;\
-		prev[current_string] = string_list_head;\
-		next[current_string] = next[string_list_head];\
-\
-		if (next[string_list_head] != DUMMY)\
-			prev[next[string_list_head]] = current_string;\
-\
-		next[string_list_head] = current_string;\
-	}\
-\
-	/* At this point, the edges will have formed a shortest-path from the start to the end:
-	   You just have to start at the last edge, and follow it backwards all the way to the start. */\
-\
-	/* Mark start/end nodes for the following loops */\
-	node_meta_array[0].previous_node_index = DUMMY;\
-	node_meta_array[total_values].u.next_node_index = DUMMY;\
-\
-	/* Reverse the direction of the edges, so we can parse the LZSS graph from start to end */\
-	for (i = total_values; node_meta_array[i].previous_node_index != DUMMY; i = node_meta_array[i].previous_node_index)\
-		node_meta_array[node_meta_array[i].previous_node_index].u.next_node_index = i;\
-\
-	/* Go through our now-complete LZSS graph, and output the optimally-compressed file */\
-	for (i = 0; node_meta_array[i].u.next_node_index != DUMMY; i = node_meta_array[i].u.next_node_index)\
-	{\
-		const size_t next_index = node_meta_array[i].u.next_node_index;\
-		const size_t offset = node_meta_array[next_index].match_offset;\
-\
-		if (offset == DUMMY)\
-			LITERAL_CALLBACK(&data[i * (BYTES_PER_VALUE)], user);\
 		else\
-			MATCH_CALLBACK(i - offset, next_index - i, offset, user);\
+		{\
+			*_matches = matches;\
+			*_total_matches = total_matches;\
+			return 1;\
+		}\
 	}\
 \
-	free(node_meta_array);\
+	return 0;\
 }
 
 #endif /* CLOWNLZSS_H */

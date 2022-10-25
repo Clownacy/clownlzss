@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2021 Clownacy
+	(C) 2018-2022 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -27,87 +27,16 @@
 
 #include "clownlzss.h"
 #include "common.h"
-#include "memory_stream.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
 typedef struct ChameleonInstance
 {
-	MemoryStream match_stream;
-	MemoryStream descriptor_stream;
+	const ClownLZSS_Callbacks *callbacks;
 
 	unsigned int descriptor;
 	unsigned int descriptor_bits_remaining;
 } ChameleonInstance;
-
-static void PutMatchByte(ChameleonInstance *instance, unsigned int byte)
-{
-	MemoryStream_WriteByte(&instance->match_stream, byte);
-}
-
-static void PutDescriptorBit(ChameleonInstance *instance, cc_bool bit)
-{
-	assert(bit == 0 || bit == 1);
-
-	if (instance->descriptor_bits_remaining == 0)
-	{
-		MemoryStream_WriteByte(&instance->descriptor_stream, instance->descriptor & 0xFF);
-
-		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-	}
-
-	--instance->descriptor_bits_remaining;
-
-	instance->descriptor <<= 1;
-
-	instance->descriptor |= bit;
-}
-
-static void DoLiteral(const unsigned char *value, void *user)
-{
-	ChameleonInstance *instance = (ChameleonInstance*)user;
-
-	PutDescriptorBit(instance, 1);
-	PutMatchByte(instance, value[0]);
-}
-
-static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
-{
-	ChameleonInstance *instance = (ChameleonInstance*)user;
-
-	(void)offset;
-
-	if (length >= 2 && length <= 3 && distance < 0x100)
-	{
-		PutDescriptorBit(instance, 0);
-		PutDescriptorBit(instance, 0);
-		PutMatchByte(instance, distance);
-		PutDescriptorBit(instance, length == 3);
-	}
-	else if (length >= 3 && length <= 5)
-	{
-		PutDescriptorBit(instance, 0);
-		PutDescriptorBit(instance, 1);
-		PutDescriptorBit(instance, !!(distance & (1 << 10)));
-		PutDescriptorBit(instance, !!(distance & (1 << 9)));
-		PutDescriptorBit(instance, !!(distance & (1 << 8)));
-		PutMatchByte(instance, distance & 0xFF);
-		PutDescriptorBit(instance, length == 5);
-		PutDescriptorBit(instance, length == 4);
-	}
-	else /*if (length >= 6)*/
-	{
-		PutDescriptorBit(instance, 0);
-		PutDescriptorBit(instance, 1);
-		PutDescriptorBit(instance, !!(distance & (1 << 10)));
-		PutDescriptorBit(instance, !!(distance & (1 << 9)));
-		PutDescriptorBit(instance, !!(distance & (1 << 8)));
-		PutMatchByte(instance, distance & 0xFF);
-		PutDescriptorBit(instance, 1);
-		PutDescriptorBit(instance, 1);
-		PutMatchByte(instance, length);
-	}
-}
 
 static size_t GetMatchCost(size_t distance, size_t length, void *user)
 {
@@ -133,63 +62,152 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 }
 
 /* TODO - Shouldn't the length limit be 0x100, and the distance limit be 0x800? */
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, GetMatchCost)
 
-static void ChameleonCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+static void PutDescriptorBit(ChameleonInstance *instance, cc_bool bit)
+{
+	const ClownLZSS_Callbacks* const callbacks = instance->callbacks;
+
+	assert(bit == 0 || bit == 1);
+
+	if (instance->descriptor_bits_remaining == 0)
+	{
+		callbacks->write(callbacks->user_data, instance->descriptor & 0xFF);
+
+		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
+	}
+
+	--instance->descriptor_bits_remaining;
+
+	instance->descriptor <<= 1;
+
+	instance->descriptor |= bit;
+}
+
+
+cc_bool ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks)
 {
 	ChameleonInstance instance;
+	ClownLZSS_Match *matches;
+	size_t total_matches;
+	size_t header_position, current_position;
+	size_t i;
 
-	size_t descriptor_buffer_size;
-	unsigned char *descriptor_buffer;
-
-	size_t match_buffer_size;
-	unsigned char *match_buffer;
-
-	(void)user;
-
-	MemoryStream_Create(&instance.match_stream, cc_true);
-	MemoryStream_Create(&instance.descriptor_stream, cc_true);
+	/* Set up the state. */
+	instance.callbacks = callbacks;
 	instance.descriptor = 0;
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	CompressData(data, data_size, &instance);
+	/* Produce a series of LZSS compression matches. */
+	if (!CompressData(data, data_size, &matches, &total_matches, &instance))
+		return cc_false;
 
-	/* Terminator match */
+	/* Track the location of the header... */
+	header_position = callbacks->tell(callbacks->user_data);
+
+	/* ...and insert a placeholder there. */
+	callbacks->write(callbacks->user_data, 0);
+	callbacks->write(callbacks->user_data, 0);
+
+	/* Produce Faxman-formatted data. */
+	/* Unlike many other LZSS formats, Chameleon stores the descriptor fields separately from the rest of the data. */
+	/* Iterate over the compression matches, outputting just the descriptor fields. */
+	for (i = 0; i < total_matches; ++i)
+	{
+		if (CLOWNLZSS_MATCH_IS_LITERAL(matches[i]))
+		{
+			PutDescriptorBit(&instance, 1);
+		}
+		else
+		{
+			const size_t distance = matches[i].destination - matches[i].source;
+			const size_t length = matches[i].length;
+
+			if (length >= 2 && length <= 3 && distance < 0x100)
+			{
+				PutDescriptorBit(&instance, 0);
+				PutDescriptorBit(&instance, 0);
+				PutDescriptorBit(&instance, length == 3);
+			}
+			else if (length >= 3 && length <= 5)
+			{
+				PutDescriptorBit(&instance, 0);
+				PutDescriptorBit(&instance, 1);
+				PutDescriptorBit(&instance, !!(distance & (1 << 10)));
+				PutDescriptorBit(&instance, !!(distance & (1 << 9)));
+				PutDescriptorBit(&instance, !!(distance & (1 << 8)));
+				PutDescriptorBit(&instance, length == 5);
+				PutDescriptorBit(&instance, length == 4);
+			}
+			else /*if (length >= 6)*/
+			{
+				PutDescriptorBit(&instance, 0);
+				PutDescriptorBit(&instance, 1);
+				PutDescriptorBit(&instance, !!(distance & (1 << 10)));
+				PutDescriptorBit(&instance, !!(distance & (1 << 9)));
+				PutDescriptorBit(&instance, !!(distance & (1 << 8)));
+				PutDescriptorBit(&instance, 1);
+				PutDescriptorBit(&instance, 1);
+			}
+		}
+	}
+
+	/* Add the terminator match. */
 	PutDescriptorBit(&instance, 0);
 	PutDescriptorBit(&instance, 1);
 	PutDescriptorBit(&instance, 0);
 	PutDescriptorBit(&instance, 0);
 	PutDescriptorBit(&instance, 0);
-	PutMatchByte(&instance, 0);
 	PutDescriptorBit(&instance, 1);
 	PutDescriptorBit(&instance, 1);
-	PutMatchByte(&instance, 0);
 
-	MemoryStream_WriteByte(&instance.descriptor_stream, (instance.descriptor << instance.descriptor_bits_remaining) & 0xFF);
+	/* The descriptor field may be incomplete, so move the bits into their proper place. */
+	instance.descriptor <<= instance.descriptor_bits_remaining;
 
-	descriptor_buffer_size = MemoryStream_GetPosition(&instance.descriptor_stream);
-	descriptor_buffer = MemoryStream_GetBuffer(&instance.descriptor_stream);
+	/* Write last descriptor field. */
+	callbacks->write(callbacks->user_data, instance.descriptor);
 
-	MemoryStream_WriteByte(output_stream, (descriptor_buffer_size >> 8) & 0xFF);
-	MemoryStream_WriteByte(output_stream, (descriptor_buffer_size >> 0) & 0xFF);
+	/* Chameleon's header contains the size of the descriptor fields end, so, now that we know that, let's fill it in. */
+	current_position = callbacks->tell(callbacks->user_data);
+	callbacks->seek(callbacks->user_data, header_position);
+	callbacks->write(callbacks->user_data, ((current_position - header_position - 2) >> (8 * 1)) & 0xFF);
+	callbacks->write(callbacks->user_data, ((current_position - header_position - 2) >> (8 * 0)) & 0xFF);
+	callbacks->seek(callbacks->user_data, current_position);
 
-	MemoryStream_Write(output_stream, descriptor_buffer, 1, descriptor_buffer_size);
+	/* Iterate over the compression matches again, now outputting just the literals and offset/length pairs. */
+	for (i = 0; i < total_matches; ++i)
+	{
+		if (CLOWNLZSS_MATCH_IS_LITERAL(matches[i]))
+		{
+			callbacks->write(callbacks->user_data, data[matches[i].destination]);
+		}
+		else
+		{
+			const size_t distance = matches[i].destination - matches[i].source;
+			const size_t length = matches[i].length;
 
-	match_buffer_size = MemoryStream_GetPosition(&instance.match_stream);
-	match_buffer = MemoryStream_GetBuffer(&instance.match_stream);
+			if (length >= 2 && length <= 3 && distance < 0x100)
+			{
+				callbacks->write(callbacks->user_data, distance);
+			}
+			else if (length >= 3 && length <= 5)
+			{
+				callbacks->write(callbacks->user_data, distance & 0xFF);
+			}
+			else /*if (length >= 6)*/
+			{
+				callbacks->write(callbacks->user_data, distance & 0xFF);
+				callbacks->write(callbacks->user_data, length);
+			}
+		}
+	}
 
-	MemoryStream_Write(output_stream, match_buffer, 1, match_buffer_size);
+	/* We don't need the matches anymore. */
+	free(matches);
 
-	MemoryStream_Destroy(&instance.descriptor_stream);
-	MemoryStream_Destroy(&instance.match_stream);
-}
+	/* Add the terminator match. */
+	callbacks->write(callbacks->user_data, 0);
+	callbacks->write(callbacks->user_data, 0);
 
-unsigned char* ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size, size_t *compressed_size)
-{
-	return RegularWrapper(data, data_size, compressed_size, NULL, ChameleonCompressStream);
-}
-
-unsigned char* ClownLZSS_ModuledChameleonCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
-{
-	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, ChameleonCompressStream, module_size, 1);
+	return cc_true;
 }

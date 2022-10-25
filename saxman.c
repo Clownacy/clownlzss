@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2021 Clownacy
+	(C) 2018-2022 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -27,75 +27,18 @@
 
 #include "clownlzss.h"
 #include "common.h"
-#include "memory_stream.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
 typedef struct SaxmanInstance
 {
-	MemoryStream *output_stream;
-	MemoryStream match_stream;
+	const ClownLZSS_Callbacks *callbacks;
+
+	size_t descriptor_position;
 
 	unsigned int descriptor;
 	unsigned int descriptor_bits_remaining;
 } SaxmanInstance;
-
-static void FlushData(SaxmanInstance *instance)
-{
-	size_t match_buffer_size;
-	unsigned char *match_buffer;
-
-	MemoryStream_WriteByte(instance->output_stream, instance->descriptor);
-
-	match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
-	match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
-
-	MemoryStream_Write(instance->output_stream, match_buffer, 1, match_buffer_size);
-}
-
-static void PutMatchByte(SaxmanInstance *instance, unsigned int byte)
-{
-	MemoryStream_WriteByte(&instance->match_stream, byte);
-}
-
-static void PutDescriptorBit(SaxmanInstance *instance, cc_bool bit)
-{
-	assert(bit == 0 || bit == 1);
-
-	if (instance->descriptor_bits_remaining == 0)
-	{
-		FlushData(instance);
-
-		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-		MemoryStream_Rewind(&instance->match_stream);
-	}
-
-	--instance->descriptor_bits_remaining;
-
-	instance->descriptor >>= 1;
-
-	if (bit)
-		instance->descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
-}
-
-static void DoLiteral(const unsigned char *value, void *user)
-{
-	SaxmanInstance *instance = (SaxmanInstance*)user;
-
-	PutDescriptorBit(instance, 1);
-	PutMatchByte(instance, value[0]);
-}
-
-static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
-{
-	SaxmanInstance *instance = (SaxmanInstance*)user;
-
-	(void)distance;
-
-	PutDescriptorBit(instance, 0);
-	PutMatchByte(instance, (offset - 0x12) & 0xFF);
-	PutMatchByte(instance, (((offset - 0x12) & 0xF00) >> 4) | (length - 3));
-}
 
 static size_t GetMatchCost(size_t distance, size_t length, void *user)
 {
@@ -133,54 +76,139 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 	}
 }
 
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x12, 0x1000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x12, 0x1000, FindExtraMatches, 1 + 8, GetMatchCost)
 
-static void SaxmanCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+static void BeginDescriptorField(SaxmanInstance *instance)
 {
-	const cc_bool header = *(cc_bool*)user;
+	const ClownLZSS_Callbacks* const callbacks = instance->callbacks;
 
+	/* Log the placement of the descriptor field. */
+	instance->descriptor_position = callbacks->tell(callbacks->user_data);
+
+	/* Insert a placeholder. */
+	callbacks->write(callbacks->user_data, 0);
+}
+
+static void FinishDescriptorField(SaxmanInstance *instance)
+{
+	const ClownLZSS_Callbacks* const callbacks = instance->callbacks;
+
+	/* Back up current position. */
+	const size_t current_position = callbacks->tell(callbacks->user_data);
+
+	/* Go back to the descriptor field. */
+	callbacks->seek(callbacks->user_data, instance->descriptor_position);
+
+	/* Write the complete descriptor field. */
+	callbacks->write(callbacks->user_data, instance->descriptor & 0xFF);
+
+	/* Seek back to where we were before. */
+	callbacks->seek(callbacks->user_data, current_position);
+}
+
+static void PutDescriptorBit(SaxmanInstance *instance, cc_bool bit)
+{
+	assert(bit == 0 || bit == 1);
+
+	if (instance->descriptor_bits_remaining == 0)
+	{
+		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
+
+		FinishDescriptorField(instance);
+		BeginDescriptorField(instance);
+	}
+
+	--instance->descriptor_bits_remaining;
+
+	instance->descriptor >>= 1;
+
+	if (bit)
+		instance->descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
+}
+
+static cc_bool SaxmanCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks, cc_bool header)
+{
 	SaxmanInstance instance;
+	ClownLZSS_Match *matches;
+	size_t total_matches;
+	size_t header_position, end_position;
+	size_t i;
 
-	size_t file_offset;
-
-	instance.output_stream = output_stream;
-	MemoryStream_Create(&instance.match_stream, cc_true);
+	/* Set up the state. */
+	instance.callbacks = callbacks;
 	instance.descriptor = 0;
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	file_offset = MemoryStream_GetPosition(output_stream);
+	/* Produce a series of LZSS compression matches. */
+	if (!CompressData(data, data_size, &matches, &total_matches, &instance))
+		return cc_false;
 
 	if (header)
 	{
-		/* Blank header */
-		MemoryStream_WriteByte(output_stream, 0);
-		MemoryStream_WriteByte(output_stream, 0);
+		/* Track the location of the header... */
+		header_position = callbacks->tell(callbacks->user_data);
+
+		/* ...and insert a placeholder there. */
+		callbacks->write(callbacks->user_data, 0);
+		callbacks->write(callbacks->user_data, 0);
 	}
 
-	CompressData(data, data_size, &instance);
+	/* Begin first descriptor field. */
+	BeginDescriptorField(&instance);
 
+	/* Produce Saxman-formatted data. */
+	for (i = 0; i < total_matches; ++i)
+	{
+		if (CLOWNLZSS_MATCH_IS_LITERAL(matches[i]))
+		{
+			PutDescriptorBit(&instance, 1);
+			callbacks->write(callbacks->user_data, data[matches[i].destination]);
+		}
+		else
+		{
+			const size_t offset = matches[i].source - 0x12;
+			const size_t length = matches[i].length;
+
+			PutDescriptorBit(&instance, 0);
+			callbacks->write(callbacks->user_data, offset & 0xFF);
+			callbacks->write(callbacks->user_data, ((offset & 0xF00) >> 4) | (length - 3));
+		}
+	}
+
+	/* We don't need the matches anymore. */
+	free(matches);
+
+	/* The descriptor field may be incomplete, so move the bits into their proper place. */
 	instance.descriptor >>= instance.descriptor_bits_remaining;
-	FlushData(&instance);
 
-	MemoryStream_Destroy(&instance.match_stream);
+	/* Finish last descriptor field. */
+	FinishDescriptorField(&instance);
 
 	if (header)
 	{
-		unsigned char *buffer = MemoryStream_GetBuffer(output_stream);
-		const size_t compressed_size = MemoryStream_GetPosition(output_stream) - file_offset - 2;
+		/* Grab the current position for later. */
+		end_position = callbacks->tell(callbacks->user_data);
 
-		/* Fill in header */
-		buffer[file_offset + 0] = (compressed_size >> 0) & 0xFF;
-		buffer[file_offset + 1] = (compressed_size >> 8) & 0xFF;
+		/* Rewind to the header... */
+		callbacks->seek(callbacks->user_data, header_position);
+
+		/* ...and complete it. */
+		callbacks->write(callbacks->user_data, ((end_position - header_position - 2) >> (8 * 0)) & 0xFF);
+		callbacks->write(callbacks->user_data, ((end_position - header_position - 2) >> (8 * 1)) & 0xFF);
+
+		/* Seek back to the end of the file just as the caller might expect us to do. */
+		callbacks->seek(callbacks->user_data, end_position);
 	}
+
+	return cc_true;
 }
 
-unsigned char* ClownLZSS_SaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool header)
+cc_bool ClownLZSS_SaxmanCompressWithHeader(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks)
 {
-	return RegularWrapper(data, data_size, compressed_size, &header, SaxmanCompressStream);
+	return SaxmanCompress(data, data_size, callbacks, cc_true);
 }
 
-unsigned char* ClownLZSS_ModuledSaxmanCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, cc_bool header, size_t module_size)
+cc_bool ClownLZSS_SaxmanCompressWithoutHeader(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks)
 {
-	return ModuledCompressionWrapper(data, data_size, compressed_size, &header, SaxmanCompressStream, module_size, 1);
+	return SaxmanCompress(data, data_size, callbacks, cc_false);
 }

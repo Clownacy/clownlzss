@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2021 Clownacy
+	(C) 2018-2022 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -27,94 +27,18 @@
 
 #include "clownlzss.h"
 #include "common.h"
-#include "memory_stream.h"
 
 #define TOTAL_DESCRIPTOR_BITS 8
 
 typedef struct KosinskiPlusInstance
 {
-	MemoryStream *output_stream;
-	MemoryStream match_stream;
+	const ClownLZSS_Callbacks *callbacks;
+
+	size_t descriptor_position;
 
 	unsigned int descriptor;
 	unsigned int descriptor_bits_remaining;
 } KosinskiPlusInstance;
-
-static void FlushData(KosinskiPlusInstance *instance)
-{
-	size_t match_buffer_size;
-	unsigned char *match_buffer;
-
-	MemoryStream_WriteByte(instance->output_stream, instance->descriptor & 0xFF);
-
-	match_buffer_size = MemoryStream_GetPosition(&instance->match_stream);
-	match_buffer = MemoryStream_GetBuffer(&instance->match_stream);
-
-	MemoryStream_Write(instance->output_stream, match_buffer, 1, match_buffer_size);
-}
-
-static void PutMatchByte(KosinskiPlusInstance *instance, unsigned int byte)
-{
-	MemoryStream_WriteByte(&instance->match_stream, byte);
-}
-
-static void PutDescriptorBit(KosinskiPlusInstance *instance, cc_bool bit)
-{
-	assert(bit == 0 || bit == 1);
-
-	if (instance->descriptor_bits_remaining == 0)
-	{
-		FlushData(instance);
-
-		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-		MemoryStream_Rewind(&instance->match_stream);
-	}
-
-	--instance->descriptor_bits_remaining;
-
-	instance->descriptor <<= 1;
-
-	instance->descriptor |= bit;
-}
-
-static void DoLiteral(const unsigned char *value, void *user)
-{
-	KosinskiPlusInstance *instance = (KosinskiPlusInstance*)user;
-
-	PutDescriptorBit(instance, 1);
-	PutMatchByte(instance, value[0]);
-}
-
-static void DoMatch(size_t distance, size_t length, size_t offset, void *user)
-{
-	KosinskiPlusInstance *instance = (KosinskiPlusInstance*)user;
-
-	(void)offset;
-
-	if (length >= 2 && length <= 5 && distance <= 0x100)
-	{
-		PutDescriptorBit(instance, 0);
-		PutDescriptorBit(instance, 0);
-		PutMatchByte(instance, -distance & 0xFF);
-		PutDescriptorBit(instance, !!((length - 2) & 2));
-		PutDescriptorBit(instance, !!((length - 2) & 1));
-	}
-	else if (length >= 3 && length <= 9)
-	{
-		PutDescriptorBit(instance, 0);
-		PutDescriptorBit(instance, 1);
-		PutMatchByte(instance, ((-distance >> (8 - 3)) & 0xF8) | ((10 - length) & 7));
-		PutMatchByte(instance, -distance & 0xFF);
-	}
-	else /*if (length >= 10)*/
-	{
-		PutDescriptorBit(instance, 0);
-		PutDescriptorBit(instance, 1);
-		PutMatchByte(instance, (-distance >> (8 - 3)) & 0xF8);
-		PutMatchByte(instance, -distance & 0xFF);
-		PutMatchByte(instance, length - 9);
-	}
-}
 
 static size_t GetMatchCost(size_t distance, size_t length, void *user)
 {
@@ -139,40 +63,128 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 	(void)user;
 }
 
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x100 + 8, 0x2000, FindExtraMatches, 1 + 8, DoLiteral, GetMatchCost, DoMatch)
+static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x100 + 8, 0x2000, FindExtraMatches, 1 + 8, GetMatchCost)
 
-static void KosinskiPlusCompressStream(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user)
+static void BeginDescriptorField(KosinskiPlusInstance *instance)
+{
+	const ClownLZSS_Callbacks* const callbacks = instance->callbacks;
+
+	/* Log the placement of the descriptor field. */
+	instance->descriptor_position = callbacks->tell(callbacks->user_data);
+
+	/* Insert a placeholder. */
+	callbacks->write(callbacks->user_data, 0);
+}
+
+static void FinishDescriptorField(KosinskiPlusInstance *instance)
+{
+	const ClownLZSS_Callbacks* const callbacks = instance->callbacks;
+
+	/* Back up current position. */
+	const size_t current_position = callbacks->tell(callbacks->user_data);
+
+	/* Go back to the descriptor field. */
+	callbacks->seek(callbacks->user_data, instance->descriptor_position);
+
+	/* Write the complete descriptor field. */
+	callbacks->write(callbacks->user_data, instance->descriptor & 0xFF);
+
+	/* Seek back to where we were before. */
+	callbacks->seek(callbacks->user_data, current_position);
+}
+
+static void PutDescriptorBit(KosinskiPlusInstance *instance, cc_bool bit)
+{
+	assert(bit == 0 || bit == 1);
+
+	if (instance->descriptor_bits_remaining == 0)
+	{
+		instance->descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
+
+		FinishDescriptorField(instance);
+		BeginDescriptorField(instance);
+	}
+
+	--instance->descriptor_bits_remaining;
+
+	instance->descriptor <<= 1;
+
+	instance->descriptor |= bit;
+}
+
+cc_bool ClownLZSS_KosinskiPlusCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks)
 {
 	KosinskiPlusInstance instance;
+	ClownLZSS_Match *matches;
+	size_t total_matches;
+	size_t i;
 
-	(void)user;
-
-	instance.output_stream = output_stream;
-	MemoryStream_Create(&instance.match_stream, cc_true);
+	/* Set up the state. */
+	instance.callbacks = callbacks;
 	instance.descriptor = 0;
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-	CompressData(data, data_size, &instance);
+	/* Produce a series of LZSS compression matches. */
+	if (!CompressData(data, data_size, &matches, &total_matches, &instance))
+		return cc_false;
 
-	/* Terminator match */
+	/* Begin first descriptor field. */
+	BeginDescriptorField(&instance);
+
+	/* Produce Kosinski+-formatted data. */
+	for (i = 0; i < total_matches; ++i)
+	{
+		if (CLOWNLZSS_MATCH_IS_LITERAL(matches[i]))
+		{
+			PutDescriptorBit(&instance, 1);
+			callbacks->write(callbacks->user_data, data[matches[i].destination]);
+		}
+		else
+		{
+			const size_t distance = matches[i].destination - matches[i].source;
+			const size_t length = matches[i].length;
+
+			if (length >= 2 && length <= 5 && distance <= 0x100)
+			{
+				PutDescriptorBit(&instance, 0);
+				PutDescriptorBit(&instance, 0);
+				callbacks->write(callbacks->user_data, -distance & 0xFF);
+				PutDescriptorBit(&instance, !!((length - 2) & 2));
+				PutDescriptorBit(&instance, !!((length - 2) & 1));
+			}
+			else if (length >= 3 && length <= 9)
+			{
+				PutDescriptorBit(&instance, 0);
+				PutDescriptorBit(&instance, 1);
+				callbacks->write(callbacks->user_data, ((-distance >> (8 - 3)) & 0xF8) | ((10 - length) & 7));
+				callbacks->write(callbacks->user_data, -distance & 0xFF);
+			}
+			else /*if (length >= 10)*/
+			{
+				PutDescriptorBit(&instance, 0);
+				PutDescriptorBit(&instance, 1);
+				callbacks->write(callbacks->user_data, (-distance >> (8 - 3)) & 0xF8);
+				callbacks->write(callbacks->user_data, -distance & 0xFF);
+				callbacks->write(callbacks->user_data, length - 9);
+			}
+		}
+	}
+
+	/* We don't need the matches anymore. */
+	free(matches);
+
+	/* Add the terminator match. */
 	PutDescriptorBit(&instance, 0);
 	PutDescriptorBit(&instance, 1);
-	PutMatchByte(&instance, 0xF0);
-	PutMatchByte(&instance, 0x00);
-	PutMatchByte(&instance, 0x00);
+	callbacks->write(callbacks->user_data, 0xF0);
+	callbacks->write(callbacks->user_data, 0x00);
+	callbacks->write(callbacks->user_data, 0x00);
 
+	/* The descriptor field may be incomplete, so move the bits into their proper place. */
 	instance.descriptor <<= instance.descriptor_bits_remaining;
-	FlushData(&instance);
 
-	MemoryStream_Destroy(&instance.match_stream);
-}
+	/* Finish last descriptor field. */
+	FinishDescriptorField(&instance);
 
-unsigned char* ClownLZSS_KosinskiPlusCompress(const unsigned char *data, size_t data_size, size_t *compressed_size)
-{
-	return RegularWrapper(data, data_size, compressed_size, NULL, KosinskiPlusCompressStream);
-}
-
-unsigned char* ClownLZSS_ModuledKosinskiPlusCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size)
-{
-	return ModuledCompressionWrapper(data, data_size, compressed_size, NULL, KosinskiPlusCompressStream, module_size, 1);
+	return cc_true;
 }

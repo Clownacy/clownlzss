@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2021 Clownacy
+	(C) 2018-2022 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -23,9 +23,16 @@
 
 #include <stddef.h>
 
-#include "memory_stream.h"
+#include "clowncommon.h"
 
-unsigned char* RegularWrapper(const unsigned char *data, size_t data_size, size_t *compressed_size, void *user_data, void (*function)(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data));
-unsigned char* ModuledCompressionWrapper(const unsigned char *data, size_t data_size, size_t *compressed_size, void *user_data, void (*function)(const unsigned char *data, size_t data_size, MemoryStream *output_stream, void *user_data), size_t module_size, size_t module_alignment);
+typedef struct ClownLZSS_Callbacks
+{
+	void *user_data;
+	void (*write)(void *user_data, unsigned char byte);
+	void (*seek)(void *user_data, size_t position);
+	size_t (*tell)(void *user_data);
+} ClownLZSS_Callbacks;
+
+cc_bool ClownLZSS_ModuledCompressionWrapper(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks, cc_bool (*compression_function)(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks), size_t module_size, size_t module_alignment);
 
 #endif /* COMMON_H */

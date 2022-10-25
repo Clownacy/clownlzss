@@ -1,5 +1,5 @@
 /*
-	(C) 2018-2021 Clownacy
+	(C) 2018-2022 Clownacy
 
 	This software is provided 'as-is', without any express or implied
 	warranty.  In no event will the authors be held liable for any damages
@@ -23,7 +23,10 @@
 
 #include <stddef.h>
 
-unsigned char* ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size, size_t *compressed_size);
-unsigned char* ClownLZSS_ModuledChameleonCompress(const unsigned char *data, size_t data_size, size_t *compressed_size, size_t module_size);
+#include "clowncommon.h"
+
+#include "common.h"
+
+cc_bool ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks);
 
 #endif /* CLOWNLZSS_CHAMELEON_H */
