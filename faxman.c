@@ -134,10 +134,9 @@ static void PutDescriptorBit(FaxmanInstance *instance, cc_bool bit)
 cc_bool ClownLZSS_FaxmanCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks)
 {
 	FaxmanInstance instance;
-	ClownLZSS_Match *matches;
+	ClownLZSS_Match *matches, *match;
 	size_t total_matches;
 	size_t header_position, end_position;
-	size_t i;
 
 	/* Set up the state. */
 	instance.callbacks = callbacks;
@@ -160,17 +159,17 @@ cc_bool ClownLZSS_FaxmanCompress(const unsigned char *data, size_t data_size, co
 	BeginDescriptorField(&instance);
 
 	/* Produce Faxman-formatted data. */
-	for (i = 0; i < total_matches; ++i)
+	for (match = matches; match != &matches[total_matches]; ++match)
 	{
-		if (CLOWNLZSS_MATCH_IS_LITERAL(matches[i]))
+		if (CLOWNLZSS_MATCH_IS_LITERAL(match))
 		{
 			PutDescriptorBit(&instance, 1);
-			callbacks->write(callbacks->user_data, data[matches[i].destination]);
+			callbacks->write(callbacks->user_data, data[match->destination]);
 		}
 		else
 		{
-			const size_t distance = matches[i].destination == matches[i].source ? 0x800 : matches[i].destination - matches[i].source;
-			const size_t length = matches[i].length;
+			const size_t distance = match->destination == match->source ? 0x800 : match->destination - match->source;
+			const size_t length = match->length;
 
 			if (length >= 2 && length <= 5 && distance <= 0x100)
 			{

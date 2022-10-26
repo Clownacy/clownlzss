@@ -90,10 +90,9 @@ static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFFFFFFFF/*dictiona
 
 cc_bool ClownLZSS_RageCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks)
 {
-	ClownLZSS_Match *matches;
+	ClownLZSS_Match *matches, *match;
 	size_t total_matches;
 	size_t header_position, end_position;
-	size_t i;
 
 	/* Produce a series of LZSS compression matches. */
 	if (!CompressData(data, data_size, &matches, &total_matches, NULL))
@@ -107,14 +106,14 @@ cc_bool ClownLZSS_RageCompress(const unsigned char *data, size_t data_size, cons
 	callbacks->write(callbacks->user_data, 0);
 
 	/* Produce Rage-formatted data. */
-	for (i = 0; i < total_matches; ++i)
+	for (match = matches; match != &matches[total_matches]; ++match)
 	{
-		const size_t distance = matches[i].destination - matches[i].source;
-		const size_t offset = matches[i].source;
+		const size_t distance = match->destination - match->source;
+		const size_t offset = match->source;
 
 		size_t length;
 
-		length = matches[i].length;
+		length = match->length;
 
 		if (distance == 0)
 		{

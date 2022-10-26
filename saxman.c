@@ -124,10 +124,9 @@ static void PutDescriptorBit(SaxmanInstance *instance, cc_bool bit)
 static cc_bool SaxmanCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks, cc_bool header)
 {
 	SaxmanInstance instance;
-	ClownLZSS_Match *matches;
+	ClownLZSS_Match *matches, *match;
 	size_t total_matches;
 	size_t header_position, end_position;
-	size_t i;
 
 	/* Set up the state. */
 	instance.callbacks = callbacks;
@@ -152,17 +151,17 @@ static cc_bool SaxmanCompress(const unsigned char *data, size_t data_size, const
 	BeginDescriptorField(&instance);
 
 	/* Produce Saxman-formatted data. */
-	for (i = 0; i < total_matches; ++i)
+	for (match = matches; match != &matches[total_matches]; ++match)
 	{
-		if (CLOWNLZSS_MATCH_IS_LITERAL(matches[i]))
+		if (CLOWNLZSS_MATCH_IS_LITERAL(match))
 		{
 			PutDescriptorBit(&instance, 1);
-			callbacks->write(callbacks->user_data, data[matches[i].destination]);
+			callbacks->write(callbacks->user_data, data[match->destination]);
 		}
 		else
 		{
-			const size_t offset = matches[i].source - 0x12;
-			const size_t length = matches[i].length;
+			const size_t offset = match->source - 0x12;
+			const size_t length = match->length;
 
 			PutDescriptorBit(&instance, 0);
 			callbacks->write(callbacks->user_data, offset & 0xFF);
