@@ -19,17 +19,17 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 
 int ClownLZSS_Compress(
-	size_t bytes_per_value,
-	size_t maximum_match_length,
-	size_t maximum_match_distance,
-	void (*extra_matches_callback)(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
-	size_t literal_cost,
-	size_t (*match_cost_callback)(size_t distance, size_t length, void *user),
-	const unsigned char *data,
-	size_t data_size,
-	ClownLZSS_Match **_matches,
-	size_t *_total_matches,
-	void *user
+	const size_t bytes_per_value,
+	const size_t maximum_match_length,
+	const size_t maximum_match_distance,
+	void (* const extra_matches_callback)(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
+	const size_t literal_cost,
+	size_t (* const match_cost_callback)(size_t distance, size_t length, void *user),
+	const unsigned char* const data,
+	const size_t data_size,
+	ClownLZSS_Match** const _matches,
+	size_t* const _total_matches,
+	void* const user
 )
 {
 	int success;
@@ -48,14 +48,14 @@ int ClownLZSS_Compress(
 	else
 	{
 		/* String list stuff */
-		size_t* const next = malloc((maximum_match_distance + 0x100) * sizeof(size_t));
-		size_t* const prev = malloc(maximum_match_distance * sizeof(size_t));
-		size_t* const bytes = malloc(maximum_match_distance * sizeof(size_t));
+		size_t* const next = (size_t*)malloc((maximum_match_distance + 0x100) * sizeof(size_t));
+		size_t* const prev = (size_t*)malloc(maximum_match_distance * sizeof(size_t));
+		size_t* const bytes = (size_t*)malloc(maximum_match_distance * sizeof(size_t));
 
 		if (next != NULL && prev != NULL && bytes != NULL)
 		{
-			ClownLZSS_GraphEdge *node_meta_array;
 			size_t i;
+			ClownLZSS_GraphEdge *node_meta_array;
 
 			const size_t DUMMY = -1;
 
