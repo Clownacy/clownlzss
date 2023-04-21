@@ -42,12 +42,6 @@ typedef struct ClownLZSS_Match
 
 #define CLOWNLZSS_MATCH_IS_LITERAL(match) ((match)->source == (size_t)-1)
 
-#define CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(NAME, BYTES_PER_VALUE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, MATCH_COST_CALLBACK)\
-int NAME(const unsigned char *data, size_t data_size, ClownLZSS_Match **_matches, size_t *_total_matches, void *user)\
-{\
-	ClownLZSS_Compress(BYTES_PER_VALUE, MAX_MATCH_LENGTH, MAX_MATCH_DISTANCE, FIND_EXTRA_MATCHES, LITERAL_COST, MATCH_COST_CALLBACK, data, data_size, _matches, _total_matches, user);\
-}
-
 int ClownLZSS_Compress(
 	size_t bytes_per_value,
 	size_t maximum_match_length,
