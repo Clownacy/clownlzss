@@ -48,15 +48,16 @@ int ClownLZSS_Compress(
 	else
 	{
 		/* String list stuff */
-		size_t* const next = (size_t*)malloc((maximum_match_distance + 0x100) * sizeof(size_t));
-		size_t* const prev = (size_t*)malloc(maximum_match_distance * sizeof(size_t));
-		size_t* const bytes = (size_t*)malloc(maximum_match_distance * sizeof(size_t));
+		size_t* const buffer = (size_t*)malloc((maximum_match_distance * 3 + 0x100) * sizeof(size_t));
 
-		if (next != NULL && prev != NULL && bytes != NULL)
+		if (buffer != NULL)
 		{
 			size_t i;
 			ClownLZSS_GraphEdge *node_meta_array;
 
+			size_t* const bytes = buffer + maximum_match_distance * 0;
+			size_t* const prev = buffer + maximum_match_distance * 1;
+			size_t* const next = buffer + maximum_match_distance * 2;
 			const size_t DUMMY = -1;
 
 			/* Initialise the string list heads */
@@ -210,9 +211,7 @@ int ClownLZSS_Compress(
 			}
 		}
 
-		free(next);
-		free(prev);
-		free(bytes);
+		free(buffer);
 	}
 
 	return success;
