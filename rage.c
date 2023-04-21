@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020-2022 Clownacy
+Copyright (c) 2020-2023 Clownacy
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted.
@@ -85,9 +85,6 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 	}
 }
 
-/* TODO - Shouldn't the distance limit be 0x2000? */
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost)
-
 cc_bool ClownLZSS_RageCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks)
 {
 	ClownLZSS_Match *matches, *match;
@@ -95,7 +92,8 @@ cc_bool ClownLZSS_RageCompress(const unsigned char *data, size_t data_size, cons
 	size_t header_position, end_position;
 
 	/* Produce a series of LZSS compression matches. */
-	if (!CompressData(data, data_size, &matches, &total_matches, NULL))
+	/* TODO - Shouldn't the distance limit be 0x2000? */
+	if (!ClownLZSS_Compress(1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, data_size, &matches, &total_matches, NULL))
 		return cc_false;
 
 	/* Track the location of the header... */

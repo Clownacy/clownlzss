@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018-2022 Clownacy
+Copyright (c) 2018-2023 Clownacy
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted.
@@ -79,8 +79,6 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 	}
 }
 
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x1F + 3, 0x800, FindExtraMatches, 1 + 8, GetMatchCost)
-
 static void BeginDescriptorField(FaxmanInstance *instance)
 {
 	const ClownLZSS_Callbacks* const callbacks = instance->callbacks;
@@ -145,7 +143,7 @@ cc_bool ClownLZSS_FaxmanCompress(const unsigned char *data, size_t data_size, co
 	instance.descriptor_bits_total = 0;
 
 	/* Produce a series of LZSS compression matches. */
-	if (!CompressData(data, data_size, &matches, &total_matches, &instance))
+	if (!ClownLZSS_Compress(1, 0x1F + 3, 0x800, FindExtraMatches, 1 + 8, GetMatchCost, data, data_size, &matches, &total_matches, &instance))
 		return cc_false;
 
 	/* Track the location of the header... */

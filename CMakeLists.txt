@@ -9,6 +9,7 @@ project(clownlzss LANGUAGES C)
 add_executable(clownlzss
 	"chameleon.c"
 	"chameleon.h"
+	"clownlzss.c"
 	"clownlzss.h"
 	"common.c"
 	"common.h"

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018-2022 Clownacy
+Copyright (c) 2018-2023 Clownacy
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted.
@@ -56,9 +56,6 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 	(void)user;
 }
 
-/* TODO - Shouldn't the length limit be 0x100, and the distance limit be 0x800? */
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, GetMatchCost)
-
 static void PutDescriptorBit(ChameleonInstance *instance, cc_bool bit)
 {
 	const ClownLZSS_Callbacks* const callbacks = instance->callbacks;
@@ -93,7 +90,8 @@ cc_bool ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size,
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	/* Produce a series of LZSS compression matches. */
-	if (!CompressData(data, data_size, &matches, &total_matches, &instance))
+	/* TODO - Shouldn't the length limit be 0x100, and the distance limit be 0x800? */
+	if (!ClownLZSS_Compress(1, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, GetMatchCost, data, data_size, &matches, &total_matches, &instance))
 		return cc_false;
 
 	/* Track the location of the header... */

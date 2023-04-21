@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018-2022 Clownacy
+Copyright (c) 2018-2023 Clownacy
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted.
@@ -57,8 +57,6 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 	(void)node_meta_array;
 	(void)user;
 }
-
-static CLOWNLZSS_MAKE_COMPRESSION_FUNCTION(CompressData, 1, 0x100, 0x2000, FindExtraMatches, 1 + 8, GetMatchCost)
 
 static void BeginDescriptorField(KosinskiInstance *instance)
 {
@@ -122,7 +120,7 @@ cc_bool ClownLZSS_KosinskiCompress(const unsigned char *data, size_t data_size, 
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	/* Produce a series of LZSS compression matches. */
-	if (!CompressData(data, data_size, &matches, &total_matches, &instance))
+	if (!ClownLZSS_Compress(1, 0x100, 0x2000, FindExtraMatches, 1 + 8, GetMatchCost, data, data_size, &matches, &total_matches, &instance))
 		return cc_false;
 
 	/* Begin first descriptor field. */
