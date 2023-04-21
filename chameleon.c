@@ -47,15 +47,6 @@ static size_t GetMatchCost(size_t distance, size_t length, void *user)
 		return 0;                 /* In the event a match cannot be compressed */
 }
 
-static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
-{
-	(void)data;
-	(void)data_size;
-	(void)offset;
-	(void)node_meta_array;
-	(void)user;
-}
-
 static void PutDescriptorBit(ChameleonInstance *instance, cc_bool bit)
 {
 	const ClownLZSS_Callbacks* const callbacks = instance->callbacks;
@@ -91,7 +82,7 @@ cc_bool ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size,
 
 	/* Produce a series of LZSS compression matches. */
 	/* TODO - Shouldn't the length limit be 0x100, and the distance limit be 0x800? */
-	if (!ClownLZSS_Compress(1, 0xFF, 0x7FF, FindExtraMatches, 1 + 8, GetMatchCost, data, data_size, &matches, &total_matches, &instance))
+	if (!ClownLZSS_Compress(1, 0xFF, 0x7FF, NULL, 1 + 8, GetMatchCost, data, data_size, &matches, &total_matches, &instance))
 		return cc_false;
 
 	/* Track the location of the header... */

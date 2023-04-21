@@ -44,15 +44,6 @@ static size_t GetMatchCost(size_t distance, size_t length, void *user)
 	return 1 + 16;	/* Descriptor bit, offset/length bytes */
 }
 
-static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
-{
-	(void)data;
-	(void)data_size;
-	(void)offset;
-	(void)node_meta_array;
-	(void)user;
-}
-
 static void BeginDescriptorField(ComperInstance *instance)
 {
 	const ClownLZSS_Callbacks* const callbacks = instance->callbacks;
@@ -114,7 +105,7 @@ cc_bool ClownLZSS_ComperCompress(const unsigned char *data, size_t data_size, co
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	/* Produce a series of LZSS compression matches. */
-	if (!ClownLZSS_Compress(2, 0x100, 0x100, FindExtraMatches, 1 + 16, GetMatchCost, data, data_size, &matches, &total_matches, &instance))
+	if (!ClownLZSS_Compress(2, 0x100, 0x100, NULL, 1 + 16, GetMatchCost, data, data_size, &matches, &total_matches, &instance))
 		return cc_false;
 
 	/* Begin first descriptor field. */

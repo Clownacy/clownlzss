@@ -93,7 +93,8 @@ int ClownLZSS_Compress(
 					const size_t string_list_head = maximum_match_distance + data[i * bytes_per_value];
 					const size_t current_string = i % maximum_match_distance;
 
-					extra_matches_callback(data, total_values, i, node_meta_array, user);
+					if (extra_matches_callback != NULL)
+						extra_matches_callback(data, total_values, i, node_meta_array, user);
 
 					/* `string_list_head` points to a linked-list of strings in the LZSS sliding window that match at least
 					   one byte with the current string: iterate over it and generate every possible match for this string */
