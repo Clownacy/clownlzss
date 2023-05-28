@@ -18,7 +18,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <assert.h>
 #include <stddef.h>
 
-#include "clowncommon.h"
+#include "clowncommon/clowncommon.h"
 
 #include "clownlzss.h"
 #include "common.h"

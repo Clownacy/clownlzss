@@ -18,7 +18,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
-#include "clowncommon.h"
+#include "clowncommon/clowncommon.h"
 
 #include "chameleon.h"
 #include "comper.h"

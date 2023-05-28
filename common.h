@@ -18,7 +18,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include <stddef.h>
 
-#include "clowncommon.h"
+#include "clowncommon/clowncommon.h"
 
 typedef struct ClownLZSS_Callbacks
 {
