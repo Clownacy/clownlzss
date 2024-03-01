@@ -8,5 +8,5 @@ endif
 
 all: clownlzss
 
-clownlzss: main.c memory_stream.c chameleon.c common.c comper.c faxman.c kosinski.c kosinskiplus.c rage.c rocket.c saxman.c
+clownlzss: main.c clownlzss.c chameleon.c common.c comper.c faxman.c kosinski.c kosinskiplus.c rage.c rocket.c saxman.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ $^  $(LIBS)
