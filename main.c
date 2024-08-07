@@ -29,6 +29,8 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "rocket.h"
 #include "saxman.h"
 
+#include "decompressors/saxman.h"
+
 typedef enum Format
 {
 	FORMAT_CHAMELEON,
@@ -84,9 +86,17 @@ static void PrintUsage(void)
 		"\n"
 		" Misc:\n"
 		"  -m[=MODULE_SIZE]  Compresses into modules\n"
-		"                    MODULE_SIZE controls the module size (defaults to 0x1000)\n",
+		"                    MODULE_SIZE controls the module size (defaults to 0x1000)\n"
+		"  -d     Decompress (Saxman only)\n",
 		stdout
 	);
+}
+
+static unsigned char ReadCallback(void* const user_data)
+{
+	FILE* const file = (FILE*)user_data;
+
+	return fgetc(file);
 }
 
 static void WriteCallback(void* const user_data, const unsigned char byte)
@@ -119,7 +129,7 @@ int main(int argc, char **argv)
 	const Mode *mode = NULL;
 	const char *in_filename = NULL;
 	const char *out_filename = NULL;
-	cc_bool moduled = cc_false;
+	cc_bool moduled = cc_false, decompress = cc_false;
 	size_t module_size = 0x1000;
 
 	/* Skip past the executable name */
@@ -161,6 +171,10 @@ int main(int argc, char **argv)
 					}
 				}
 			}
+			else if (!strcmp(argv[i], "-d"))
+			{
+				decompress = cc_true;
+			}
 			else
 			{
 				size_t j;
@@ -201,12 +215,7 @@ int main(int argc, char **argv)
 		else
 		{
 			/* Load input file to buffer */
-			FILE *in_file;
-
-			if (out_filename == NULL)
-				out_filename = moduled ? mode->moduled_default_filename : mode->normal_default_filename;
-
-			in_file = fopen(in_filename, "rb");
+			FILE *in_file = fopen(in_filename, "rb");
 
 			if (in_file == NULL)
 			{
@@ -215,124 +224,142 @@ int main(int argc, char **argv)
 			}
 			else
 			{
-				size_t file_size;
-				unsigned char *file_buffer;
+				FILE *out_file;
 
-				fseek(in_file, 0, SEEK_END);
-				file_size = ftell(in_file);
-				rewind(in_file);
+				if (out_filename == NULL)
+					out_filename = moduled ? mode->moduled_default_filename : mode->normal_default_filename;
 
-				file_buffer = (unsigned char*)malloc(file_size);
+				/* Write compressed data to output file */
+				out_file = fopen(out_filename, decompress ? "w+b" : "wb");
 
-				if (file_buffer == NULL)
+				if (out_file == NULL)
 				{
 					exit_code = EXIT_FAILURE;
-					fputs("Error: Could not allocate memory for the file buffer\n", stderr);
+					fputs("Error: Could not open output file\n", stderr);
 				}
 				else
 				{
-					FILE *out_file;
+					ClownLZSS_Callbacks callbacks;
 
-					fread(file_buffer, 1, file_size, in_file);
-					fclose(in_file);
+					callbacks.user_data = out_file;
+					callbacks.read = ReadCallback;
+					callbacks.write = WriteCallback;
+					callbacks.seek = SeekCallback;
+					callbacks.tell = TellCallback;
 
-					/* Write compressed data to output file */
-					out_file = fopen(out_filename, "wb");
-
-					if (out_file == NULL)
+					if (decompress)
 					{
-						exit_code = EXIT_FAILURE;
-						fputs("Error: Could not open output file\n", stderr);
+						const unsigned int uncompressed_length_lower_byte = fgetc(in_file);
+						const unsigned int uncompressed_length_upper_byte = fgetc(in_file);
+						const unsigned int uncompressed_length = uncompressed_length_upper_byte << 8 | uncompressed_length_lower_byte;
+						ClownLZSS_SaxmanDecompress(ReadCallback, in_file, &callbacks, uncompressed_length);
 					}
 					else
 					{
-						ClownLZSS_Callbacks callbacks;
-						cc_bool success;
+						size_t file_size;
+						unsigned char *file_buffer;
 
-						callbacks.user_data = out_file;
-						callbacks.write = WriteCallback;
-						callbacks.seek = SeekCallback;
-						callbacks.tell = TellCallback;
+						fseek(in_file, 0, SEEK_END);
+						file_size = ftell(in_file);
+						rewind(in_file);
 
-						/* Compress data */
-						success = cc_false;
+						file_buffer = (unsigned char*)malloc(file_size);
 
-						switch (mode->format)
-						{
-							case FORMAT_CHAMELEON:
-								if (moduled)
-									success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_ChameleonCompress, module_size, 1);
-								else
-									success = ClownLZSS_ChameleonCompress(file_buffer, file_size, &callbacks);
-								break;
-
-							case FORMAT_COMPER:
-								if (moduled)
-									success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_ComperCompress, module_size, 1);
-								else
-									success = ClownLZSS_ComperCompress(file_buffer, file_size, &callbacks);
-								break;
-
-							case FORMAT_FAXMAN:
-								if (moduled)
-									success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_FaxmanCompress, module_size, 1);
-								else
-									success = ClownLZSS_FaxmanCompress(file_buffer, file_size, &callbacks);
-								break;
-
-							case FORMAT_KOSINSKI:
-								if (moduled)
-									success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_KosinskiCompress, module_size, 0x10);
-								else
-									success = ClownLZSS_KosinskiCompress(file_buffer, file_size, &callbacks);
-								break;
-
-							case FORMAT_KOSINSKIPLUS:
-								if (moduled)
-									success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_KosinskiPlusCompress, module_size, 1);
-								else
-									success = ClownLZSS_KosinskiPlusCompress(file_buffer, file_size, &callbacks);
-								break;
-
-							case FORMAT_RAGE:
-								if (moduled)
-									success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_RageCompress, module_size, 1);
-								else
-									success = ClownLZSS_RageCompress(file_buffer, file_size, &callbacks);
-								break;
-
-							case FORMAT_ROCKET:
-								if (moduled)
-									success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_RocketCompress, module_size, 1);
-								else
-									success = ClownLZSS_RocketCompress(file_buffer, file_size, &callbacks);
-								break;
-
-							case FORMAT_SAXMAN:
-								if (moduled)
-									success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_SaxmanCompressWithHeader, module_size, 1);
-								else
-									success = ClownLZSS_SaxmanCompressWithHeader(file_buffer, file_size, &callbacks);
-								break;
-
-							case FORMAT_SAXMAN_NO_HEADER:
-								if (moduled)
-									success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_SaxmanCompressWithoutHeader, module_size, 1);
-								else
-									success = ClownLZSS_SaxmanCompressWithoutHeader(file_buffer, file_size, &callbacks);
-								break;
-						}
-
-						free(file_buffer);
-						fclose(out_file);
-
-						if (!success)
+						if (file_buffer == NULL)
 						{
 							exit_code = EXIT_FAILURE;
-							fputs("Error: File could not be compressed\n", stderr);
+							fputs("Error: Could not allocate memory for the file buffer\n", stderr);
+						}
+						else
+						{
+							/* Compress data */
+							cc_bool success = cc_false;
+
+							fread(file_buffer, 1, file_size, in_file);
+							fclose(in_file);
+							in_file = NULL;
+
+							switch (mode->format)
+							{
+								case FORMAT_CHAMELEON:
+									if (moduled)
+										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_ChameleonCompress, module_size, 1);
+									else
+										success = ClownLZSS_ChameleonCompress(file_buffer, file_size, &callbacks);
+									break;
+
+								case FORMAT_COMPER:
+									if (moduled)
+										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_ComperCompress, module_size, 1);
+									else
+										success = ClownLZSS_ComperCompress(file_buffer, file_size, &callbacks);
+									break;
+
+								case FORMAT_FAXMAN:
+									if (moduled)
+										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_FaxmanCompress, module_size, 1);
+									else
+										success = ClownLZSS_FaxmanCompress(file_buffer, file_size, &callbacks);
+									break;
+
+								case FORMAT_KOSINSKI:
+									if (moduled)
+										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_KosinskiCompress, module_size, 0x10);
+									else
+										success = ClownLZSS_KosinskiCompress(file_buffer, file_size, &callbacks);
+									break;
+
+								case FORMAT_KOSINSKIPLUS:
+									if (moduled)
+										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_KosinskiPlusCompress, module_size, 1);
+									else
+										success = ClownLZSS_KosinskiPlusCompress(file_buffer, file_size, &callbacks);
+									break;
+
+								case FORMAT_RAGE:
+									if (moduled)
+										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_RageCompress, module_size, 1);
+									else
+										success = ClownLZSS_RageCompress(file_buffer, file_size, &callbacks);
+									break;
+
+								case FORMAT_ROCKET:
+									if (moduled)
+										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_RocketCompress, module_size, 1);
+									else
+										success = ClownLZSS_RocketCompress(file_buffer, file_size, &callbacks);
+									break;
+
+								case FORMAT_SAXMAN:
+									if (moduled)
+										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_SaxmanCompressWithHeader, module_size, 1);
+									else
+										success = ClownLZSS_SaxmanCompressWithHeader(file_buffer, file_size, &callbacks);
+									break;
+
+								case FORMAT_SAXMAN_NO_HEADER:
+									if (moduled)
+										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_SaxmanCompressWithoutHeader, module_size, 1);
+									else
+										success = ClownLZSS_SaxmanCompressWithoutHeader(file_buffer, file_size, &callbacks);
+									break;
+							}
+
+							if (!success)
+							{
+								exit_code = EXIT_FAILURE;
+								fputs("Error: File could not be compressed\n", stderr);
+							}
+
+							free(file_buffer);
 						}
 					}
+
+					fclose(out_file);
 				}
+
+				if (in_file != NULL)
+					fclose(in_file);
 			}
 		}
 	}

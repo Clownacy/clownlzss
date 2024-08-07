@@ -20,9 +20,12 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "clowncommon/clowncommon.h"
 
+typedef unsigned char (*ClownLZSS_ReadCallback)(void *user_data);
+
 typedef struct ClownLZSS_Callbacks
 {
 	void *user_data;
+	ClownLZSS_ReadCallback read;
 	void (*write)(void *user_data, unsigned char byte);
 	void (*seek)(void *user_data, size_t position);
 	size_t (*tell)(void *user_data);

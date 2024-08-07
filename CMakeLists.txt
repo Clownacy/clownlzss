@@ -152,6 +152,19 @@ set_target_properties(clownlzss-saxman PROPERTIES
 
 target_link_libraries(clownlzss-saxman PRIVATE clownlzss clownlzss-common)
 
+# Saxman (decompress)
+
+add_library(clownlzss-decompress-saxman STATIC
+	"decompressors/saxman.c"
+	"decompressors/saxman.h"
+)
+
+set_target_properties(clownlzss-decompress-saxman PROPERTIES
+	C_STANDARD 90
+	C_STANDARD_REQUIRED NO
+	C_EXTENSIONS OFF
+)
+
 add_executable(clownlzss-tool
 	"main.c"
 )
@@ -162,7 +175,7 @@ set_target_properties(clownlzss-tool PROPERTIES
 	C_EXTENSIONS OFF
 )
 
-target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-comper clownlzss-faxman clownlzss-kosinski clownlzss-kosinskiplus clownlzss-rage clownlzss-rocket clownlzss-saxman)
+target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-comper clownlzss-faxman clownlzss-kosinski clownlzss-kosinskiplus clownlzss-rage clownlzss-rocket clownlzss-saxman clownlzss-decompress-saxman)
 
 # MSVC tweak
 if(MSVC)
