@@ -13,8 +13,8 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef CLOWNLZSS_COMMON_H
+#define CLOWNLZSS_COMMON_H
 
 #include <stddef.h>
 
@@ -33,4 +33,4 @@ typedef struct ClownLZSS_Callbacks
 
 cc_bool ClownLZSS_ModuledCompressionWrapper(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks, cc_bool (*compression_function)(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks), size_t module_size, size_t module_alignment);
 
-#endif /* COMMON_H */
+#endif /* CLOWNLZSS_COMMON_H */
