@@ -260,3 +260,7 @@ add_test(NAME test_moduled_saxman_no_header_compare COMMAND ${CMAKE_COMMAND} -E 
 # Faxman (moduled)
 add_test(NAME test_moduled_faxman_run COMMAND clownlzss-tool -m -f "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
 add_test(NAME test_moduled_faxman_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_faxman" "temp")
+
+# Saxman decompress
+add_test(NAME test_saxman_decompress_run COMMAND clownlzss-tool -d -s "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/saxman" "temp")
+add_test(NAME test_saxman_decompress_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
