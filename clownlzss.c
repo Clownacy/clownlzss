@@ -22,7 +22,7 @@ int ClownLZSS_Compress(
 	const size_t bytes_per_value,
 	const size_t maximum_match_length,
 	const size_t maximum_match_distance,
-	void (* const extra_matches_callback)(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
+	void (* const extra_matches_callback)(const unsigned char *data, size_t total_values, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
 	const size_t literal_cost,
 	size_t (* const match_cost_callback)(size_t distance, size_t length, void *user),
 	const unsigned char* const data,

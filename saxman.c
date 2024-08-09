@@ -47,7 +47,7 @@ static size_t GetMatchCost(size_t distance, size_t length, void *user)
 		return 0;
 }
 
-static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
+static void FindExtraMatches(const unsigned char *data, size_t total_values, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
 {
 	(void)user;
 
@@ -55,7 +55,7 @@ static void FindExtraMatches(const unsigned char *data, size_t data_size, size_t
 	{
 		size_t i;
 
-		const size_t max_read_ahead = CLOWNLZSS_MIN(0x12, data_size - offset);
+		const size_t max_read_ahead = CLOWNLZSS_MIN(0x12, total_values - offset);
 
 		for (i = 0; i < max_read_ahead && data[offset + i] == 0; ++i)
 		{
