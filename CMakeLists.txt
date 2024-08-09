@@ -4,7 +4,7 @@ if((${CMAKE_VERSION} VERSION_EQUAL 3.9) OR (${CMAKE_VERSION} VERSION_GREATER 3.9
 	cmake_policy(SET CMP0069 NEW)
 endif()
 
-project(clownlzss LANGUAGES C)
+project(clownlzss LANGUAGES C CXX)
 
 function(make_library name filename)
 	add_library(${name} STATIC
@@ -36,13 +36,13 @@ make_compression_library(rocket)
 make_compression_library(saxman)
 
 add_executable(clownlzss-tool
-	"main.c"
+	"main.cpp"
 )
 
 set_target_properties(clownlzss-tool PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
+	CXX_STANDARD 11
+	CXX_STANDARD_REQUIRED NO
+	CXX_EXTENSIONS OFF
 )
 
 target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-comper clownlzss-faxman clownlzss-kosinski clownlzss-kosinskiplus clownlzss-rage clownlzss-rocket clownlzss-saxman)
