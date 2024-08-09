@@ -29,6 +29,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "rocket.h"
 #include "saxman.h"
 
+#include "decompressors/comper.h"
 #include "decompressors/saxman.h"
 
 typedef enum Format
@@ -119,6 +120,52 @@ static size_t TellCallback(void* const user_data)
 
 	return (size_t)ftell(file);
 }
+
+#define CLOWNLZSS_READ_INPUT fgetc(in_file)
+#define CLOWNLZSS_WRITE_OUTPUT(VALUE) fputc(VALUE, out_file)
+#define CLOWNLZSS_FILL_OUTPUT(VALUE, COUNT, MAXIMUM_COUNT) \
+	do \
+	{ \
+		unsigned int i; \
+		for (i = 0; i < COUNT; ++i) \
+			fputc(VALUE, out_file); \
+	} \
+	while (0)
+#define CLOWNLZSS_COPY_OUTPUT(OFFSET, COUNT, MAXIMUM_COUNT) \
+	do \
+	{ \
+		fpos_t position; \
+		unsigned int i; \
+		unsigned char bytes[MAXIMUM_COUNT]; \
+\
+		fgetpos(out_file, &position); \
+		fseek(out_file, -(long)OFFSET, SEEK_CUR); \
+		fread(bytes, 1, COUNT, out_file); \
+		fsetpos(out_file, &position); \
+\
+		for (i = OFFSET; i < COUNT; ++i) \
+			bytes[i] = bytes[i - OFFSET]; \
+\
+		fwrite(bytes, 1, COUNT, out_file); \
+	} \
+	while (0)
+
+static void ComperDecompress(FILE* const out_file, FILE* const in_file)
+{
+	CLOWNLZSS_COMPER_DECOMPRESS;
+}
+
+static void SaxmanDecompress(FILE* const out_file, FILE* const in_file)
+{
+	const unsigned int uncompressed_length_lower_byte = fgetc(in_file);
+	const unsigned int uncompressed_length_upper_byte = fgetc(in_file);
+	const unsigned int uncompressed_length = uncompressed_length_upper_byte << 8 | uncompressed_length_lower_byte;
+	CLOWNLZSS_SAXMAN_DECOMPRESS(uncompressed_length);
+}
+#undef CLOWNLZSS_READ_INPUT
+#undef CLOWNLZSS_WRITE_OUTPUT
+#undef CLOWNLZSS_FILL_OUTPUT
+#undef CLOWNLZSS_COPY_OUTPUT
 
 int main(int argc, char **argv)
 {
@@ -249,42 +296,16 @@ int main(int argc, char **argv)
 
 					if (decompress)
 					{
-						#define CLOWNLZSS_SAXMAN_DECOMPRESS_READ_INPUT fgetc(in_file)
-						#define CLOWNLZSS_SAXMAN_DECOMPRESS_WRITE_OUTPUT(VALUE) fputc(VALUE, in_file)
-						#define CLOWNLZSS_SAXMAN_DECOMPRESS_FILL_OUTPUT(VALUE, COUNT) \
-							do \
-							{ \
-								unsigned int i; \
-								for (i = 0; i < COUNT; ++i) \
-									fputc(VALUE, out_file); \
-							} \
-							while (0)
-						#define CLOWNLZSS_SAXMAN_DECOMPRESS_COPY_OUTPUT(OFFSET, COUNT) \
-							do \
-							{ \
-								unsigned char bytes[0xF + 3]; \
-								fpos_t position; \
- \
-								fgetpos(out_file, &position); \
-								fseek(out_file, -(long)offset, SEEK_CUR); \
-								fread(bytes, 1, count, out_file); \
-								fsetpos(out_file, &position); \
- \
-								for (i = 0; i < count; ++i) \
-									if (i >= offset) \
-										bytes[i] = bytes[i - offset]; \
- \
-								fwrite(bytes, 1, count, out_file); \
-							} \
-							while (0)
-						const unsigned int uncompressed_length_lower_byte = fgetc(in_file);
-						const unsigned int uncompressed_length_upper_byte = fgetc(in_file);
-						const unsigned int uncompressed_length = uncompressed_length_upper_byte << 8 | uncompressed_length_lower_byte;
-						CLOWNLZSS_SAXMAN_DECOMPRESS(uncompressed_length);
-						#undef CLOWNLZSS_SAXMAN_DECOMPRESS_READ_INPUT
-						#undef CLOWNLZSS_SAXMAN_DECOMPRESS_WRITE_OUTPUT
-						#undef CLOWNLZSS_SAXMAN_DECOMPRESS_FILL_OUTPUT
-						#undef CLOWNLZSS_SAXMAN_DECOMPRESS_COPY_OUTPUT
+						switch (mode->format)
+						{
+							case FORMAT_COMPER:
+								ComperDecompress(out_file, in_file);
+								break;
+
+							case FORMAT_SAXMAN:
+								SaxmanDecompress(out_file, in_file);
+								break;
+						}
 					}
 					else
 					{

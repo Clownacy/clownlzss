@@ -14,22 +14,22 @@
 		if (descriptor_bits_remaining == 0) \
 		{ \
 			descriptor_bits_remaining = 8; \
-			descriptor_bits = (CLOWNLZSS_SAXMAN_DECOMPRESS_READ_INPUT); \
+			descriptor_bits = (CLOWNLZSS_READ_INPUT); \
 			++input_position; \
 		} \
  \
 		if ((descriptor_bits & 1) != 0) \
 		{ \
 			/* Uncompressed. */ \
-			CLOWNLZSS_SAXMAN_DECOMPRESS_WRITE_OUTPUT((CLOWNLZSS_SAXMAN_DECOMPRESS_READ_INPUT)); \
+			CLOWNLZSS_WRITE_OUTPUT((CLOWNLZSS_READ_INPUT)); \
 			++input_position; \
 			++output_position; \
 		} \
 		else \
 		{ \
 			/* Dictionary match. */ \
-			const unsigned int first_byte = (CLOWNLZSS_SAXMAN_DECOMPRESS_READ_INPUT); \
-			const unsigned int second_byte = (CLOWNLZSS_SAXMAN_DECOMPRESS_READ_INPUT); \
+			const unsigned int first_byte = (CLOWNLZSS_READ_INPUT); \
+			const unsigned int second_byte = (CLOWNLZSS_READ_INPUT); \
 			const unsigned int dictionary_index = (first_byte | ((second_byte << 4) & 0xF00)) + (0xF + 3); \
 			const unsigned int count = (second_byte & 0xF) + 3; \
 			const unsigned int offset = (output_position - dictionary_index) & 0xFFF; \
@@ -37,12 +37,12 @@
 			if (offset > output_position) \
 			{ \
 				/* Zero-fill. */ \
-				CLOWNLZSS_SAXMAN_DECOMPRESS_FILL_OUTPUT(0, count); \
+				CLOWNLZSS_FILL_OUTPUT(0, count, 0xF + 3); \
 			} \
 			else \
 			{ \
 				/* Copy */ \
-				CLOWNLZSS_SAXMAN_DECOMPRESS_COPY_OUTPUT(offset, count); \
+				CLOWNLZSS_COPY_OUTPUT(offset, count, 0xF + 3); \
 			} \
  \
 			input_position += 2; \
@@ -52,7 +52,6 @@
 		descriptor_bits >>= 1; \
 		--descriptor_bits_remaining; \
 	} \
- \
 }
 
 #if defined(__cplusplus)
@@ -63,15 +62,15 @@ void ClownLZSS_SaxmanDecompress(T1 input_begin, T1 input_end, T2 output_begin)
 {
 	T1 input_iterator = input_begin;
 	T2 output_iterator = output_begin;
-	#define CLOWNLZSS_SAXMAN_DECOMPRESS_READ_INPUT (++input_iterator, input_iterator[-1])
-	#define CLOWNLZSS_SAXMAN_DECOMPRESS_WRITE_OUTPUT(VALUE) (*output_iterator = (VALUE), ++output_iterator)
-	#define CLOWNLZSS_SAXMAN_DECOMPRESS_FILL_OUTPUT(VALUE, COUNT) std::fill_n(output_iterator, (COUNT), (VALUE))
-	#define CLOWNLZSS_SAXMAN_DECOMPRESS_COPY_OUTPUT(OFFSET, COUNT) std::copy(output_iterator - (OFFSET), output_iterator - (OFFSET) + (COUNT), output_iterator)
+	#define CLOWNLZSS_READ_INPUT (++input_iterator, input_iterator[-1])
+	#define CLOWNLZSS_WRITE_OUTPUT(VALUE) (*output_iterator = (VALUE), ++output_iterator)
+	#define CLOWNLZSS_FILL_OUTPUT(VALUE, COUNT, MAXIMUM_COUNT) std::fill_n(output_iterator, (COUNT), (VALUE))
+	#define CLOWNLZSS_COPY_OUTPUT(OFFSET, COUNT, MAXIMUM_COUNT) std::copy(output_iterator - (OFFSET), output_iterator - (OFFSET) + (COUNT), output_iterator)
 	CLOWNLZSS_SAXMAN_DECOMPRESS(input_end - input_iterator);
-	#undef CLOWNLZSS_SAXMAN_DECOMPRESS_READ_INPUT
-	#undef CLOWNLZSS_SAXMAN_DECOMPRESS_WRITE_OUTPUT
-	#undef CLOWNLZSS_SAXMAN_DECOMPRESS_FILL_OUTPUT
-	#undef CLOWNLZSS_SAXMAN_DECOMPRESS_COPY_OUTPUT
+	#undef CLOWNLZSS_READ_INPUT
+	#undef CLOWNLZSS_WRITE_OUTPUT
+	#undef CLOWNLZSS_FILL_OUTPUT
+	#undef CLOWNLZSS_COPY_OUTPUT
 }
 #endif
 

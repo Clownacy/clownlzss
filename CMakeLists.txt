@@ -152,19 +152,6 @@ set_target_properties(clownlzss-saxman PROPERTIES
 
 target_link_libraries(clownlzss-saxman PRIVATE clownlzss clownlzss-common)
 
-# Saxman (decompress)
-
-add_library(clownlzss-decompress-saxman STATIC
-	"decompressors/saxman.c"
-	"decompressors/saxman.h"
-)
-
-set_target_properties(clownlzss-decompress-saxman PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
-)
-
 add_executable(clownlzss-tool
 	"main.c"
 )
@@ -175,7 +162,7 @@ set_target_properties(clownlzss-tool PROPERTIES
 	C_EXTENSIONS OFF
 )
 
-target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-comper clownlzss-faxman clownlzss-kosinski clownlzss-kosinskiplus clownlzss-rage clownlzss-rocket clownlzss-saxman clownlzss-decompress-saxman)
+target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-comper clownlzss-faxman clownlzss-kosinski clownlzss-kosinskiplus clownlzss-rage clownlzss-rocket clownlzss-saxman)
 
 # MSVC tweak
 if(MSVC)
@@ -260,6 +247,10 @@ add_test(NAME test_moduled_saxman_no_header_compare COMMAND ${CMAKE_COMMAND} -E 
 # Faxman (moduled)
 add_test(NAME test_moduled_faxman_run COMMAND clownlzss-tool -m -f "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
 add_test(NAME test_moduled_faxman_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_faxman" "temp")
+
+# Comper decompress
+add_test(NAME test_comper_decompress_run COMMAND clownlzss-tool -d -c "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/comper" "temp")
+add_test(NAME test_comper_decompress_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
 
 # Saxman decompress
 add_test(NAME test_saxman_decompress_run COMMAND clownlzss-tool -d -s "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/saxman" "temp")
