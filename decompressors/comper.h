@@ -45,10 +45,8 @@
 #include <algorithm>
 
 template<typename T1, typename T2>
-void ClownLZSS_ComperDecompress(T1 input_begin, T2 output_begin)
+void ClownLZSS_ComperDecompress(T1 input_iterator, T2 output_iterator)
 {
-	T1 input_iterator = input_begin;
-	T2 output_iterator = output_begin;
 	#define CLOWNLZSS_READ_INPUT (++input_iterator, input_iterator[-1])
 	#define CLOWNLZSS_WRITE_OUTPUT(VALUE) (*output_iterator = (VALUE), ++output_iterator)
 	#define CLOWNLZSS_COPY_OUTPUT(OFFSET, COUNT, MAXIMUM_COUNT) std::copy(output_iterator - (OFFSET), output_iterator - (OFFSET) + (COUNT), output_iterator)
