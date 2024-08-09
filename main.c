@@ -249,10 +249,42 @@ int main(int argc, char **argv)
 
 					if (decompress)
 					{
+						#define CLOWNLZSS_SAXMAN_DECOMPRESS_READ_INPUT fgetc(in_file)
+						#define CLOWNLZSS_SAXMAN_DECOMPRESS_WRITE_OUTPUT(VALUE) fputc(VALUE, in_file)
+						#define CLOWNLZSS_SAXMAN_DECOMPRESS_FILL_OUTPUT(VALUE, COUNT) \
+							do \
+							{ \
+								unsigned int i; \
+								for (i = 0; i < COUNT; ++i) \
+									fputc(VALUE, out_file); \
+							} \
+							while (0)
+						#define CLOWNLZSS_SAXMAN_DECOMPRESS_COPY_OUTPUT(OFFSET, COUNT) \
+							do \
+							{ \
+								unsigned char bytes[0xF + 3]; \
+								fpos_t position; \
+ \
+								fgetpos(out_file, &position); \
+								fseek(out_file, -(long)offset, SEEK_CUR); \
+								fread(bytes, 1, count, out_file); \
+								fsetpos(out_file, &position); \
+ \
+								for (i = 0; i < count; ++i) \
+									if (i >= offset) \
+										bytes[i] = bytes[i - offset]; \
+ \
+								fwrite(bytes, 1, count, out_file); \
+							} \
+							while (0)
 						const unsigned int uncompressed_length_lower_byte = fgetc(in_file);
 						const unsigned int uncompressed_length_upper_byte = fgetc(in_file);
 						const unsigned int uncompressed_length = uncompressed_length_upper_byte << 8 | uncompressed_length_lower_byte;
-						ClownLZSS_SaxmanDecompress(ReadCallback, in_file, &callbacks, uncompressed_length);
+						CLOWNLZSS_SAXMAN_DECOMPRESS(uncompressed_length);
+						#undef CLOWNLZSS_SAXMAN_DECOMPRESS_READ_INPUT
+						#undef CLOWNLZSS_SAXMAN_DECOMPRESS_WRITE_OUTPUT
+						#undef CLOWNLZSS_SAXMAN_DECOMPRESS_FILL_OUTPUT
+						#undef CLOWNLZSS_SAXMAN_DECOMPRESS_COPY_OUTPUT
 					}
 					else
 					{
