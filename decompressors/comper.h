@@ -25,10 +25,12 @@
 		else \
 		{ \
 			/* Dictionary match. */ \
-			const unsigned int offset = (0x100 - (CLOWNLZSS_READ_INPUT)) * 2; \
-			const unsigned int count = ((CLOWNLZSS_READ_INPUT) + 1) * 2; \
+			const unsigned int raw_offset = (CLOWNLZSS_READ_INPUT); \
+			const unsigned int offset = (0x100 - raw_offset) * 2; \
+			const unsigned int raw_count = (CLOWNLZSS_READ_INPUT); \
+			const unsigned int count = (raw_count + 1) * 2; \
  \
-			if (count == (0 + 1) * 2) \
+			if (raw_count == 0) \
 				break; \
  \
 			CLOWNLZSS_COPY_OUTPUT(offset, count, (0xFF + 1) * 2); \
