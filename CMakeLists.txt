@@ -6,151 +6,34 @@ endif()
 
 project(clownlzss LANGUAGES C)
 
-# clownlzss
+function(make_library name filename)
+	add_library(${name} STATIC
+		"${filename}.c"
+		"${filename}.h"
+	)
 
-add_library(clownlzss STATIC
-	"clownlzss.c"
-	"clownlzss.h"
-)
+	set_target_properties(${name} PROPERTIES
+		C_STANDARD 90
+		C_STANDARD_REQUIRED NO
+		C_EXTENSIONS OFF
+	)
+endfunction()
 
-set_target_properties(clownlzss PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
-)
+function(make_compression_library name)
+	make_library(clownlzss-${name} ${name})
+	target_link_libraries(clownlzss-${name} PRIVATE clownlzss clownlzss-common)
+endfunction()
 
-# Common
-
-add_library(clownlzss-common STATIC
-	"common.c"
-	"common.h"
-)
-
-set_target_properties(clownlzss-common PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
-)
-
-# Chameleon
-
-add_library(clownlzss-chameleon STATIC
-	"chameleon.c"
-	"chameleon.h"
-)
-
-set_target_properties(clownlzss-chameleon PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
-)
-
-target_link_libraries(clownlzss-chameleon PRIVATE clownlzss clownlzss-common)
-
-# Comper
-
-add_library(clownlzss-comper STATIC
-	"comper.c"
-	"comper.h"
-)
-
-set_target_properties(clownlzss-comper PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
-)
-
-target_link_libraries(clownlzss-comper PRIVATE clownlzss clownlzss-common)
-
-# Faxman
-
-add_library(clownlzss-faxman STATIC
-	"faxman.c"
-	"faxman.h"
-)
-
-set_target_properties(clownlzss-faxman PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
-)
-
-target_link_libraries(clownlzss-faxman PRIVATE clownlzss clownlzss-common)
-
-# Kosinski
-
-add_library(clownlzss-kosinski STATIC
-	"kosinski.c"
-	"kosinski.h"
-)
-
-set_target_properties(clownlzss-kosinski PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
-)
-
-target_link_libraries(clownlzss-kosinski PRIVATE clownlzss clownlzss-common)
-
-# Kosinski+
-
-add_library(clownlzss-kosinskiplus STATIC
-	"kosinskiplus.c"
-	"kosinskiplus.h"
-)
-
-set_target_properties(clownlzss-kosinskiplus PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
-)
-
-target_link_libraries(clownlzss-kosinskiplus PRIVATE clownlzss clownlzss-common)
-
-# Rage
-
-add_library(clownlzss-rage STATIC
-	"rage.c"
-	"rage.h"
-)
-
-set_target_properties(clownlzss-rage PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
-)
-
-target_link_libraries(clownlzss-rage PRIVATE clownlzss clownlzss-common)
-
-# Rocket
-
-add_library(clownlzss-rocket STATIC
-	"rocket.c"
-	"rocket.h"
-)
-
-set_target_properties(clownlzss-rocket PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
-)
-
-target_link_libraries(clownlzss-rocket PRIVATE clownlzss clownlzss-common)
-
-# Saxman
-
-add_library(clownlzss-saxman STATIC
-	"saxman.c"
-	"saxman.h"
-)
-
-set_target_properties(clownlzss-saxman PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED NO
-	C_EXTENSIONS OFF
-)
-
-target_link_libraries(clownlzss-saxman PRIVATE clownlzss clownlzss-common)
+make_library(clownlzss clownlzss)
+make_library(clownlzss-common common)
+make_compression_library(chameleon)
+make_compression_library(comper)
+make_compression_library(faxman)
+make_compression_library(kosinski)
+make_compression_library(kosinskiplus)
+make_compression_library(rage)
+make_compression_library(rocket)
+make_compression_library(saxman)
 
 add_executable(clownlzss-tool
 	"main.c"
@@ -176,82 +59,30 @@ endif()
 
 enable_testing()
 
-# Chameleon
-add_test(NAME test_chameleon_run COMMAND clownlzss-tool -ch "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_chameleon_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/chameleon" "temp")
+function(make_compress_test_internal compression-name compression-command)
+	add_test(NAME test_${compression-name}_run COMMAND clownlzss-tool ${compression-command} "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+	add_test(NAME test_${compression-name}_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/${compression-name}" "temp")
+endfunction()
 
-# Comper
-add_test(NAME test_comper_run COMMAND clownlzss-tool -c "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_comper_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/comper" "temp")
+function(make_compress_test compression-name compression-command)
+	make_compress_test_internal("${compression-name}" "${compression-command}")
+	make_compress_test_internal("moduled_${compression-name}" "-m;${compression-command}")
+endfunction()
 
-# Kosinski
-add_test(NAME test_kosinski_run COMMAND clownlzss-tool -k "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_kosinski_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/kosinski" "temp")
+make_compress_test(chameleon "-ch")
+make_compress_test(comper "-c")
+make_compress_test(kosinski "-k")
+make_compress_test(kosinskiplus "-kp")
+make_compress_test(rage "-ra")
+make_compress_test(rocket "-r")
+make_compress_test(saxman "-s")
+make_compress_test(saxman_no_header "-sn")
+make_compress_test(faxman "-f")
 
-# Kosinski+
-add_test(NAME test_kosinskiplus_run COMMAND clownlzss-tool -kp "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_kosinskiplus_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/kosinskiplus" "temp")
+function(make_decompress_test compression-name compression-command)
+	add_test(NAME test_${compression-name}_decompress_run COMMAND clownlzss-tool -d ${compression-command} "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/${compression-name}" "temp")
+	add_test(NAME test_${compression-name}_decompress_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+endfunction()
 
-# Rage
-add_test(NAME test_rage_run COMMAND clownlzss-tool -ra "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_rage_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/rage" "temp")
-
-# Rocket
-add_test(NAME test_rocket_run COMMAND clownlzss-tool -r "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_rocket_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/rocket" "temp")
-
-# Saxman
-add_test(NAME test_saxman_run COMMAND clownlzss-tool -s "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_saxman_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/saxman" "temp")
-
-# Saxman (no header)
-add_test(NAME test_saxman_no_header_run COMMAND clownlzss-tool -sn "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_saxman_no_header_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/saxman_no_header" "temp")
-
-# Faxman
-add_test(NAME test_faxman_run COMMAND clownlzss-tool -f "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_faxman_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/faxman" "temp")
-
-# Chameleon (moduled)
-add_test(NAME test_moduled_chameleon_run COMMAND clownlzss-tool -m -ch "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_moduled_chameleon_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_chameleon" "temp")
-
-# Comper (moduled)
-add_test(NAME test_moduled_comper_run COMMAND clownlzss-tool -m -c "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_moduled_comper_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_comper" "temp")
-
-# Kosinski (moduled)
-add_test(NAME test_moduled_kosinski_run COMMAND clownlzss-tool -m -k "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_moduled_kosinski_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_kosinski" "temp")
-
-# Kosinski+ (moduled)
-add_test(NAME test_moduled_kosinskiplus_run COMMAND clownlzss-tool -m -kp "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_moduled_kosinskiplus_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_kosinskiplus" "temp")
-
-# Rage (moduled)
-add_test(NAME test_moduled_rage_run COMMAND clownlzss-tool -m -ra "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_moduled_rage_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_rage" "temp")
-
-# Rocket (moduled)
-add_test(NAME test_moduled_rocket_run COMMAND clownlzss-tool -m -r "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_moduled_rocket_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_rocket" "temp")
-
-# Saxman (moduled)
-add_test(NAME test_moduled_saxman_run COMMAND clownlzss-tool -m -s "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_moduled_saxman_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_saxman" "temp")
-
-# Saxman (no header) (moduled)
-add_test(NAME test_moduled_saxman_no_header_run COMMAND clownlzss-tool -m -sn "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_moduled_saxman_no_header_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_saxman_no_header" "temp")
-
-# Faxman (moduled)
-add_test(NAME test_moduled_faxman_run COMMAND clownlzss-tool -m -f "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-add_test(NAME test_moduled_faxman_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/moduled_faxman" "temp")
-
-# Comper decompress
-add_test(NAME test_comper_decompress_run COMMAND clownlzss-tool -d -c "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/comper" "temp")
-add_test(NAME test_comper_decompress_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
-
-# Saxman decompress
-add_test(NAME test_saxman_decompress_run COMMAND clownlzss-tool -d -s "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/saxman" "temp")
-add_test(NAME test_saxman_decompress_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/clone_driver_v2_dac_driver/uncompressed" "temp")
+make_decompress_test(comper "-c")
+make_decompress_test(saxman "-s")
