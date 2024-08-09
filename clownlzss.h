@@ -53,7 +53,7 @@ int ClownLZSS_Compress(
 	size_t data_size,
 	ClownLZSS_Match **_matches,
 	size_t *_total_matches,
-	void *user
+	const void *user
 );
 
 #endif /* CLOWNLZSS_H */

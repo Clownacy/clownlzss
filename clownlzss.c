@@ -29,7 +29,7 @@ int ClownLZSS_Compress(
 	const size_t data_size,
 	ClownLZSS_Match** const _matches,
 	size_t* const _total_matches,
-	void* const user
+	const void* const user
 )
 {
 	int success;
@@ -94,7 +94,7 @@ int ClownLZSS_Compress(
 					const size_t current_string = i % maximum_match_distance;
 
 					if (extra_matches_callback != NULL)
-						extra_matches_callback(data, total_values, i, node_meta_array, user);
+						extra_matches_callback(data, total_values, i, node_meta_array, (void*)user);
 
 					/* `string_list_head` points to a linked-list of strings in the LZSS sliding window that match at least
 					   one byte with the current string: iterate over it and generate every possible match for this string */
@@ -122,7 +122,7 @@ int ClownLZSS_Compress(
 							else
 							{
 								/* Figure out how much it costs to encode the current run */
-								const size_t cost = match_cost_callback((current_bytes - match_bytes) / bytes_per_value, j + 1, user);
+								const size_t cost = match_cost_callback((current_bytes - match_bytes) / bytes_per_value, j + 1, (void*)user);
 
 								/* Figure out if the cost is lower than that of any other runs that end at the same value as this one */
 								if (cost != 0 && node_meta_array[i + j + 1].u.cost > node_meta_array[i].u.cost + cost)
