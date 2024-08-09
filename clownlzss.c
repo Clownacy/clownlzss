@@ -210,9 +210,9 @@ int ClownLZSS_Compress(
 					success = 1;
 				}
 			}
-		}
 
-		free(buffer);
+			free(buffer);
+		}
 	}
 
 	return success;
