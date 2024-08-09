@@ -22,7 +22,15 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 cc_bool ClownLZSS_SaxmanCompressWithHeader(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks);
 cc_bool ClownLZSS_SaxmanCompressWithoutHeader(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CLOWNLZSS_SAXMAN_H */

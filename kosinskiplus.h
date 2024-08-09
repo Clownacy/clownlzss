@@ -22,6 +22,14 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 cc_bool ClownLZSS_KosinskiPlusCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CLOWNLZSS_KOSINSKIPLUS_H */

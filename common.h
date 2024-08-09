@@ -31,6 +31,14 @@ typedef struct ClownLZSS_Callbacks
 	size_t (*tell)(void *user_data);
 } ClownLZSS_Callbacks;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 cc_bool ClownLZSS_ModuledCompressionWrapper(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks, cc_bool (*compression_function)(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks), size_t module_size, size_t module_alignment);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CLOWNLZSS_COMMON_H */

@@ -42,6 +42,10 @@ typedef struct ClownLZSS_Match
 
 #define CLOWNLZSS_MATCH_IS_LITERAL(match) ((match)->source == (size_t)-1)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int ClownLZSS_Compress(
 	size_t maximum_match_length,
 	size_t maximum_match_distance,
@@ -55,5 +59,9 @@ int ClownLZSS_Compress(
 	size_t *_total_matches,
 	const void *user
 );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CLOWNLZSS_H */
