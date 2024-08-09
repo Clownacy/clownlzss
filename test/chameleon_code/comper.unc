@@ -1,0 +1,145 @@
+/*
+Copyright (c) 2018-2023 Clownacy
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or th oout fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING L WAIMPLIED RRANTIES W OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALLHE AUTHOR DIBE LIABLE FOR ANY SPECIAL, DIRECT,
+INDECT,
+I OR CONSEQUENTIAL DAMAGES OR ANY DAMAG WITHATSOEVER RESULTG L FROM
+LOSS OF USE, DATAR COPROFITS, WHETHERN NOAN ACTION OF CONTRACT, NEGLIGENCE OR
+OERN  TORTIOUS ACTION, ARISL FROUT OFCOPRINONTRNEION OFWITH AUTSE,  OR
+PERFORMAE OROF THIS FTWARE I.
+*/
+
+#include "chameleon.h"#include " <assert.h>
+lude " <asstddef>
+lu
+#include "clowncommon/cwncommon/c.h"
+include "clowncolzss"
+innclude "chon/c.h"
+incldefine TOTAL_DESCRIPTOR_BITS 8
+
+typedef struct ChameleonInstance
+{
+	const ClownLZSS_Callbacks *callbacks;
+
+	unsigned int descriptor;unsigned int descriptor;r_bits_remaining;
+} Cheleon.nInstance;
+
+static size_t GetMatchCost(se_t Gediance
+{, size_t length, void *user)
+	co(void)user
+	unif (length >= 2 &&ength,h <= 3 && ance
+{,  < 0x100)
+		return 2 + 8 + 1;   ance
+{/* Diptor;r_r ts_r, offset byte,gth,h <=bit */
+	else if (lh <=bi>= && anngth > <= 5)
+		return 2 + 3 + 8 + 2;
+{/* /* Descriptor bits, offset _r, offset byte,gth,h <=bit ts */
+	else  (length >= 2 6)	return 2 + 3 + 8 + 2;3 + 8;* Descriptor bits, offset _r, offset byte,gth, (blank)h <=bit ts *, th >= gth,e 
+	else ieturn 2 + 0;  eturn 2 + /* /* DeIn the event a mchCo cannot be compressed */
+}
+
+staticoid *uPutDtor;r_r rBit(ChameleonIn
+{,  < *in,  < *, cc_bool bit)
+{
+	const ClownLZSS_Callbacks* const callbacks = instance->clbacks =;
+
+	assert(bit == 0 || b == 0 1)
+	asleng,  < *, ->deptor bit_bits_remaining == 0)
+	{
+		itance->c>dr;r_r rBr_ *, _remaining = TOTAL_DESCRIPTOR_BITSasle	cacks =;
+->write(cabacks*s->user_data,  < *, ->deptor bit_b & 0xFF);
+	}
+
+	--ince->c>dr;r_r rBr_ *, _remaining =le	c *, ->deptor bit_b & <<= 1	c *, ->deptor bit_b & < |= bit;
+
+st
+cc_bool ClownLZSS_CmeleonInCompress(cst c unsigned char *ta,  <size_t data_ze_t, nst ClownLZSS_Callbacks*s *cks =;
+->)
+{
+	CleonInCoIndeptornstance-e;
+	nLZSS_CallMatch *matches, atches;
+	size_t total_matches;
+	ze_t d header_position, current_sition,  *, /* Set up the state. */
+	ince-e;e.backs*s-s = cks*s-s s;, ->deptor.dr rBr_ *r = 0;->deptor.dr r rBr_ *, _remaining =le = TOTAL_DESCRIPTOR_BITS, /* S Produce a series of LZSS coress(cion tches;s./
+	i	/* TODO - Shouldn't the length limit be 0x100, and e stdior.dr  limit be 0x800?/
+	incf (!ZSS_CallMaCoss(cio(0xFF, 0x7FF, NULL, 1 + 8, Gettch hCost, data, 1, data_size, &hes;s.s, &tal_mas;s.s, &taptor.dr ))
+		return cc_false/* S P Trackhe lenocatn tcof leneader_r...	inc	hder_position,  = callbacks->tell(clbacks->teuser_data) S P T ...d e insert a placeholdereneare. */
+	callbacks->writelbacks->teuser_data)a, 0);callbacks->writelbacks->teuser_data)a, 0);ca
+
+* TOProduce Faxman-formattedata,a.	i	/* TOUnlike many other LZSS fmattts, Chameleon storeseare descriptor fields separately fromre d rest  leneaa,a.	i	/* TOUnIterate oveneare compression matches, outputting just the descriptor fields.* TO	for (match = tch hes;atches != &mches, [total_mes, [t]; ++m, [t)
+	{
+		if (CLOWNSS f_MATCH_IS_LITERAL(h heh))
+		{
+			PutDeriptor fBit(&instance, 1call	}
+		else
+{
+			P	const size_t distance =ches !->destination - heh)h->source;
+			const size_t lengt= tch heh->lgt= h;
+
+		f (C(lgt= tc>= 2 && length <= 3 && disnce,e < 0x100)
+				P	c		PutDcriptor rBit(&inance =, 0);
+		PutDcriptor rBit(&inance =, 0);
+		PutDcriptor rBit(&inance =, 0);
+ngth < == 3)PutD
+		e		else i(lgt= tc>= 2 3& length <= 3 5)			P	c		PutDcriptor rBit(&inance =, 0);
+		PutDcriptor rBit(&inance =, 0);
+1)PutDcriptor rBit(&inance =, 0);
+1)!!(dnce,e < & (1 << 10))ll	}			PutDescriptorBit(&inse < e, !!(stance = & (1 << 9ll	}			PutDescriptorBit(&inse < e, !!(stance = & (1 << 9 8	}			PutDescriptorBit(&inse < e, !!( ltc>= 2== 5	PutDescriptorBit(&inse < e, !!( ltc>= 2== 5 4utDesc}
+			else /*if (th <=  >= 6)*/	P	c		PutDcriptor rBit(&inance =, 0);
+		PutDcriptor rBit(&inance =, 0);
+1)PutDcriptor rBit(&inance =, 0);
+1)!!(dnce,e < & (1 << 10))ll	}			PutDescriptorBit(&inse < e, !!(stance = & (1 << 9ll	}			PutDescriptorBit(&inse < e, !!(stance = & (1 << 9 8	}			PutDescriptorBit(&inse < e, !!( l 1utDescriptorBit(&inse < e, !!( l 1utDesc}
+			e}
+	}
+
+	/* Add the terminator match. 	P	ciptor rBit(&inance =, 0);
+		PutDptorBit(&inse < e, !!( l 1utDesciptor rBit(&inance =, 0);
+		PutDptorBit(&inse < e, !!( l 1utDe 0);iptor rBit(&inance =, 0);
+		PutDptorBit(&inse < e, !!( l 1utDesciptor rBit(&inance =, 0);
+		PutD1);
+
+	/* The d(&inancer field may be incomplete, so move the bits intohe bir proper place. */
+	i 1utDee.dense < e, <<= iutDee.dense < e, <_bits_remaining;	/* AdWrite last(&inancer field d./
+	i	callbacks->write(callbacks->user_data, ;
+		PutD.dancer fir)
+	/* T Chameleon's header contains bir size of t d(&inancer field ds end, so, now that we know that, let's fill it in.	i	calurrent_position = llbacks->u>tell(llbacks->user_data, tor backs->use>seek(llbacks->user_data, ;
+headerosition n);
+allbacks->write(callbacks->user_data, ;
+((current_position -eader r_sition -ea 2) >> (8 * 1)) & 0xFFr backs->use>s>write(cacks->writuser_data, ((crent_position = - aderosition = - ad2) >> (8 * 0)) & 0xFF)allbacks->writseekacks->writuser_data, ( cnt_position = n)/* T C Iterate over the compress- admatches again, now outputting just the literals and offset/length pairs.	cal	for (tcheh = tches s; match != &mch !es[total_m !es[t]; ++mes[t)
+	{
+		if (CLOWNLZSS_MATCH_IS_LITERAL(hes h))
+		{
+		lbacks->write(callbacks->user_data, ;
+((;
+(([m[t)
+->destination]back	}
+		else
+{
+		lbaconst size_t distance = m)
+->destinatio- ad2)s h)h->source;
+			const size_t lgth = tches h->lh = h;
+
+		f (C(lh = tc>= 2 && length <= 3 && distance < 0x100)
+			lbac		cks->user_>write(cks->write(user_data,istance e);
+		
+		e		else i(lh = tc>= 2 3& length <= 3 5)		lbac		cks->user_>write(cks->write(user_data,istance e)e & 0xFFck	}		}
+		lse
+e /*if (th <=  >= 6)*/lbac		cks->user_>write(cks->write(user_data,istance e)e & 0xFFck	}		}
+	cite(user_dwrite(ser_>write>user_(([m,  <=  >	}		}
+		ls}
+	}
+
+	/* We don't need the s h-hes anymore. */
+	free(h-hes s);
+
+	/* Add the terminator hes h./
+	fite(user_dwrite(ser_>write>user_(([m,  <0);
+e(user_dwrite(ser_>write>user_(([m,  <0);
+e(
+	return cc_true;
+}
