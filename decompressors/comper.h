@@ -41,18 +41,18 @@
 	} \
 }
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 #include <algorithm>
 
 template<typename T1, typename T2>
-void ClownLZSS_ComperDecompress(T1 input_begin, T1 input_end, T2 output_begin)
+void ClownLZSS_ComperDecompress(T1 input_begin, T2 output_begin)
 {
 	T1 input_iterator = input_begin;
 	T2 output_iterator = output_begin;
 	#define CLOWNLZSS_READ_INPUT (++input_iterator, input_iterator[-1])
 	#define CLOWNLZSS_WRITE_OUTPUT(VALUE) (*output_iterator = (VALUE), ++output_iterator)
 	#define CLOWNLZSS_COPY_OUTPUT(OFFSET, COUNT, MAXIMUM_COUNT) std::copy(output_iterator - (OFFSET), output_iterator - (OFFSET) + (COUNT), output_iterator)
-	CLOWNLZSS_COMPER_DECOMPRESS(input_end - input_iterator);
+	CLOWNLZSS_COMPER_DECOMPRESS;
 	#undef CLOWNLZSS_READ_INPUT
 	#undef CLOWNLZSS_WRITE_OUTPUT
 	#undef CLOWNLZSS_COPY_OUTPUT

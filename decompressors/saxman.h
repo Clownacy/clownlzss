@@ -54,7 +54,7 @@
 	} \
 }
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 #include <algorithm>
 
 template<typename T1, typename T2>
