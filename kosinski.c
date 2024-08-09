@@ -111,7 +111,7 @@ cc_bool ClownLZSS_KosinskiCompress(const unsigned char *data, size_t data_size, 
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	/* Produce a series of LZSS compression matches. */
-	if (!ClownLZSS_Compress(1, 0x100, 0x2000, NULL, 1 + 8, GetMatchCost, data, data_size, &matches, &total_matches, &instance))
+	if (!ClownLZSS_Compress(0x100, 0x2000, NULL, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, &instance))
 		return cc_false;
 
 	/* Begin first descriptor field. */

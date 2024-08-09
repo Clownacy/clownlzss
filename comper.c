@@ -95,9 +95,15 @@ static void PutDescriptorBit(ComperInstance *instance, cc_bool bit)
 
 cc_bool ClownLZSS_ComperCompress(const unsigned char *data, size_t data_size, const ClownLZSS_Callbacks *callbacks)
 {
+	const unsigned int bytes_per_value = 2;
+
 	ComperInstance instance;
 	ClownLZSS_Match *matches, *match;
 	size_t total_matches;
+
+	/* Cannot compress data that is an odd number of bytes long. */
+	if (data_size % bytes_per_value != 0)
+		return cc_false;
 
 	/* Set up the state. */
 	instance.callbacks = callbacks;
@@ -105,7 +111,7 @@ cc_bool ClownLZSS_ComperCompress(const unsigned char *data, size_t data_size, co
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	/* Produce a series of LZSS compression matches. */
-	if (!ClownLZSS_Compress(2, 0x100, 0x100, NULL, 1 + 16, GetMatchCost, data, data_size, &matches, &total_matches, &instance))
+	if (!ClownLZSS_Compress(0x100, 0x100, NULL, 1 + 16, GetMatchCost, data, bytes_per_value, data_size / bytes_per_value, &matches, &total_matches, &instance))
 		return cc_false;
 
 	/* Begin first descriptor field. */

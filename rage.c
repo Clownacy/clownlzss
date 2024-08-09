@@ -93,7 +93,7 @@ cc_bool ClownLZSS_RageCompress(const unsigned char *data, size_t data_size, cons
 
 	/* Produce a series of LZSS compression matches. */
 	/* TODO - Shouldn't the distance limit be 0x2000? */
-	if (!ClownLZSS_Compress(1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, data_size, &matches, &total_matches, NULL))
+	if (!ClownLZSS_Compress(0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, 1, data_size, &matches, &total_matches, NULL))
 		return cc_false;
 
 	/* Track the location of the header... */

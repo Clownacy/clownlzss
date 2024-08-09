@@ -82,7 +82,7 @@ cc_bool ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size,
 
 	/* Produce a series of LZSS compression matches. */
 	/* TODO - Shouldn't the length limit be 0x100, and the distance limit be 0x800? */
-	if (!ClownLZSS_Compress(1, 0xFF, 0x7FF, NULL, 1 + 8, GetMatchCost, data, data_size, &matches, &total_matches, &instance))
+	if (!ClownLZSS_Compress(0xFF, 0x7FF, NULL, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, &instance))
 		return cc_false;
 
 	/* Track the location of the header... */

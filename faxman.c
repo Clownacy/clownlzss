@@ -143,7 +143,7 @@ cc_bool ClownLZSS_FaxmanCompress(const unsigned char *data, size_t data_size, co
 	instance.descriptor_bits_total = 0;
 
 	/* Produce a series of LZSS compression matches. */
-	if (!ClownLZSS_Compress(1, 0x1F + 3, 0x800, FindExtraMatches, 1 + 8, GetMatchCost, data, data_size, &matches, &total_matches, &instance))
+	if (!ClownLZSS_Compress(0x1F + 3, 0x800, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, &instance))
 		return cc_false;
 
 	/* Track the location of the header... */

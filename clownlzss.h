@@ -43,13 +43,13 @@ typedef struct ClownLZSS_Match
 #define CLOWNLZSS_MATCH_IS_LITERAL(match) ((match)->source == (size_t)-1)
 
 int ClownLZSS_Compress(
-	size_t bytes_per_value,
 	size_t maximum_match_length,
 	size_t maximum_match_distance,
 	void (*extra_matches_callback)(const unsigned char *data, size_t total_values, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
 	size_t literal_cost,
 	size_t (*match_cost_callback)(size_t distance, size_t length, void *user),
 	const unsigned char *data,
+	size_t bytes_per_value,
 	size_t total_values,
 	ClownLZSS_Match **_matches,
 	size_t *_total_matches,
