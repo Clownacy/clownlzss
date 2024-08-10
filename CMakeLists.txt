@@ -94,6 +94,7 @@ function(make_decompress_test compression-name compression-command)
 endfunction()
 
 make_decompress_test(comper "-c")
+make_decompress_test(kosinski "-k")
 make_decompress_test(saxman "-s")
 
 set_property(TEST test_clone_driver_v2_dac_driver_comper_decompress_run PROPERTY WILL_FAIL true)
