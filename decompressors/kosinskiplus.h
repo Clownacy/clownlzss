@@ -52,7 +52,7 @@ namespace ClownLZSS
 						const unsigned int low_byte = Read(input);
 
 						offset = ((high_byte & 0xF8) << 5) | low_byte;
-						offset = 0x2000 - offset; // Convert from negative two's-complement to positive.
+						offset = 0x2000 - offset;
 						count = high_byte & 7;
 
 						if (count != 0)
@@ -69,7 +69,7 @@ namespace ClownLZSS
 					}
 					else
 					{
-						offset = 0x100 - Read(input); // Convert from negative two's-complement to positive.
+						offset = 0x100 - Read(input);
 
 						count = 2;
 
