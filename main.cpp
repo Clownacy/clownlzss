@@ -275,6 +275,12 @@ int main(int argc, char **argv)
 						ClownLZSS::SaxmanDecompress(in_file, out_file, uncompressed_length);
 						break;
 					}
+
+					case FORMAT_SAXMAN_NO_HEADER:
+					{
+						ClownLZSS::SaxmanDecompress(in_file, out_file, std::filesystem::file_size(in_filename));
+						break;
+					}
 				}
 			}
 			else
