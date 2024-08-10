@@ -222,161 +222,149 @@ int main(int argc, char **argv)
 		else
 		{
 			/* Load input file to buffer */
-			std::fstream in_file(in_filename, std::fstream::in | std::fstream::binary);
+			std::fstream in_file;
+			in_file.exceptions(in_file.badbit | in_file.eofbit | in_file.failbit);
+			in_file.open(in_filename, std::fstream::in | std::fstream::binary);
 
-			if (!in_file)
+			if (out_filename == NULL)
+				out_filename = moduled ? mode->moduled_default_filename : mode->normal_default_filename;
+
+			/* Write compressed data to output file */
+			std::fstream out_file;
+			out_file.exceptions(out_file.badbit | out_file.eofbit | out_file.failbit);
+			out_file.open(out_filename, decompress ? std::fstream::trunc | std::fstream::in | std::fstream::out | std::fstream::binary : std::fstream::out | std::fstream::binary);
+
+			ClownLZSS_Callbacks callbacks;
+
+			callbacks.user_data = &out_file;
+			callbacks.read = ReadCallback;
+			callbacks.write = WriteCallback;
+			callbacks.seek = SeekCallback;
+			callbacks.tell = TellCallback;
+
+			if (decompress)
 			{
-				exit_code = EXIT_FAILURE;
-				fputs("Error: Could not open input file\n", stderr);
+				switch (mode->format)
+				{
+					case FORMAT_COMPER:
+						ClownLZSS::ComperDecompress(in_file, out_file);
+						break;
+
+					case FORMAT_KOSINSKI:
+						ClownLZSS::KosinskiDecompress(in_file, out_file);
+						break;
+
+					case FORMAT_KOSINSKIPLUS:
+						ClownLZSS::KosinskiPlusDecompress(in_file, out_file);
+						break;
+
+					case FORMAT_SAXMAN:
+					{
+						const unsigned int uncompressed_length_lower_byte = ReadCallback(&in_file);
+						const unsigned int uncompressed_length_upper_byte = ReadCallback(&in_file);
+						const unsigned int uncompressed_length = uncompressed_length_upper_byte << 8 | uncompressed_length_lower_byte;
+						ClownLZSS::SaxmanDecompress(in_file, out_file, uncompressed_length);
+						break;
+					}
+				}
 			}
 			else
 			{
-				if (out_filename == NULL)
-					out_filename = moduled ? mode->moduled_default_filename : mode->normal_default_filename;
+				size_t file_size;
+				unsigned char *file_buffer;
 
-				/* Write compressed data to output file */
-				std::fstream out_file(out_filename, decompress ? std::fstream::trunc | std::fstream::in | std::fstream::out | std::fstream::binary : std::fstream::out | std::fstream::binary);
+				in_file.seekg(0, in_file.end);
+				file_size = in_file.tellg();
+				in_file.seekg(0, in_file.beg);
 
-				if (!out_file)
+				file_buffer = (unsigned char*)malloc(file_size);
+
+				if (file_buffer == NULL)
 				{
 					exit_code = EXIT_FAILURE;
-					fputs("Error: Could not open output file\n", stderr);
+					fputs("Error: Could not allocate memory for the file buffer\n", stderr);
 				}
 				else
 				{
-					ClownLZSS_Callbacks callbacks;
+					/* Compress data */
+					cc_bool success = cc_false;
 
-					callbacks.user_data = &out_file;
-					callbacks.read = ReadCallback;
-					callbacks.write = WriteCallback;
-					callbacks.seek = SeekCallback;
-					callbacks.tell = TellCallback;
+					in_file.read((char*)file_buffer, file_size);
+					in_file.close();
 
-					if (decompress)
+					switch (mode->format)
 					{
-						switch (mode->format)
-						{
-							case FORMAT_COMPER:
-								ClownLZSS::ComperDecompress(in_file, out_file);
-								break;
+						case FORMAT_CHAMELEON:
+							if (moduled)
+								success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_ChameleonCompress, module_size, 1);
+							else
+								success = ClownLZSS_ChameleonCompress(file_buffer, file_size, &callbacks);
+							break;
 
-							case FORMAT_KOSINSKI:
-								ClownLZSS::KosinskiDecompress(in_file, out_file);
-								break;
+						case FORMAT_COMPER:
+							if (moduled)
+								success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_ComperCompress, module_size, 1);
+							else
+								success = ClownLZSS_ComperCompress(file_buffer, file_size, &callbacks);
+							break;
 
-							case FORMAT_KOSINSKIPLUS:
-								ClownLZSS::KosinskiPlusDecompress(in_file, out_file);
-								break;
+						case FORMAT_FAXMAN:
+							if (moduled)
+								success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_FaxmanCompress, module_size, 1);
+							else
+								success = ClownLZSS_FaxmanCompress(file_buffer, file_size, &callbacks);
+							break;
 
-							case FORMAT_SAXMAN:
-							{
-								const unsigned int uncompressed_length_lower_byte = ReadCallback(&in_file);
-								const unsigned int uncompressed_length_upper_byte = ReadCallback(&in_file);
-								const unsigned int uncompressed_length = uncompressed_length_upper_byte << 8 | uncompressed_length_lower_byte;
-								ClownLZSS::SaxmanDecompress(in_file, out_file, uncompressed_length);
-								break;
-							}
-						}
+						case FORMAT_KOSINSKI:
+							if (moduled)
+								success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_KosinskiCompress, module_size, 0x10);
+							else
+								success = ClownLZSS_KosinskiCompress(file_buffer, file_size, &callbacks);
+							break;
+
+						case FORMAT_KOSINSKIPLUS:
+							if (moduled)
+								success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_KosinskiPlusCompress, module_size, 1);
+							else
+								success = ClownLZSS_KosinskiPlusCompress(file_buffer, file_size, &callbacks);
+							break;
+
+						case FORMAT_RAGE:
+							if (moduled)
+								success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_RageCompress, module_size, 1);
+							else
+								success = ClownLZSS_RageCompress(file_buffer, file_size, &callbacks);
+							break;
+
+						case FORMAT_ROCKET:
+							if (moduled)
+								success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_RocketCompress, module_size, 1);
+							else
+								success = ClownLZSS_RocketCompress(file_buffer, file_size, &callbacks);
+							break;
+
+						case FORMAT_SAXMAN:
+							if (moduled)
+								success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_SaxmanCompressWithHeader, module_size, 1);
+							else
+								success = ClownLZSS_SaxmanCompressWithHeader(file_buffer, file_size, &callbacks);
+							break;
+
+						case FORMAT_SAXMAN_NO_HEADER:
+							if (moduled)
+								success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_SaxmanCompressWithoutHeader, module_size, 1);
+							else
+								success = ClownLZSS_SaxmanCompressWithoutHeader(file_buffer, file_size, &callbacks);
+							break;
 					}
-					else
+
+					if (!success)
 					{
-						size_t file_size;
-						unsigned char *file_buffer;
-
-						in_file.seekg(0, in_file.end);
-						file_size = in_file.tellg();
-						in_file.seekg(0, in_file.beg);
-
-						file_buffer = (unsigned char*)malloc(file_size);
-
-						if (file_buffer == NULL)
-						{
-							exit_code = EXIT_FAILURE;
-							fputs("Error: Could not allocate memory for the file buffer\n", stderr);
-						}
-						else
-						{
-							/* Compress data */
-							cc_bool success = cc_false;
-
-							in_file.read((char*)file_buffer, file_size);
-							in_file.close();
-
-							switch (mode->format)
-							{
-								case FORMAT_CHAMELEON:
-									if (moduled)
-										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_ChameleonCompress, module_size, 1);
-									else
-										success = ClownLZSS_ChameleonCompress(file_buffer, file_size, &callbacks);
-									break;
-
-								case FORMAT_COMPER:
-									if (moduled)
-										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_ComperCompress, module_size, 1);
-									else
-										success = ClownLZSS_ComperCompress(file_buffer, file_size, &callbacks);
-									break;
-
-								case FORMAT_FAXMAN:
-									if (moduled)
-										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_FaxmanCompress, module_size, 1);
-									else
-										success = ClownLZSS_FaxmanCompress(file_buffer, file_size, &callbacks);
-									break;
-
-								case FORMAT_KOSINSKI:
-									if (moduled)
-										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_KosinskiCompress, module_size, 0x10);
-									else
-										success = ClownLZSS_KosinskiCompress(file_buffer, file_size, &callbacks);
-									break;
-
-								case FORMAT_KOSINSKIPLUS:
-									if (moduled)
-										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_KosinskiPlusCompress, module_size, 1);
-									else
-										success = ClownLZSS_KosinskiPlusCompress(file_buffer, file_size, &callbacks);
-									break;
-
-								case FORMAT_RAGE:
-									if (moduled)
-										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_RageCompress, module_size, 1);
-									else
-										success = ClownLZSS_RageCompress(file_buffer, file_size, &callbacks);
-									break;
-
-								case FORMAT_ROCKET:
-									if (moduled)
-										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_RocketCompress, module_size, 1);
-									else
-										success = ClownLZSS_RocketCompress(file_buffer, file_size, &callbacks);
-									break;
-
-								case FORMAT_SAXMAN:
-									if (moduled)
-										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_SaxmanCompressWithHeader, module_size, 1);
-									else
-										success = ClownLZSS_SaxmanCompressWithHeader(file_buffer, file_size, &callbacks);
-									break;
-
-								case FORMAT_SAXMAN_NO_HEADER:
-									if (moduled)
-										success = ClownLZSS_ModuledCompressionWrapper(file_buffer, file_size, &callbacks, ClownLZSS_SaxmanCompressWithoutHeader, module_size, 1);
-									else
-										success = ClownLZSS_SaxmanCompressWithoutHeader(file_buffer, file_size, &callbacks);
-									break;
-							}
-
-							if (!success)
-							{
-								exit_code = EXIT_FAILURE;
-								fputs("Error: File could not be compressed\n", stderr);
-							}
-
-							free(file_buffer);
-						}
+						exit_code = EXIT_FAILURE;
+						fputs("Error: File could not be compressed\n", stderr);
 					}
+
+					free(file_buffer);
 				}
 			}
 		}
