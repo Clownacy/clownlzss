@@ -284,7 +284,7 @@ int main(int argc, char **argv)
 					out_filename = moduled ? mode->moduled_default_filename : mode->normal_default_filename;
 
 				/* Write compressed data to output file */
-				std::fstream out_file(out_filename, decompress ? std::fstream::in | std::fstream::out | std::fstream::binary : std::fstream::out | std::fstream::binary);
+				std::fstream out_file(out_filename, decompress ? std::fstream::trunc | std::fstream::in | std::fstream::out | std::fstream::binary : std::fstream::out | std::fstream::binary);
 
 				if (!out_file)
 				{
