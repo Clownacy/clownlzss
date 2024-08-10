@@ -13,8 +13,9 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
+#include <fstream>
+
 #include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,6 +31,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "saxman.h"
 
 #include "decompressors/comper.h"
+#include "decompressors/kosinski.h"
 #include "decompressors/saxman.h"
 
 typedef enum Format
@@ -95,70 +97,72 @@ static void PrintUsage(void)
 
 static unsigned char ReadCallback(void* const user_data)
 {
-	FILE* const file = (FILE*)user_data;
+	std::fstream* const file = (std::fstream*)user_data;
 
-	return fgetc(file);
+//	file->seekp(1, file->cur);
+	return file->get();
 }
 
 static void WriteCallback(void* const user_data, const unsigned char byte)
 {
-	FILE* const file = (FILE*)user_data;
+	std::fstream* const file = (std::fstream*)user_data;
 
-	fputc(byte, file);
+//	file->seekg(1, file->cur);
+	file->put(byte);
 }
 
 static void SeekCallback(void* const user_data, const size_t position)
 {
-	FILE* const file = (FILE*)user_data;
+	std::fstream* const file = (std::fstream*)user_data;
 
-	fseek(file, (long)position, SEEK_SET);
+	file->seekg(position, file->beg);
+	file->seekp(position, file->beg);
 }
 
 static size_t TellCallback(void* const user_data)
 {
-	FILE* const file = (FILE*)user_data;
+	std::fstream* const file = (std::fstream*)user_data;
 
-	return (size_t)ftell(file);
+	return (size_t)file->tellp();
 }
 
-#define CLOWNLZSS_READ_INPUT fgetc(in_file)
-#define CLOWNLZSS_WRITE_OUTPUT(VALUE) fputc(VALUE, out_file)
+#define CLOWNLZSS_READ_INPUT in_file.get()
+#define CLOWNLZSS_WRITE_OUTPUT(VALUE) out_file.put(VALUE)
 #define CLOWNLZSS_FILL_OUTPUT(VALUE, COUNT, MAXIMUM_COUNT) \
 	do \
 	{ \
 		unsigned int i; \
 		for (i = 0; i < COUNT; ++i) \
-			fputc(VALUE, out_file); \
+			out_file.put(VALUE); \
 	} \
 	while (0)
 #define CLOWNLZSS_COPY_OUTPUT(OFFSET, COUNT, MAXIMUM_COUNT) \
 	do \
 	{ \
-		fpos_t position; \
 		unsigned int i; \
-		unsigned char bytes[MAXIMUM_COUNT]; \
+		char bytes[MAXIMUM_COUNT]; \
 \
-		fgetpos(out_file, &position); \
-		fseek(out_file, -(long)OFFSET, SEEK_CUR); \
-		fread(bytes, 1, COUNT, out_file); \
-		fsetpos(out_file, &position); \
+		const auto position = out_file.tellg(); \
+		out_file.seekg(-(long)OFFSET, out_file.cur); \
+		out_file.read(bytes, COUNT); \
+		out_file.seekg(position); \
 \
 		for (i = OFFSET; i < COUNT; ++i) \
 			bytes[i] = bytes[i - OFFSET]; \
 \
-		fwrite(bytes, 1, COUNT, out_file); \
+		out_file.write(bytes, COUNT); \
 	} \
 	while (0)
 
-static void ComperDecompress(FILE* const out_file, FILE* const in_file)
+static void ComperDecompress(std::fstream &out_file, std::fstream &in_file)
 {
 	CLOWNLZSS_COMPER_DECOMPRESS;
 }
 
-static void SaxmanDecompress(FILE* const out_file, FILE* const in_file)
+static void SaxmanDecompress(std::fstream &out_file, std::fstream &in_file)
 {
-	const unsigned int uncompressed_length_lower_byte = fgetc(in_file);
-	const unsigned int uncompressed_length_upper_byte = fgetc(in_file);
+	const unsigned int uncompressed_length_lower_byte = ReadCallback(&in_file);
+	const unsigned int uncompressed_length_upper_byte = ReadCallback(&in_file);
 	const unsigned int uncompressed_length = uncompressed_length_upper_byte << 8 | uncompressed_length_lower_byte;
 	CLOWNLZSS_SAXMAN_DECOMPRESS(uncompressed_length);
 }
@@ -166,6 +170,11 @@ static void SaxmanDecompress(FILE* const out_file, FILE* const in_file)
 #undef CLOWNLZSS_WRITE_OUTPUT
 #undef CLOWNLZSS_FILL_OUTPUT
 #undef CLOWNLZSS_COPY_OUTPUT
+
+static void KosinskiDecompress(std::fstream &out_file, std::fstream &in_file)
+{
+//	ClownLZSS_KosinskiDecompress(InFileIterator(in_file), OutFileIterator(out_file));
+}
 
 int main(int argc, char **argv)
 {
@@ -262,24 +271,22 @@ int main(int argc, char **argv)
 		else
 		{
 			/* Load input file to buffer */
-			FILE *in_file = fopen(in_filename, "rb");
+			std::fstream in_file(in_filename, std::fstream::in | std::fstream::binary);
 
-			if (in_file == NULL)
+			if (!in_file)
 			{
 				exit_code = EXIT_FAILURE;
 				fputs("Error: Could not open input file\n", stderr);
 			}
 			else
 			{
-				FILE *out_file;
-
 				if (out_filename == NULL)
 					out_filename = moduled ? mode->moduled_default_filename : mode->normal_default_filename;
 
 				/* Write compressed data to output file */
-				out_file = fopen(out_filename, decompress ? "w+b" : "wb");
+				std::fstream out_file(out_filename, decompress ? std::fstream::in | std::fstream::out | std::fstream::binary : std::fstream::out | std::fstream::binary);
 
-				if (out_file == NULL)
+				if (!out_file)
 				{
 					exit_code = EXIT_FAILURE;
 					fputs("Error: Could not open output file\n", stderr);
@@ -288,7 +295,7 @@ int main(int argc, char **argv)
 				{
 					ClownLZSS_Callbacks callbacks;
 
-					callbacks.user_data = out_file;
+					callbacks.user_data = &out_file;
 					callbacks.read = ReadCallback;
 					callbacks.write = WriteCallback;
 					callbacks.seek = SeekCallback;
@@ -302,6 +309,10 @@ int main(int argc, char **argv)
 								ComperDecompress(out_file, in_file);
 								break;
 
+							case FORMAT_KOSINSKI:
+								KosinskiDecompress(out_file, in_file);
+								break;
+
 							case FORMAT_SAXMAN:
 								SaxmanDecompress(out_file, in_file);
 								break;
@@ -312,9 +323,9 @@ int main(int argc, char **argv)
 						size_t file_size;
 						unsigned char *file_buffer;
 
-						fseek(in_file, 0, SEEK_END);
-						file_size = ftell(in_file);
-						rewind(in_file);
+						in_file.seekg(0, in_file.end);
+						file_size = in_file.tellg();
+						in_file.seekg(0, in_file.beg);
 
 						file_buffer = (unsigned char*)malloc(file_size);
 
@@ -328,9 +339,8 @@ int main(int argc, char **argv)
 							/* Compress data */
 							cc_bool success = cc_false;
 
-							fread(file_buffer, 1, file_size, in_file);
-							fclose(in_file);
-							in_file = NULL;
+							in_file.read((char*)file_buffer, file_size);
+							in_file.close();
 
 							switch (mode->format)
 							{
@@ -407,12 +417,7 @@ int main(int argc, char **argv)
 							free(file_buffer);
 						}
 					}
-
-					fclose(out_file);
 				}
-
-				if (in_file != NULL)
-					fclose(in_file);
 			}
 		}
 	}
