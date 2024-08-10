@@ -13,15 +13,14 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
+#include <array>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <string>
+#include <string_view>
 #include <vector>
-
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "clowncommon/clowncommon.h"
 
 #include "chameleon.h"
 #include "comper.h"
@@ -52,13 +51,13 @@ typedef enum Format
 
 typedef struct Mode
 {
-	const char *command;
+	std::string command;
 	Format format;
-	const char *normal_default_filename;
-	const char *moduled_default_filename;
+	std::string normal_default_filename;
+	std::string moduled_default_filename;
 } Mode;
 
-static const Mode modes[] = {
+static const auto modes = std::to_array<Mode>({
 	{"-ch", FORMAT_CHAMELEON,        "out.cham", "out.chamm"},
 	{"-c",  FORMAT_COMPER,           "out.comp", "out.compm"},
 	{"-f",  FORMAT_FAXMAN,           "out.fax",  "out.faxm" },
@@ -68,11 +67,11 @@ static const Mode modes[] = {
 	{"-r",  FORMAT_ROCKET,           "out.rock", "out.rockm"},
 	{"-s",  FORMAT_SAXMAN,           "out.sax",  "out.saxm" },
 	{"-sn", FORMAT_SAXMAN_NO_HEADER, "out.sax",  "out.saxm" }
-};
+});
 
 static void PrintUsage(void)
 {
-	fputs(
+	std::cout <<
 		"Clownacy's LZSS compression tool\n"
 		"\n"
 		"Usage: clownlzss [options] [in-filename] [out-filename]"
@@ -93,40 +92,37 @@ static void PrintUsage(void)
 		" Misc:\n"
 		"  -m[=MODULE_SIZE]  Compresses into modules\n"
 		"                    MODULE_SIZE controls the module size (defaults to 0x1000)\n"
-		"  -d     Decompress\n",
-		stdout
-	);
+		"  -d     Decompress\n"
+	;
 }
 
 static unsigned char ReadCallback(void* const user_data)
 {
-	std::fstream* const file = (std::fstream*)user_data;
+	std::fstream &file = *static_cast<std::fstream*>(user_data);
 
-//	file->seekp(1, file->cur);
-	return file->get();
+	return file.get();
 }
 
 static void WriteCallback(void* const user_data, const unsigned char byte)
 {
-	std::fstream* const file = (std::fstream*)user_data;
+	std::fstream &file = *static_cast<std::fstream*>(user_data);
 
-//	file->seekg(1, file->cur);
-	file->put(byte);
+	file.put(byte);
 }
 
-static void SeekCallback(void* const user_data, const size_t position)
+static void SeekCallback(void* const user_data, const std::size_t position)
 {
-	std::fstream* const file = (std::fstream*)user_data;
+	std::fstream &file = *static_cast<std::fstream*>(user_data);
 
-	file->seekg(position, file->beg);
-	file->seekp(position, file->beg);
+	file.seekg(position, file.beg);
+	file.seekp(position, file.beg);
 }
 
-static size_t TellCallback(void* const user_data)
+static std::size_t TellCallback(void* const user_data)
 {
-	std::fstream* const file = (std::fstream*)user_data;
+	std::fstream &file = *static_cast<std::fstream*>(user_data);
 
-	return (size_t)file->tellp();
+	return static_cast<std::size_t>(file.tellp()); // TODO: GET RID OF THIS.
 }
 
 static auto FileToBuffer(const std::filesystem::path &path)
@@ -144,43 +140,43 @@ static auto FileToBuffer(const std::filesystem::path &path)
 
 int main(int argc, char **argv)
 {
-	int i;
-
 	int exit_code = EXIT_SUCCESS;
 
 	const Mode *mode = NULL;
-	const char *in_filename = NULL;
-	const char *out_filename = NULL;
-	cc_bool moduled = cc_false, decompress = cc_false;
-	size_t module_size = 0x1000;
+	std::filesystem::path in_filename;
+	std::filesystem::path out_filename;
+	bool moduled = false, decompress = false;
+	std::size_t module_size = 0x1000;
 
 	/* Skip past the executable name */
 	--argc;
 	++argv;
 
 	/* Parse arguments */
-	for (i = 0; i < argc; ++i)
+	for (int i = 0; i < argc; ++i)
 	{
-		if (argv[i][0] == '-')
+		const std::string_view arg(argv[i]);
+
+		if (arg[0] == '-')
 		{
-			if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help"))
+			if (arg == "-h" || arg == "--help")
 			{
 				PrintUsage();
 			}
-			else if (!strncmp(argv[i], "-m", 2))
+			else if (arg[1] == 'm')
 			{
-				char *argument = strchr(argv[i], '=');
+				moduled = true;
 
-				moduled = cc_true;
+				const auto argument_position = arg.find_first_of('=');
 
-				if (argument != NULL)
+				if (argument_position != arg.npos)
 				{
 					char *end;
-					unsigned long result = strtoul(argument + 1, &end, 0);
+					unsigned long result = std::strtoul(&argv[i][argument_position + 1], &end, 0);
 
 					if (*end != '\0')
 					{
-						fputs("Invalid parameter to -m\n", stderr);
+						std::cerr << "Invalid parameter to -m\n";
 						exit_code = EXIT_FAILURE;
 						break;
 					}
@@ -189,23 +185,21 @@ int main(int argc, char **argv)
 						module_size = result;
 
 						if (module_size > 0x1000)
-							fputs("Warning: the moduled format header does not fully support sizes greater than\n 0x1000 - header will likely be invalid!\n", stderr);
+							std::cerr << "Warning: the moduled format header does not fully support sizes greater than\n 0x1000 - header will likely be invalid!\n";
 					}
 				}
 			}
-			else if (!strcmp(argv[i], "-d"))
+			else if (arg == "-d")
 			{
-				decompress = cc_true;
+				decompress = true;
 			}
 			else
 			{
-				size_t j;
-
-				for (j = 0; j < CC_COUNT_OF(modes); ++j)
+				for (const auto &current_mode : modes)
 				{
-					if (!strcmp(argv[i], modes[j].command))
+					if (arg == current_mode.command)
 					{
-						mode = &modes[j];
+						mode = &current_mode;
 						break;
 					}
 				}
@@ -213,30 +207,30 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-			if (in_filename == NULL)
-				in_filename = argv[i];
+			if (in_filename.empty())
+				in_filename = arg;
 			else
-				out_filename = argv[i];
+				out_filename = arg;
 		}
 	}
 
 	if (exit_code != EXIT_FAILURE)
 	{
-		if (in_filename == NULL)
+		if (in_filename.empty())
 		{
 			exit_code = EXIT_FAILURE;
-			fputs("Error: Input file not specified\n\n", stderr);
+			std::cerr << "Error: Input file not specified\n";
 			PrintUsage();
 		}
 		else if (mode == NULL)
 		{
 			exit_code = EXIT_FAILURE;
-			fputs("Error: Format not specified\n\n", stderr);
+			std::cerr << "Error: Format not specified\n";
 			PrintUsage();
 		}
 		else
 		{
-			if (out_filename == NULL)
+			if (out_filename.empty())
 				out_filename = moduled ? mode->moduled_default_filename : mode->normal_default_filename;
 
 			/* Write compressed data to output file */
@@ -288,7 +282,7 @@ int main(int argc, char **argv)
 				const auto file_buffer = FileToBuffer(in_filename);
 
 				/* Compress data */
-				cc_bool success = cc_false;
+				bool success = false;
 
 				switch (mode->format)
 				{
@@ -359,7 +353,7 @@ int main(int argc, char **argv)
 				if (!success)
 				{
 					exit_code = EXIT_FAILURE;
-					fputs("Error: File could not be compressed\n", stderr);
+					std::cerr << "Error: File could not be compressed\n";
 				}
 			}
 		}
