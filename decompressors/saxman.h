@@ -55,23 +55,42 @@
 }
 
 #ifdef __cplusplus
-#include <algorithm>
 
-template<typename T1, typename T2>
-void ClownLZSS_SaxmanDecompress(T1 input_begin, T1 input_end, T2 output_begin)
+#include "common.h"
+
+namespace ClownLZSS
 {
-	T1 input_iterator = input_begin;
-	T2 output_iterator = output_begin;
-	#define CLOWNLZSS_READ_INPUT (++input_iterator, input_iterator[-1])
-	#define CLOWNLZSS_WRITE_OUTPUT(VALUE) (*output_iterator = (VALUE), ++output_iterator)
-	#define CLOWNLZSS_FILL_OUTPUT(VALUE, COUNT, MAXIMUM_COUNT) std::fill_n(output_iterator, (COUNT), (VALUE))
-	#define CLOWNLZSS_COPY_OUTPUT(OFFSET, COUNT, MAXIMUM_COUNT) std::copy(output_iterator - (OFFSET), output_iterator - (OFFSET) + (COUNT), output_iterator)
-	CLOWNLZSS_SAXMAN_DECOMPRESS(input_end - input_iterator);
-	#undef CLOWNLZSS_READ_INPUT
-	#undef CLOWNLZSS_WRITE_OUTPUT
-	#undef CLOWNLZSS_FILL_OUTPUT
-	#undef CLOWNLZSS_COPY_OUTPUT
+	namespace Internal
+	{
+		template<typename T1, typename T2>
+		void SaxmanDecompress(T1 &&input, T2 &&output, const unsigned int compressed_length)
+		{
+			#define CLOWNLZSS_READ_INPUT Read(input)
+			#define CLOWNLZSS_WRITE_OUTPUT(VALUE) Write(output, (VALUE))
+			#define CLOWNLZSS_FILL_OUTPUT(VALUE, COUNT, MAXIMUM_COUNT) Fill(output, (VALUE), (COUNT))
+			#define CLOWNLZSS_COPY_OUTPUT(OFFSET, COUNT, MAXIMUM_COUNT) Copy<0xF + 3>(output, (OFFSET), (COUNT))
+			CLOWNLZSS_SAXMAN_DECOMPRESS(compressed_length);
+			#undef CLOWNLZSS_READ_INPUT
+			#undef CLOWNLZSS_WRITE_OUTPUT
+			#undef CLOWNLZSS_FILL_OUTPUT
+			#undef CLOWNLZSS_COPY_OUTPUT
+		}
+	}
+
+	template<std::input_or_output_iterator T1, std::input_or_output_iterator T2>
+	inline void SaxmanDecompress(T1 input_begin, T1 input_end, T2 output_begin)
+	{
+		Internal::SaxmanDecompress(input_begin, output_begin, input_end - input_begin);
+	}
+
+	#if __STDC_HOSTED__ == 1
+	inline void SaxmanDecompress(std::istream &input, std::iostream &output, const unsigned int compressed_length)
+	{
+		Internal::SaxmanDecompress(input, output, compressed_length);
+	}
+	#endif
 }
+
 #endif
 
 #endif /* CLOWNLZSS_DECOMPRESSORS_SAXMAN_H */

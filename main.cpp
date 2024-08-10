@@ -156,7 +156,7 @@ static size_t TellCallback(void* const user_data)
 
 static void ComperDecompress(std::fstream &out_file, std::fstream &in_file)
 {
-	CLOWNLZSS_COMPER_DECOMPRESS;
+	ClownLZSS::ComperDecompress(in_file, out_file);
 }
 
 static void SaxmanDecompress(std::fstream &out_file, std::fstream &in_file)
@@ -164,7 +164,7 @@ static void SaxmanDecompress(std::fstream &out_file, std::fstream &in_file)
 	const unsigned int uncompressed_length_lower_byte = ReadCallback(&in_file);
 	const unsigned int uncompressed_length_upper_byte = ReadCallback(&in_file);
 	const unsigned int uncompressed_length = uncompressed_length_upper_byte << 8 | uncompressed_length_lower_byte;
-	CLOWNLZSS_SAXMAN_DECOMPRESS(uncompressed_length);
+	ClownLZSS::SaxmanDecompress(in_file, out_file, uncompressed_length);
 }
 #undef CLOWNLZSS_READ_INPUT
 #undef CLOWNLZSS_WRITE_OUTPUT
@@ -173,7 +173,7 @@ static void SaxmanDecompress(std::fstream &out_file, std::fstream &in_file)
 
 static void KosinskiDecompress(std::fstream &out_file, std::fstream &in_file)
 {
-	ClownLZSS_KosinskiDecompress(in_file, out_file);
+	ClownLZSS::KosinskiDecompress(in_file, out_file);
 }
 
 int main(int argc, char **argv)
