@@ -40,7 +40,7 @@ add_executable(clownlzss-tool
 )
 
 set_target_properties(clownlzss-tool PROPERTIES
-	CXX_STANDARD 11
+	CXX_STANDARD 20
 	CXX_STANDARD_REQUIRED NO
 	CXX_EXTENSIONS OFF
 )

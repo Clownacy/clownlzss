@@ -173,7 +173,7 @@ static void SaxmanDecompress(std::fstream &out_file, std::fstream &in_file)
 
 static void KosinskiDecompress(std::fstream &out_file, std::fstream &in_file)
 {
-//	ClownLZSS_KosinskiDecompress(InFileIterator(in_file), OutFileIterator(out_file));
+	ClownLZSS_KosinskiDecompress(in_file, out_file);
 }
 
 int main(int argc, char **argv)
