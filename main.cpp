@@ -127,56 +127,6 @@ static size_t TellCallback(void* const user_data)
 	return (size_t)file->tellp();
 }
 
-#define CLOWNLZSS_READ_INPUT in_file.get()
-#define CLOWNLZSS_WRITE_OUTPUT(VALUE) out_file.put(VALUE)
-#define CLOWNLZSS_FILL_OUTPUT(VALUE, COUNT, MAXIMUM_COUNT) \
-	do \
-	{ \
-		unsigned int i; \
-		for (i = 0; i < COUNT; ++i) \
-			out_file.put(VALUE); \
-	} \
-	while (0)
-#define CLOWNLZSS_COPY_OUTPUT(OFFSET, COUNT, MAXIMUM_COUNT) \
-	do \
-	{ \
-		unsigned int i; \
-		char bytes[MAXIMUM_COUNT]; \
-\
-		const auto position = out_file.tellg(); \
-		out_file.seekg(-(long)OFFSET, out_file.cur); \
-		out_file.read(bytes, COUNT); \
-		out_file.seekg(position); \
-\
-		for (i = OFFSET; i < COUNT; ++i) \
-			bytes[i] = bytes[i - OFFSET]; \
-\
-		out_file.write(bytes, COUNT); \
-	} \
-	while (0)
-
-static void ComperDecompress(std::fstream &out_file, std::fstream &in_file)
-{
-	ClownLZSS::ComperDecompress(in_file, out_file);
-}
-
-static void SaxmanDecompress(std::fstream &out_file, std::fstream &in_file)
-{
-	const unsigned int uncompressed_length_lower_byte = ReadCallback(&in_file);
-	const unsigned int uncompressed_length_upper_byte = ReadCallback(&in_file);
-	const unsigned int uncompressed_length = uncompressed_length_upper_byte << 8 | uncompressed_length_lower_byte;
-	ClownLZSS::SaxmanDecompress(in_file, out_file, uncompressed_length);
-}
-#undef CLOWNLZSS_READ_INPUT
-#undef CLOWNLZSS_WRITE_OUTPUT
-#undef CLOWNLZSS_FILL_OUTPUT
-#undef CLOWNLZSS_COPY_OUTPUT
-
-static void KosinskiDecompress(std::fstream &out_file, std::fstream &in_file)
-{
-	ClownLZSS::KosinskiDecompress(in_file, out_file);
-}
-
 int main(int argc, char **argv)
 {
 	int i;
@@ -307,11 +257,11 @@ int main(int argc, char **argv)
 						switch (mode->format)
 						{
 							case FORMAT_COMPER:
-								ComperDecompress(out_file, in_file);
+								ClownLZSS::ComperDecompress(in_file, out_file);
 								break;
 
 							case FORMAT_KOSINSKI:
-								KosinskiDecompress(out_file, in_file);
+								ClownLZSS::KosinskiDecompress(in_file, out_file);
 								break;
 
 							case FORMAT_KOSINSKIPLUS:
@@ -319,8 +269,13 @@ int main(int argc, char **argv)
 								break;
 
 							case FORMAT_SAXMAN:
-								SaxmanDecompress(out_file, in_file);
+							{
+								const unsigned int uncompressed_length_lower_byte = ReadCallback(&in_file);
+								const unsigned int uncompressed_length_upper_byte = ReadCallback(&in_file);
+								const unsigned int uncompressed_length = uncompressed_length_upper_byte << 8 | uncompressed_length_lower_byte;
+								ClownLZSS::SaxmanDecompress(in_file, out_file, uncompressed_length);
 								break;
+							}
 						}
 					}
 					else
