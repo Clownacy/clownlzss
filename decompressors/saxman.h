@@ -77,7 +77,7 @@ namespace ClownLZSS
 		}
 	}
 
-	template<std::input_or_output_iterator T1, std::input_or_output_iterator T2>
+	template<std::input_iterator T1, Internal::random_access_input_output_iterator T2>
 	inline void SaxmanDecompress(T1 input_begin, T1 input_end, T2 output_begin)
 	{
 		Internal::SaxmanDecompress(input_begin, output_begin, input_end - input_begin);

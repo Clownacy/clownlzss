@@ -3,10 +3,17 @@
 
 #include <algorithm>
 #include <array>
+#include <iterator>
 
 namespace ClownLZSS
 {
-	template<std::input_or_output_iterator T>
+	namespace Internal
+	{
+		template <typename T>
+		concept random_access_input_output_iterator = std::random_access_iterator<T> && std::input_iterator<T> && std::output_iterator<T, unsigned char>;
+	}
+
+	template<std::input_iterator T>
 	inline unsigned char Read(T &input_iterator)
 	{
 		const auto value = *input_iterator;
@@ -14,20 +21,20 @@ namespace ClownLZSS
 		return value;
 	};
 
-	template<std::input_or_output_iterator T>
+	template<std::output_iterator<unsigned char> T>
 	inline void Write(T &output_iterator, const unsigned char value)
 	{
 		*output_iterator = value;
 		++output_iterator;
 	};
 
-	template<std::input_or_output_iterator T>
+	template<std::output_iterator<unsigned char> T>
 	inline void Fill(T &output_iterator, const unsigned char value, const unsigned char count)
 	{
 		std::fill_n(output_iterator, count, value);
 	}
 
-	template<unsigned int maximum_count, std::input_or_output_iterator T>
+	template<unsigned int maximum_count, Internal::random_access_input_output_iterator T>
 	inline void Copy(T &output_iterator, const unsigned int distance, const unsigned int count)
 	{
 		std::copy(output_iterator - distance, output_iterator - distance + count, output_iterator);

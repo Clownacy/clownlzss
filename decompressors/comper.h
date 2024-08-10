@@ -62,7 +62,7 @@ namespace ClownLZSS
 		}
 	}
 
-	template<std::input_or_output_iterator T1, std::input_or_output_iterator T2>
+	template<std::input_iterator T1, Internal::random_access_input_output_iterator T2>
 	inline void ComperDecompress(T1 input, T2 output)
 	{
 		Internal::ComperDecompress(input, output);
