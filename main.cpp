@@ -32,6 +32,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "decompressors/comper.h"
 #include "decompressors/kosinski.h"
+#include "decompressors/kosinskiplus.h"
 #include "decompressors/saxman.h"
 
 typedef enum Format
@@ -311,6 +312,10 @@ int main(int argc, char **argv)
 
 							case FORMAT_KOSINSKI:
 								KosinskiDecompress(out_file, in_file);
+								break;
+
+							case FORMAT_KOSINSKIPLUS:
+								ClownLZSS::KosinskiPlusDecompress(in_file, out_file);
 								break;
 
 							case FORMAT_SAXMAN:
