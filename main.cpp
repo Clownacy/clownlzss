@@ -36,37 +36,37 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "decompressors/kosinskiplus.h"
 #include "decompressors/saxman.h"
 
-typedef enum Format
+enum class Format
 {
-	FORMAT_CHAMELEON,
-	FORMAT_COMPER,
-	FORMAT_FAXMAN,
-	FORMAT_KOSINSKI,
-	FORMAT_KOSINSKIPLUS,
-	FORMAT_RAGE,
-	FORMAT_ROCKET,
-	FORMAT_SAXMAN,
-	FORMAT_SAXMAN_NO_HEADER
-} Format;
+	CHAMELEON,
+	COMPER,
+	FAXMAN,
+	KOSINSKI,
+	KOSINSKIPLUS,
+	RAGE,
+	ROCKET,
+	SAXMAN,
+	SAXMAN_NO_HEADER
+};
 
-typedef struct Mode
+struct Mode
 {
 	std::string command;
 	Format format;
 	std::string normal_default_filename;
 	std::string moduled_default_filename;
-} Mode;
+};
 
 static const auto modes = std::to_array<Mode>({
-	{"-ch", FORMAT_CHAMELEON,        "out.cham", "out.chamm"},
-	{"-c",  FORMAT_COMPER,           "out.comp", "out.compm"},
-	{"-f",  FORMAT_FAXMAN,           "out.fax",  "out.faxm" },
-	{"-k",  FORMAT_KOSINSKI,         "out.kos",  "out.kosm" },
-	{"-kp", FORMAT_KOSINSKIPLUS,     "out.kosp", "out.kospm"},
-	{"-ra", FORMAT_RAGE,             "out.rage", "out.ragem"},
-	{"-r",  FORMAT_ROCKET,           "out.rock", "out.rockm"},
-	{"-s",  FORMAT_SAXMAN,           "out.sax",  "out.saxm" },
-	{"-sn", FORMAT_SAXMAN_NO_HEADER, "out.sax",  "out.saxm" }
+	{"-ch", Format::CHAMELEON,        "out.cham", "out.chamm"},
+	{"-c",  Format::COMPER,           "out.comp", "out.compm"},
+	{"-f",  Format::FAXMAN,           "out.fax",  "out.faxm" },
+	{"-k",  Format::KOSINSKI,         "out.kos",  "out.kosm" },
+	{"-kp", Format::KOSINSKIPLUS,     "out.kosp", "out.kospm"},
+	{"-ra", Format::RAGE,             "out.rage", "out.ragem"},
+	{"-r",  Format::ROCKET,           "out.rock", "out.rockm"},
+	{"-s",  Format::SAXMAN,           "out.sax",  "out.saxm" },
+	{"-sn", Format::SAXMAN_NO_HEADER, "out.sax",  "out.saxm" }
 });
 
 static void PrintUsage(void)
@@ -94,35 +94,6 @@ static void PrintUsage(void)
 		"                    MODULE_SIZE controls the module size (defaults to 0x1000)\n"
 		"  -d     Decompress\n"
 	;
-}
-
-static unsigned char ReadCallback(void* const user_data)
-{
-	std::fstream &file = *static_cast<std::fstream*>(user_data);
-
-	return file.get();
-}
-
-static void WriteCallback(void* const user_data, const unsigned char byte)
-{
-	std::fstream &file = *static_cast<std::fstream*>(user_data);
-
-	file.put(byte);
-}
-
-static void SeekCallback(void* const user_data, const std::size_t position)
-{
-	std::fstream &file = *static_cast<std::fstream*>(user_data);
-
-	file.seekg(position, file.beg);
-	file.seekp(position, file.beg);
-}
-
-static std::size_t TellCallback(void* const user_data)
-{
-	std::fstream &file = *static_cast<std::fstream*>(user_data);
-
-	return static_cast<std::size_t>(file.tellp()); // TODO: GET RID OF THIS.
 }
 
 static auto FileToBuffer(const std::filesystem::path &path)
@@ -245,19 +216,19 @@ int main(int argc, char **argv)
 
 				switch (mode->format)
 				{
-					case FORMAT_COMPER:
+					case Format::COMPER:
 						ClownLZSS::ComperDecompress(in_file, out_file);
 						break;
 
-					case FORMAT_KOSINSKI:
+					case Format::KOSINSKI:
 						ClownLZSS::KosinskiDecompress(in_file, out_file);
 						break;
 
-					case FORMAT_KOSINSKIPLUS:
+					case Format::KOSINSKIPLUS:
 						ClownLZSS::KosinskiPlusDecompress(in_file, out_file);
 						break;
 
-					case FORMAT_SAXMAN:
+					case Format::SAXMAN:
 					{
 						const unsigned int uncompressed_length_lower_byte = in_file.get();
 						const unsigned int uncompressed_length_upper_byte = in_file.get();
@@ -266,7 +237,7 @@ int main(int argc, char **argv)
 						break;
 					}
 
-					case FORMAT_SAXMAN_NO_HEADER:
+					case Format::SAXMAN_NO_HEADER:
 					{
 						ClownLZSS::SaxmanDecompress(in_file, out_file, std::filesystem::file_size(in_filename));
 						break;
@@ -277,6 +248,35 @@ int main(int argc, char **argv)
 			{
 				const bool success = [&]() -> bool
 				{
+					constexpr auto ReadCallback = [](void* const user_data)
+					{
+						std::fstream &file = *static_cast<std::fstream*>(user_data);
+
+						return static_cast<unsigned char>(file.get());
+					};
+
+					constexpr auto WriteCallback = [](void* const user_data, const unsigned char byte)
+					{
+						std::fstream &file = *static_cast<std::fstream*>(user_data);
+
+						file.put(byte);
+					};
+
+					constexpr auto SeekCallback = [](void* const user_data, const std::size_t position)
+					{
+						std::fstream &file = *static_cast<std::fstream*>(user_data);
+
+						file.seekg(position, file.beg);
+						file.seekp(position, file.beg);
+					};
+
+					constexpr auto TellCallback = [](void* const user_data)
+					{
+						std::fstream &file = *static_cast<std::fstream*>(user_data);
+
+						return static_cast<std::size_t>(file.tellp()); // TODO: GET RID OF THIS.
+					};
+
 					const ClownLZSS_Callbacks callbacks = {
 						.user_data = &out_file,
 						.read = ReadCallback,
@@ -289,55 +289,55 @@ int main(int argc, char **argv)
 
 					switch (mode->format)
 					{
-						case FORMAT_CHAMELEON:
+						case Format::CHAMELEON:
 							if (moduled)
 								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_ChameleonCompress, module_size, 1);
 							else
 								return ClownLZSS_ChameleonCompress(file_buffer.data(), file_buffer.size(), &callbacks);
 
-						case FORMAT_COMPER:
+						case Format::COMPER:
 							if (moduled)
 								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_ComperCompress, module_size, 1);
 							else
 								return ClownLZSS_ComperCompress(file_buffer.data(), file_buffer.size(), &callbacks);
 
-						case FORMAT_FAXMAN:
+						case Format::FAXMAN:
 							if (moduled)
 								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_FaxmanCompress, module_size, 1);
 							else
 								return ClownLZSS_FaxmanCompress(file_buffer.data(), file_buffer.size(), &callbacks);
 
-						case FORMAT_KOSINSKI:
+						case Format::KOSINSKI:
 							if (moduled)
 								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_KosinskiCompress, module_size, 0x10);
 							else
 								return ClownLZSS_KosinskiCompress(file_buffer.data(), file_buffer.size(), &callbacks);
 
-						case FORMAT_KOSINSKIPLUS:
+						case Format::KOSINSKIPLUS:
 							if (moduled)
 								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_KosinskiPlusCompress, module_size, 1);
 							else
 								return ClownLZSS_KosinskiPlusCompress(file_buffer.data(), file_buffer.size(), &callbacks);
 
-						case FORMAT_RAGE:
+						case Format::RAGE:
 							if (moduled)
 								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_RageCompress, module_size, 1);
 							else
 								return ClownLZSS_RageCompress(file_buffer.data(), file_buffer.size(), &callbacks);
 
-						case FORMAT_ROCKET:
+						case Format::ROCKET:
 							if (moduled)
 								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_RocketCompress, module_size, 1);
 							else
 								return ClownLZSS_RocketCompress(file_buffer.data(), file_buffer.size(), &callbacks);
 
-						case FORMAT_SAXMAN:
+						case Format::SAXMAN:
 							if (moduled)
 								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_SaxmanCompressWithHeader, module_size, 1);
 							else
 								return ClownLZSS_SaxmanCompressWithHeader(file_buffer.data(), file_buffer.size(), &callbacks);
 
-						case FORMAT_SAXMAN_NO_HEADER:
+						case Format::SAXMAN_NO_HEADER:
 							if (moduled)
 								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_SaxmanCompressWithoutHeader, module_size, 1);
 							else
