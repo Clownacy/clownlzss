@@ -10,34 +10,11 @@ namespace ClownLZSS
 		template<typename T1, typename T2>
 		inline void KosinskiPlusDecompress(T1 &&input, T2 &&output)
 		{
-			unsigned int descriptor_bits_remaining;
-			unsigned char descriptor_bits;
-
-			const auto GetDescriptor = [&]()
-			{
-				descriptor_bits = Read(input);
-				descriptor_bits_remaining = 8;
-
-			};
-
-			const auto PopDescriptor = [&]()
-			{
-				if (descriptor_bits_remaining == 0)
-					GetDescriptor();
-
-				const bool result = (descriptor_bits & 0x80) != 0;
-
-				descriptor_bits <<= 1;
-				--descriptor_bits_remaining;
-
-				return result;
-			};
-
-			GetDescriptor();
+			BitField<1, ReadWhen::BeforePop, PopWhere::High, Endian::Big, T1> descriptor_bits(input);
 
 			for (;;)
 			{
-				if (PopDescriptor())
+				if (descriptor_bits.Pop())
 				{
 					Write(output, Read(input));
 				}
@@ -46,7 +23,7 @@ namespace ClownLZSS
 					unsigned int offset;
 					unsigned int count;
 
-					if (PopDescriptor())
+					if (descriptor_bits.Pop())
 					{
 						const unsigned int high_byte = Read(input);
 						const unsigned int low_byte = Read(input);
@@ -73,9 +50,9 @@ namespace ClownLZSS
 
 						count = 2;
 
-						if (PopDescriptor())
+						if (descriptor_bits.Pop())
 							count += 2;
-						if (PopDescriptor())
+						if (descriptor_bits.Pop())
 							count += 1;
 					}
 
