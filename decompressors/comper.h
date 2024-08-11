@@ -17,8 +17,8 @@ namespace ClownLZSS
 				if (!descriptor_bits.Pop())
 				{
 					// Uncompressed.
-					Write(output, Read(input));
-					Write(output, Read(input));
+					output.Write(Read(input));
+					output.Write(Read(input));
 				}
 				else
 				{
@@ -31,7 +31,7 @@ namespace ClownLZSS
 					if (raw_count == 0)
 						break;
 
-					Copy<(0xFF + 1) * 2>(output, offset, count);
+					output.template Copy<(0xFF + 1) * 2>(offset, count);
 				}
 			}
 		}
@@ -40,13 +40,13 @@ namespace ClownLZSS
 	template<std::input_iterator T1, Internal::random_access_input_output_iterator T2>
 	inline void ComperDecompress(T1 input, T2 output)
 	{
-		Internal::ComperDecompress(input, output);
+		Internal::ComperDecompress(input, Output(output));
 	}
 
 	#if __STDC_HOSTED__ == 1
 	inline void ComperDecompress(std::istream &input, std::iostream &output)
 	{
-		Internal::ComperDecompress(input, output);
+		Internal::ComperDecompress(input, Output(output));
 	}
 	#endif
 }

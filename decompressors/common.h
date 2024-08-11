@@ -21,58 +21,99 @@ namespace ClownLZSS
 		return value;
 	};
 
-	template<std::output_iterator<unsigned char> T>
-	inline void Write(T &output_iterator, const unsigned char value)
-	{
-		*output_iterator = value;
-		++output_iterator;
-	};
-
-	template<std::output_iterator<unsigned char> T>
-	inline void Fill(T &output_iterator, const unsigned char value, const unsigned char count)
-	{
-		std::fill_n(output_iterator, count, value);
-	}
-
-	template<unsigned int maximum_count, Internal::random_access_input_output_iterator T>
-	inline void Copy(T &output_iterator, const unsigned int distance, const unsigned int count)
-	{
-		std::copy(output_iterator - distance, output_iterator - distance + count, output_iterator);
-	};
-
 	#if __STDC_HOSTED__ == 1
 	inline unsigned char Read(std::istream &input)
 	{
 		return input.get();
 	};
+	#endif
 
-	inline void Write(std::iostream &output, const unsigned char value)
+	template<typename T>
+	class Output
 	{
-		output.put(value);
+	private:
+		T &output;
+
+	public:
+		Output(T &output)
+			: output(output)
+		{}
+
+		void Write(unsigned char value);
+		void Fill(unsigned char value, unsigned int count);
+		template<unsigned int maximum_count>
+		void Copy(const unsigned int distance, const unsigned int count);
 	};
 
-	inline void Fill(std::iostream &output, const unsigned char value, const unsigned int count)
+	template<Internal::random_access_input_output_iterator T>
+	class Output<T>
 	{
-		for (unsigned int i = 0; i < count; ++i)
+	private:
+		T &output_iterator;
+
+	public:
+		Output(T &output_iterator)
+			: output_iterator(output_iterator)
+		{}
+
+		void Write(const unsigned char value)
+		{
+			*output_iterator = value;
+			++output_iterator;
+		};
+
+		void Fill(const unsigned char value, const unsigned int count)
+		{
+			std::fill_n(output_iterator, count, value);
+		}
+
+		template<unsigned int maximum_count>
+		void Copy(const unsigned int distance, const unsigned int count)
+		{
+			std::copy(output_iterator - distance, output_iterator - distance + count, output_iterator);
+		};
+	};
+
+	#if __STDC_HOSTED__ == 1
+	template<>
+	class Output<std::iostream>
+	{
+	private:
+		std::iostream &output;
+
+	public:
+		Output(std::iostream &output)
+			: output(output)
+		{}
+
+		void Write(const unsigned char value)
+		{
 			output.put(value);
-	}
+		};
 
-	template<unsigned int maximum_count>
-	inline void Copy(std::iostream &output, const unsigned int offset, const unsigned int count)
-	{
-		std::array<char, maximum_count> bytes;
+		void Fill(const unsigned char value, const unsigned int count)
+		{
+			for (unsigned int i = 0; i < count; ++i)
+				output.put(value);
+		}
 
-		const auto write_position = output.tellp();
+		template<unsigned int maximum_count>
+		void Copy(const unsigned int offset, const unsigned int count)
+		{
+			std::array<char, maximum_count> bytes;
 
-		output.seekg(write_position);
-		output.seekg(-static_cast<std::iostream::off_type>(offset), output.cur);
-		output.read(bytes.data(), std::min(offset, count));
+			const auto write_position = output.tellp();
 
-		for (unsigned int i = offset; i < count; ++i)
-			bytes[i] = bytes[i - offset];
+			output.seekg(write_position);
+			output.seekg(-static_cast<std::iostream::off_type>(offset), output.cur);
+			output.read(bytes.data(), std::min(offset, count));
 
-		output.seekp(write_position);
-		output.write(bytes.data(), count);
+			for (unsigned int i = offset; i < count; ++i)
+				bytes[i] = bytes[i - offset];
+
+			output.seekp(write_position);
+			output.write(bytes.data(), count);
+		};
 	};
 	#endif
 
