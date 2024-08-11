@@ -16,7 +16,7 @@ namespace ClownLZSS
 			{
 				if (descriptor_bits.Pop())
 				{
-					output.Write(Read(input));
+					output.Write(input.Read());
 				}
 				else
 				{
@@ -25,8 +25,8 @@ namespace ClownLZSS
 
 					if (descriptor_bits.Pop())
 					{
-						const unsigned int high_byte = Read(input);
-						const unsigned int low_byte = Read(input);
+						const unsigned int high_byte = input.Read();
+						const unsigned int low_byte = input.Read();
 
 						offset = ((high_byte & 0xF8) << 5) | low_byte;
 						offset = 0x2000 - offset;
@@ -38,7 +38,7 @@ namespace ClownLZSS
 						}
 						else
 						{
-							count = Read(input) + 9;
+							count = input.Read() + 9;
 
 							if (count == 9)
 								break;
@@ -46,7 +46,7 @@ namespace ClownLZSS
 					}
 					else
 					{
-						offset = 0x100 - Read(input);
+						offset = 0x100 - input.Read();
 
 						count = 2;
 
@@ -65,13 +65,13 @@ namespace ClownLZSS
 	template<std::input_iterator T1, Internal::random_access_input_output_iterator T2>
 	inline void KosinskiPlusDecompress(T1 input, T2 output)
 	{
-		Internal::KosinskiPlusDecompress(input, Output(output));
+		Internal::KosinskiPlusDecompress(Input(input), Output(output));
 	}
 
 	#if __STDC_HOSTED__ == 1
 	inline void KosinskiPlusDecompress(std::istream &input, std::iostream &output)
 	{
-		Internal::KosinskiPlusDecompress(input, Output(output));
+		Internal::KosinskiPlusDecompress(Input(input), Output(output));
 	}
 	#endif
 }

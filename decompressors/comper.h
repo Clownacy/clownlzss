@@ -17,15 +17,15 @@ namespace ClownLZSS
 				if (!descriptor_bits.Pop())
 				{
 					// Uncompressed.
-					output.Write(Read(input));
-					output.Write(Read(input));
+					output.Write(input.Read());
+					output.Write(input.Read());
 				}
 				else
 				{
 					// Dictionary match.
-					const unsigned int raw_offset = Read(input);
+					const unsigned int raw_offset = input.Read();
 					const unsigned int offset = (0x100 - raw_offset) * 2;
-					const unsigned int raw_count = Read(input);
+					const unsigned int raw_count = input.Read();
 					const unsigned int count = (raw_count + 1) * 2;
 
 					if (raw_count == 0)
@@ -40,13 +40,13 @@ namespace ClownLZSS
 	template<std::input_iterator T1, Internal::random_access_input_output_iterator T2>
 	inline void ComperDecompress(T1 input, T2 output)
 	{
-		Internal::ComperDecompress(input, Output(output));
+		Internal::ComperDecompress(Input(input), Output(output));
 	}
 
 	#if __STDC_HOSTED__ == 1
 	inline void ComperDecompress(std::istream &input, std::iostream &output)
 	{
-		Internal::ComperDecompress(input, Output(output));
+		Internal::ComperDecompress(Input(input), Output(output));
 	}
 	#endif
 }

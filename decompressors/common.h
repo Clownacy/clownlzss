@@ -13,18 +13,55 @@ namespace ClownLZSS
 		concept random_access_input_output_iterator = std::random_access_iterator<T> && std::input_iterator<T> && std::output_iterator<T, unsigned char>;
 	}
 
-	template<std::input_iterator T>
-	inline unsigned char Read(T &input_iterator)
+	template<typename T>
+	class Input
 	{
-		const auto value = *input_iterator;
-		++input_iterator;
-		return value;
+	private:
+		T &input;
+
+	public:
+		Input(T &input)
+			: input(input)
+		{}
+
+		unsigned char Read();
+	};
+
+	template<std::input_iterator T>
+	class Input<T>
+	{
+	private:
+		T &input_iterator;
+
+	public:
+		Input(T &input_iterator)
+			: input_iterator(input_iterator)
+		{}
+
+		unsigned char Read()
+		{
+			const auto value = *input_iterator;
+			++input_iterator;
+			return value;
+		}
 	};
 
 	#if __STDC_HOSTED__ == 1
-	inline unsigned char Read(std::istream &input)
+	template<>
+	class Input<std::istream>
 	{
-		return input.get();
+	private:
+		std::istream &input;
+
+	public:
+		Input(std::istream &input)
+			: input(input)
+		{}
+
+		unsigned char Read()
+		{
+			return input.get();
+		}
 	};
 	#endif
 
@@ -155,12 +192,12 @@ namespace ClownLZSS
 					if constexpr(endian == Endian::Big)
 					{
 						bits <<= 8;
-						bits |= Read(input);
+						bits |= input.Read();
 					}
 					else if constexpr(endian == Endian::Little)
 					{
 						bits >>= 8;
-						bits |= static_cast<decltype(bits)>(Read(input)) << (total_bits - 8);
+						bits |= static_cast<decltype(bits)>(input.Read()) << (total_bits - 8);
 					}
 				}
 			};
