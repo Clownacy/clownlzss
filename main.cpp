@@ -249,7 +249,7 @@ int main(int argc, char **argv)
 			if (decompress)
 			{
 				/* Load input file to buffer */
-				std::fstream in_file;
+				std::ifstream in_file;
 				in_file.exceptions(in_file.badbit | in_file.eofbit | in_file.failbit);
 				in_file.open(in_filename, in_file.in | in_file.binary);
 
