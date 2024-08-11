@@ -76,4 +76,4 @@ namespace ClownLZSS
 	#endif
 }
 
-#endif /* CLOWNLZSS_DECOMPRESSORS_KOSINSKI_H */
+#endif // CLOWNLZSS_DECOMPRESSORS_KOSINSKI_H
