@@ -119,7 +119,7 @@ namespace ClownLZSS
 					else if constexpr(endian == Endian::Little)
 					{
 						bits >>= 8;
-						bits |= static_cast<decltype(bits)>(Read(input)) << total_bits - 8;
+						bits |= static_cast<decltype(bits)>(Read(input)) << (total_bits - 8);
 					}
 				}
 			};
@@ -145,7 +145,7 @@ namespace ClownLZSS
 				constexpr unsigned int mask = []() constexpr
 				{
 					if constexpr(pop_where == PopWhere::High)
-						return 1 << total_bits - 1;
+						return 1 << (total_bits - 1);
 					else if constexpr(pop_where == PopWhere::Low)
 						return 1;
 				}();
