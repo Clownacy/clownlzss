@@ -92,7 +92,7 @@ cc_bool ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size,
 	callbacks->write(callbacks->user_data, 0);
 	callbacks->write(callbacks->user_data, 0);
 
-	/* Produce Faxman-formatted data. */
+	/* Produce Chameleon-formatted data. */
 	/* Unlike many other LZSS formats, Chameleon stores the descriptor fields separately from the rest of the data. */
 	/* Iterate over the compression matches, outputting just the descriptor fields. */
 	for (match = matches; match != &matches[total_matches]; ++match)
