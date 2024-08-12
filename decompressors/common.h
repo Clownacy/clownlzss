@@ -115,16 +115,16 @@ namespace ClownLZSS
 
 	// Output
 
-	template<typename T>
+	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
 	class Output
 	{
 	public:
 		Output(T output) = delete;
 	};
 
-	template<typename T>
+	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
 	requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-	class Output<T>
+	class Output<T, dictionary_size, maximum_copy_length>
 	{
 	private:
 		std::decay_t<T> output_iterator;
@@ -146,7 +146,6 @@ namespace ClownLZSS
 			output_iterator += count;
 		}
 
-		template<unsigned int maximum_count>
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
 			std::copy(output_iterator - distance, output_iterator - distance + count, output_iterator);
@@ -155,45 +154,52 @@ namespace ClownLZSS
 	};
 
 	#if __STDC_HOSTED__ == 1
-	template<typename T>
-	requires std::is_convertible_v<T&, std::iostream&>
-	class Output<T>
+	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
+	requires std::is_convertible_v<T&, std::ostream&>
+	class Output<T, dictionary_size, maximum_copy_length>
 	{
 	private:
-		std::iostream &output;
+		std::ostream &output;
+		std::array<char, dictionary_size + maximum_copy_length - 1> buffer;
+		unsigned int index = 0;
+
+		void WriteToBuffer(const unsigned char value)
+		{
+			buffer[index] = value;
+
+			// A lovely little trick that is borrowed from Okumura's LZSS decompressor...
+			if (index < maximum_copy_length)
+				buffer[dictionary_size + index] = value;
+
+			index = (index + 1) % dictionary_size;
+		};
 
 	public:
-		Output(std::iostream &output)
+		Output(std::ostream &output)
 			: output(output)
 		{}
 
 		void Write(const unsigned char value)
 		{
+			WriteToBuffer(value);
 			output.put(value);
 		};
 
 		void Fill(const unsigned char value, const unsigned int count)
 		{
 			for (unsigned int i = 0; i < count; ++i)
-				output.put(value);
+				Write(value);
 		}
 
-		template<unsigned int maximum_count>
-		void Copy(const unsigned int offset, const unsigned int count)
+		void Copy(const unsigned int distance, const unsigned int count)
 		{
-			std::array<char, maximum_count> bytes;
+			const unsigned int source_index = (index - distance) % dictionary_size;
+			const unsigned int destination_index = index;
 
-			const auto write_position = output.tellp();
+			for (unsigned int i = 0; i < count; ++i)
+				WriteToBuffer(buffer[source_index + i]);
 
-			output.seekg(write_position);
-			output.seekg(-static_cast<std::iostream::off_type>(offset), output.cur);
-			output.read(bytes.data(), std::min(offset, count));
-
-			for (unsigned int i = offset; i < count; ++i)
-				bytes[i] = bytes[i - offset];
-
-			output.seekp(write_position);
-			output.write(bytes.data(), count);
+			output.write(&buffer[destination_index], count);
 		};
 	};
 	#endif

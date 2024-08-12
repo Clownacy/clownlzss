@@ -31,7 +31,7 @@ namespace ClownLZSS
 					if (raw_count == 0)
 						break;
 
-					output.template Copy<(0xFF + 1) * 2>(offset, count);
+					output.Copy(offset, count);
 				}
 			}
 		}
@@ -40,7 +40,7 @@ namespace ClownLZSS
 	template<typename T1, typename T2>
 	void ComperDecompress(T1 &&input, T2 &&output)
 	{
-		Internal::ComperDecompress(Input(input), Output(output));
+		Internal::ComperDecompress(Input(input), Output<decltype(output), (0x100 - 0) * 2, (0xFF + 1) * 2>(output));
 	}
 }
 

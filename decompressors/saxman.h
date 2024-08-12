@@ -39,7 +39,7 @@ namespace ClownLZSS
 					else
 					{
 						// Copy.
-						output.template Copy<0xF + 3>(offset, count);
+						output.Copy(offset, count);
 					}
 
 					output_position += count;
@@ -51,7 +51,7 @@ namespace ClownLZSS
 	template<typename T1, typename T2>
 	void SaxmanDecompress(T1 &&input, T2 &&output, const unsigned int compressed_length)
 	{
-		Internal::SaxmanDecompress(InputWithLength(input, compressed_length), Output(output));
+		Internal::SaxmanDecompress(InputWithLength(input, compressed_length), Output<decltype(output), 0x1000, 0xF + 3>(output));
 	}
 
 	template<std::random_access_iterator T1, std::random_access_iterator T2>

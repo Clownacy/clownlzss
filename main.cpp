@@ -204,7 +204,7 @@ int main(int argc, char **argv)
 			if (out_filename.empty())
 				out_filename = moduled ? mode->moduled_default_filename : mode->normal_default_filename;
 
-			std::fstream out_file;
+			std::ofstream out_file;
 			out_file.exceptions(out_file.badbit | out_file.eofbit | out_file.failbit);
 			out_file.open(out_filename, decompress ? out_file.trunc | out_file.in | out_file.out | out_file.binary : out_file.out | out_file.binary);
 
@@ -248,38 +248,29 @@ int main(int argc, char **argv)
 			{
 				const bool success = [&]() -> bool
 				{
-					constexpr auto ReadCallback = [](void* const user_data)
-					{
-						std::fstream &file = *static_cast<std::fstream*>(user_data);
-
-						return static_cast<unsigned char>(file.get());
-					};
-
 					constexpr auto WriteCallback = [](void* const user_data, const unsigned char byte)
 					{
-						std::fstream &file = *static_cast<std::fstream*>(user_data);
+						std::ofstream &file = *static_cast<std::ofstream*>(user_data);
 
 						file.put(byte);
 					};
 
 					constexpr auto SeekCallback = [](void* const user_data, const std::size_t position)
 					{
-						std::fstream &file = *static_cast<std::fstream*>(user_data);
+						std::ofstream &file = *static_cast<std::ofstream*>(user_data);
 
-						file.seekg(position, file.beg);
 						file.seekp(position, file.beg);
 					};
 
 					constexpr auto TellCallback = [](void* const user_data)
 					{
-						std::fstream &file = *static_cast<std::fstream*>(user_data);
+						std::ofstream &file = *static_cast<std::ofstream*>(user_data);
 
 						return static_cast<std::size_t>(file.tellp()); // TODO: GET RID OF THIS.
 					};
 
 					const ClownLZSS_Callbacks callbacks = {
 						.user_data = &out_file,
-						.read = ReadCallback,
 						.write = WriteCallback,
 						.seek = SeekCallback,
 						.tell = TellCallback,

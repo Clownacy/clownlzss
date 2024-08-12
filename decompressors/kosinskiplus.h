@@ -56,7 +56,7 @@ namespace ClownLZSS
 							count += 1;
 					}
 
-					output.template Copy<0x100>(offset, count);
+					output.Copy(offset, count);
 				}
 			}
 		}
@@ -65,7 +65,7 @@ namespace ClownLZSS
 	template<typename T1, typename T2>
 	void KosinskiPlusDecompress(T1 &&input, T2 &&output)
 	{
-		Internal::KosinskiPlusDecompress(Input(input), Output(output));
+		Internal::KosinskiPlusDecompress(Input(input), Output<decltype(output), 0x2000, 0x100>(output));
 	}
 }
 
