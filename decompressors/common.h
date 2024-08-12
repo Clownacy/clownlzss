@@ -143,12 +143,14 @@ namespace ClownLZSS
 		void Fill(const unsigned char value, const unsigned int count)
 		{
 			std::fill_n(output_iterator, count, value);
+			output_iterator += count;
 		}
 
 		template<unsigned int maximum_count>
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
 			std::copy(output_iterator - distance, output_iterator - distance + count, output_iterator);
+			output_iterator += count;
 		};
 	};
 
