@@ -7,42 +7,48 @@ namespace ClownLZSS
 {
 	namespace Internal
 	{
-		template<typename T1, typename T2>
-		void SaxmanDecompress(T1 &&input, T2 &&output)
+		namespace Saxman
 		{
-			BitField<1, ReadWhen::BeforePop, PopWhere::Low, Endian::Little, T1> descriptor_bits(input);
+			template<typename T>
+			using Output = Output<T, 0x1000, 0xF + 3>;
 
-			unsigned int output_position = 0;
-
-			while (!input.AtEnd())
+			template<typename T1, typename T2>
+			void Decompress(T1 &&input, T2 &&output)
 			{
-				if (descriptor_bits.Pop())
-				{
-					// Uncompressed.
-					output.Write(input.Read());
-					++output_position;
-				}
-				else
-				{
-					// Dictionary match.
-					const unsigned int first_byte = input.Read();
-					const unsigned int second_byte = input.Read();
-					const unsigned int dictionary_index = (first_byte | ((second_byte << 4) & 0xF00)) + (0xF + 3);
-					const unsigned int count = (second_byte & 0xF) + 3;
-					const unsigned int offset = (output_position - dictionary_index) & 0xFFF;
+				BitField<1, ReadWhen::BeforePop, PopWhere::Low, Endian::Little, T1> descriptor_bits(input);
 
-					if (offset > output_position)
+				unsigned int output_position = 0;
+
+				while (!input.AtEnd())
+				{
+					if (descriptor_bits.Pop())
 					{
-						// Zero-fill.
-						output.Fill(0, count);
+						// Uncompressed.
+						output.Write(input.Read());
+						++output_position;
 					}
 					else
 					{
-						// Copy.
-						output.Copy(offset, count);
-					}
+						// Dictionary match.
+						const unsigned int first_byte = input.Read();
+						const unsigned int second_byte = input.Read();
+						const unsigned int dictionary_index = (first_byte | ((second_byte << 4) & 0xF00)) + (0xF + 3);
+						const unsigned int count = (second_byte & 0xF) + 3;
+						const unsigned int offset = (output_position - dictionary_index) & 0xFFF;
 
-					output_position += count;
+						if (offset > output_position)
+						{
+							// Zero-fill.
+							output.Fill(0, count);
+						}
+						else
+						{
+							// Copy.
+							output.Copy(offset, count);
+						}
+
+						output_position += count;
+					}
 				}
 			}
 		}
@@ -51,7 +57,9 @@ namespace ClownLZSS
 	template<typename T1, typename T2>
 	void SaxmanDecompress(T1 &&input, T2 &&output, const unsigned int compressed_length)
 	{
-		Internal::SaxmanDecompress(InputWithLength(input, compressed_length), Output<decltype(output), 0x1000, 0xF + 3>(output));
+		using namespace Internal;
+
+		Saxman::Decompress(InputWithLength(input, compressed_length), Saxman::Output(output));
 	}
 
 	template<std::random_access_iterator T1, std::random_access_iterator T2>

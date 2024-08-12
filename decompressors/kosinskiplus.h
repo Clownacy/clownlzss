@@ -7,56 +7,62 @@ namespace ClownLZSS
 {
 	namespace Internal
 	{
-		template<typename T1, typename T2>
-		void KosinskiPlusDecompress(T1 &&input, T2 &&output)
+		namespace KosinskiPlus
 		{
-			BitField<1, ReadWhen::BeforePop, PopWhere::High, Endian::Big, T1> descriptor_bits(input);
+			template<typename T>
+			using Output = Output<T, 0x2000, 0x100>;
 
-			for (;;)
+			template<typename T1, typename T2>
+			void Decompress(T1 &&input, T2 &&output)
 			{
-				if (descriptor_bits.Pop())
-				{
-					output.Write(input.Read());
-				}
-				else
-				{
-					unsigned int offset;
-					unsigned int count;
+				BitField<1, ReadWhen::BeforePop, PopWhere::High, Endian::Big, T1> descriptor_bits(input);
 
+				for (;;)
+				{
 					if (descriptor_bits.Pop())
 					{
-						const unsigned int high_byte = input.Read();
-						const unsigned int low_byte = input.Read();
-
-						offset = ((high_byte & 0xF8) << 5) | low_byte;
-						offset = 0x2000 - offset;
-						count = high_byte & 7;
-
-						if (count != 0)
-						{
-							count = 10 - count;
-						}
-						else
-						{
-							count = input.Read() + 9;
-
-							if (count == 9)
-								break;
-						}
+						output.Write(input.Read());
 					}
 					else
 					{
-						offset = 0x100 - input.Read();
-
-						count = 2;
+						unsigned int offset;
+						unsigned int count;
 
 						if (descriptor_bits.Pop())
-							count += 2;
-						if (descriptor_bits.Pop())
-							count += 1;
+						{
+							const unsigned int high_byte = input.Read();
+							const unsigned int low_byte = input.Read();
+
+							offset = ((high_byte & 0xF8) << 5) | low_byte;
+							offset = 0x2000 - offset;
+							count = high_byte & 7;
+
+							if (count != 0)
+							{
+								count = 10 - count;
+							}
+							else
+							{
+								count = input.Read() + 9;
+
+								if (count == 9)
+									break;
+							}
+						}
+						else
+						{
+							offset = 0x100 - input.Read();
+
+							count = 2;
+
+							if (descriptor_bits.Pop())
+								count += 2;
+							if (descriptor_bits.Pop())
+								count += 1;
+						}
+
+						output.Copy(offset, count);
 					}
-
-					output.Copy(offset, count);
 				}
 			}
 		}
@@ -65,7 +71,9 @@ namespace ClownLZSS
 	template<typename T1, typename T2>
 	void KosinskiPlusDecompress(T1 &&input, T2 &&output)
 	{
-		Internal::KosinskiPlusDecompress(Input(input), Output<decltype(output), 0x2000, 0x100>(output));
+		using namespace Internal;
+
+		KosinskiPlus::Decompress(Input(input), KosinskiPlus::Output(output));
 	}
 }
 
