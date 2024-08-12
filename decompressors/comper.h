@@ -7,31 +7,44 @@ namespace ClownLZSS
 {
 	namespace Internal
 	{
-		template<typename T1, typename T2>
-		void ComperDecompress(T1 &&input, T2 &&output)
+		namespace Comper
 		{
-			BitField<2, ReadWhen::BeforePop, PopWhere::High, Endian::Big, T1> descriptor_bits(input);
-
-			for (;;)
+			constexpr unsigned int RawDistanceToDistance(const unsigned int raw_distance)
 			{
-				if (!descriptor_bits.Pop())
-				{
-					// Uncompressed.
-					output.Write(input.Read());
-					output.Write(input.Read());
-				}
-				else
-				{
-					// Dictionary match.
-					const unsigned int raw_offset = input.Read();
-					const unsigned int offset = (0x100 - raw_offset) * 2;
-					const unsigned int raw_count = input.Read();
-					const unsigned int count = (raw_count + 1) * 2;
+				return (0x100 - raw_distance) * 2;
+			}
 
-					if (raw_count == 0)
-						break;
+			constexpr unsigned int RawCountToCount(const unsigned int raw_count)
+			{
+				return (raw_count + 1) * 2;
+			}
 
-					output.Copy(offset, count);
+			template<typename T1, typename T2>
+			void Decompress(T1 &&input, T2 &&output)
+			{
+				BitField<2, ReadWhen::BeforePop, PopWhere::High, Endian::Big, T1> descriptor_bits(input);
+
+				for (;;)
+				{
+					if (!descriptor_bits.Pop())
+					{
+						// Uncompressed.
+						output.Write(input.Read());
+						output.Write(input.Read());
+					}
+					else
+					{
+						// Dictionary match.
+						const unsigned int raw_distance = input.Read();
+						const unsigned int distance = RawDistanceToDistance(raw_distance);
+						const unsigned int raw_count = input.Read();
+						const unsigned int count = RawCountToCount(raw_count);
+
+						if (raw_count == 0)
+							break;
+
+						output.Copy(distance, count);
+					}
 				}
 			}
 		}
@@ -40,7 +53,9 @@ namespace ClownLZSS
 	template<typename T1, typename T2>
 	void ComperDecompress(T1 &&input, T2 &&output)
 	{
-		Internal::ComperDecompress(Input(input), Output<decltype(output), (0x100 - 0) * 2, (0xFF + 1) * 2>(output));
+		using namespace Internal::Comper;
+
+		Decompress(Input(input), Output<decltype(output), RawDistanceToDistance(0), RawCountToCount(0xFF)>(output));
 	}
 }
 
