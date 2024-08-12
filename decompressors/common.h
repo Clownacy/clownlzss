@@ -10,8 +10,10 @@ namespace ClownLZSS
 	namespace Internal
 	{
 		template<typename T>
-		concept random_access_input_output_iterator = std::random_access_iterator<T> && std::input_iterator<T> && std::output_iterator<T, unsigned char>;
+		concept random_access_input_output_iterator = std::random_access_iterator<T> && std::output_iterator<T, unsigned char>;
 	}
+
+	// Input
 
 	template<typename T>
 	class Input
@@ -21,10 +23,17 @@ namespace ClownLZSS
 	};
 
 	template<typename T>
+	class InputWithPosition : public Input<T>
+	{
+	public:
+		InputWithPosition(T input) = delete;
+	};
+
+	template<typename T>
 	requires std::input_iterator<std::decay_t<T>>
 	class Input<T>
 	{
-	private:
+	protected:
 		std::decay_t<T> input_iterator;
 
 	public:
@@ -37,6 +46,28 @@ namespace ClownLZSS
 			const auto value = *input_iterator;
 			++input_iterator;
 			return value;
+		}
+	};
+
+	template<typename T>
+	requires std::random_access_iterator<std::decay_t<T>>
+	class InputWithPosition<T> : public Input<T>
+	{
+	private:
+		unsigned int position = 0;
+
+	public:
+		using Input<T>::Input;
+
+		unsigned char Read()
+		{
+			++position;
+			return Input<T>::Read();
+		}
+
+		unsigned int Position() const
+		{
+			return position;
 		}
 	};
 
@@ -58,7 +89,31 @@ namespace ClownLZSS
 			return input.get();
 		}
 	};
+
+	template<typename T>
+	requires std::is_convertible_v<T&, std::istream&>
+	class InputWithPosition<T> : public Input<T>
+	{
+	private:
+		unsigned int position = 0;
+
+	public:
+		using Input<T>::Input;
+
+		unsigned char Read()
+		{
+			++position;
+			return Input<T>::Read();
+		}
+
+		unsigned int Position() const
+		{
+			return position;
+		}
+	};
 	#endif
+
+	// Output
 
 	template<typename T>
 	class Output
@@ -140,6 +195,8 @@ namespace ClownLZSS
 		};
 	};
 	#endif
+
+	// Bitfield
 
 	namespace Internal
 	{
