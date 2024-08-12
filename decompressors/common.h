@@ -23,10 +23,10 @@ namespace ClownLZSS
 	};
 
 	template<typename T>
-	class InputWithPosition : public Input<T>
+	class InputWithLength : public Input<T>
 	{
 	public:
-		InputWithPosition(T input) = delete;
+		InputWithLength(T input, unsigned int length) = delete;
 	};
 
 	template<typename T>
@@ -51,23 +51,20 @@ namespace ClownLZSS
 
 	template<typename T>
 	requires std::random_access_iterator<std::decay_t<T>>
-	class InputWithPosition<T> : public Input<T>
+	class InputWithLength<T> : public Input<T>
 	{
 	private:
-		unsigned int position = 0;
+		std::decay_t<T> input_end;
 
 	public:
-		using Input<T>::Input;
+		InputWithLength(std::decay_t<T> input_iterator, unsigned int length)
+			: Input<T>(input_iterator)
+			, input_end(input_iterator + length)
+		{}
 
-		unsigned char Read()
+		bool AtEnd() const
 		{
-			++position;
-			return Input<T>::Read();
-		}
-
-		unsigned int Position() const
-		{
-			return position;
+			return Input<T>::input_iterator >= input_end;
 		}
 	};
 
@@ -92,13 +89,16 @@ namespace ClownLZSS
 
 	template<typename T>
 	requires std::is_convertible_v<T&, std::istream&>
-	class InputWithPosition<T> : public Input<T>
+	class InputWithLength<T> : public Input<T>
 	{
 	private:
-		unsigned int position = 0;
+		unsigned int position = 0, length;
 
 	public:
-		using Input<T>::Input;
+		InputWithLength(std::istream &input, unsigned int length)
+			: Input<T>(input)
+			, length(length)
+		{}
 
 		unsigned char Read()
 		{
@@ -106,9 +106,9 @@ namespace ClownLZSS
 			return Input<T>::Read();
 		}
 
-		unsigned int Position() const
+		bool AtEnd() const
 		{
-			return position;
+			return position >= length;
 		}
 	};
 	#endif

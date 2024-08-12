@@ -8,13 +8,13 @@ namespace ClownLZSS
 	namespace Internal
 	{
 		template<typename T1, typename T2>
-		void SaxmanDecompress(T1 &&input, T2 &&output, const unsigned int compressed_length)
+		void SaxmanDecompress(T1 &&input, T2 &&output)
 		{
 			BitField<1, ReadWhen::BeforePop, PopWhere::Low, Endian::Little, T1> descriptor_bits(input);
 
 			unsigned int output_position = 0;
 
-			while (input.Position() < compressed_length)
+			while (!input.AtEnd())
 			{
 				if (descriptor_bits.Pop())
 				{
@@ -51,7 +51,7 @@ namespace ClownLZSS
 	template<typename T1, typename T2>
 	void SaxmanDecompress(T1 &&input, T2 &&output, const unsigned int compressed_length)
 	{
-		Internal::SaxmanDecompress(InputWithPosition(input), Output(output), compressed_length);
+		Internal::SaxmanDecompress(InputWithLength(input, compressed_length), Output(output));
 	}
 
 	template<std::random_access_iterator T1, std::random_access_iterator T2>
