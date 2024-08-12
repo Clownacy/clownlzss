@@ -16,14 +16,8 @@ namespace ClownLZSS
 	template<typename T>
 	class Input
 	{
-	private:
-		T &input;
-
 	public:
-		Input(T &input)
-			: input(input)
-		{}
-
+		Input(T &input);
 		unsigned char Read();
 	};
 
@@ -47,8 +41,9 @@ namespace ClownLZSS
 	};
 
 	#if __STDC_HOSTED__ == 1
-	template<>
-	class Input<std::istream>
+	template<typename T>
+	requires std::is_convertible_v<T&, std::istream&>
+	class Input<T>
 	{
 	private:
 		std::istream &input;
@@ -68,13 +63,8 @@ namespace ClownLZSS
 	template<typename T>
 	class Output
 	{
-	private:
-		T &output;
-
 	public:
-		Output(T &output)
-			: output(output)
-		{}
+		Output(T &output);
 
 		void Write(unsigned char value);
 		void Fill(unsigned char value, unsigned int count);
@@ -112,8 +102,9 @@ namespace ClownLZSS
 	};
 
 	#if __STDC_HOSTED__ == 1
-	template<>
-	class Output<std::iostream>
+	template<typename T>
+	requires std::is_convertible_v<T&, std::iostream&>
+	class Output<T>
 	{
 	private:
 		std::iostream &output;

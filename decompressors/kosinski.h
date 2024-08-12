@@ -64,18 +64,11 @@ namespace ClownLZSS
 		}
 	}
 
-	template<std::input_iterator T1, Internal::random_access_input_output_iterator T2>
-	inline void KosinskiDecompress(T1 input, T2 output)
+	template<typename T1, typename T2>
+	void KosinskiDecompress(T1 &&input, T2 &&output)
 	{
 		Internal::KosinskiDecompress(Input(input), Output(output));
 	}
-
-	#if __STDC_HOSTED__ == 1
-	inline void KosinskiDecompress(std::istream &input, std::iostream &output)
-	{
-		Internal::KosinskiDecompress(Input(input), Output(output));
-	}
-	#endif
 }
 
 #endif // CLOWNLZSS_DECOMPRESSORS_KOSINSKI_H
