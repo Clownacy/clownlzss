@@ -17,18 +17,18 @@ namespace ClownLZSS
 	class Input
 	{
 	public:
-		Input(T &input);
-		unsigned char Read();
+		Input(T input) = delete;
 	};
 
-	template<std::input_iterator T>
+	template<typename T>
+	requires std::input_iterator<std::decay_t<T>>
 	class Input<T>
 	{
 	private:
-		T &input_iterator;
+		std::decay_t<T> input_iterator;
 
 	public:
-		Input(T &input_iterator)
+		Input(std::decay_t<T> input_iterator)
 			: input_iterator(input_iterator)
 		{}
 
@@ -64,22 +64,18 @@ namespace ClownLZSS
 	class Output
 	{
 	public:
-		Output(T &output);
-
-		void Write(unsigned char value);
-		void Fill(unsigned char value, unsigned int count);
-		template<unsigned int maximum_count>
-		void Copy(const unsigned int distance, const unsigned int count);
+		Output(T output) = delete;
 	};
 
-	template<Internal::random_access_input_output_iterator T>
+	template<typename T>
+	requires Internal::random_access_input_output_iterator<std::decay_t<T>>
 	class Output<T>
 	{
 	private:
-		T &output_iterator;
+		std::decay_t<T> output_iterator;
 
 	public:
-		Output(T &output_iterator)
+		Output(std::decay_t<T> output_iterator)
 			: output_iterator(output_iterator)
 		{}
 

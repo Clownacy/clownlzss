@@ -8,7 +8,7 @@ namespace ClownLZSS
 	namespace Internal
 	{
 		template<typename T1, typename T2>
-		inline void KosinskiPlusDecompress(T1 &&input, T2 &&output)
+		void KosinskiPlusDecompress(T1 &&input, T2 &&output)
 		{
 			BitField<1, ReadWhen::BeforePop, PopWhere::High, Endian::Big, T1> descriptor_bits(input);
 
