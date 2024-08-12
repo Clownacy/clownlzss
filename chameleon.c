@@ -81,7 +81,7 @@ cc_bool ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size,
 	instance.descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
 	/* Produce a series of LZSS compression matches. */
-	/* TODO - Shouldn't the length limit be 0x100, and the distance limit be 0x800? */
+	/* Yes, the first two values really are lower than usual by 1. */
 	if (!ClownLZSS_Compress(0xFF, 0x7FF, NULL, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, &instance))
 		return cc_false;
 
@@ -150,7 +150,7 @@ cc_bool ClownLZSS_ChameleonCompress(const unsigned char *data, size_t data_size,
 	/* Write last descriptor field. */
 	callbacks->write(callbacks->user_data, instance.descriptor);
 
-	/* Chameleon's header contains the size of the descriptor fields end, so, now that we know that, let's fill it in. */
+	/* Chameleon's header contains the size of the descriptor fields, so, now that we know that, let's fill it in. */
 	current_position = callbacks->tell(callbacks->user_data);
 	callbacks->seek(callbacks->user_data, header_position);
 	callbacks->write(callbacks->user_data, ((current_position - header_position - 2) >> (8 * 1)) & 0xFF);

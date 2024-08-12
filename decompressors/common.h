@@ -47,6 +47,12 @@ namespace ClownLZSS
 			++input_iterator;
 			return value;
 		}
+
+		Input& operator+=(const unsigned int value)
+		{
+			input_iterator += value;
+			return *this;
+		}
 	};
 
 	template<typename T>
@@ -73,7 +79,7 @@ namespace ClownLZSS
 	requires std::is_convertible_v<T&, std::istream&>
 	class Input<T>
 	{
-	private:
+	protected:
 		std::istream &input;
 
 	public:
@@ -84,6 +90,12 @@ namespace ClownLZSS
 		unsigned char Read()
 		{
 			return input.get();
+		}
+
+		Input& operator+=(const unsigned int value)
+		{
+			input.seekg(value, input.cur);
+			return *this;
 		}
 	};
 
@@ -109,6 +121,57 @@ namespace ClownLZSS
 		bool AtEnd() const
 		{
 			return position >= length;
+		}
+	};
+	#endif
+
+	template<typename T>
+	class InputSeparate : public Input<T>
+	{
+	public:
+		InputSeparate(T input) = delete;
+	};
+
+	template<typename T>
+	requires std::random_access_iterator<std::decay_t<T>>
+	class InputSeparate<T> : public Input<T>
+	{
+	public:
+		using Input<T>::Input;
+	};
+
+	#if __STDC_HOSTED__ == 1
+	template<typename T>
+	requires std::is_convertible_v<T&, std::istream&>
+	class InputSeparate<T> : public Input<T>
+	{
+	private:
+		std::istream::pos_type position;
+
+	public:
+		InputSeparate(std::istream &input)
+			: Input<T>::Input(input)
+			, position(input.tellg())
+		{}
+
+		unsigned char Read()
+		{
+			const auto previous_position = Input<T>::input.tellg();
+			Input<T>::input.seekg(position);
+			const auto value = Input<T>::Read();
+			position = Input<T>::input.tellg();
+			Input<T>::input.seekg(previous_position);
+			return value;
+		}
+
+		InputSeparate& operator+=(const unsigned int value)
+		{
+			const auto previous_position = Input<T>::input.tellg();
+			Input<T>::input.seekg(position);
+			Input<T>::operator+=(value);
+			position = Input<T>::input.tellg();
+			Input<T>::input.seekg(previous_position);
+			return *this;
 		}
 	};
 	#endif
@@ -193,7 +256,7 @@ namespace ClownLZSS
 
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
-			const unsigned int source_index = (index - distance) % dictionary_size;
+			const unsigned int source_index = (index - distance + dictionary_size) % dictionary_size;
 			const unsigned int destination_index = index;
 
 			for (unsigned int i = 0; i < count; ++i)

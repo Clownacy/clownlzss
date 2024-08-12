@@ -31,6 +31,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "rocket.h"
 #include "saxman.h"
 
+#include "decompressors/chameleon.h"
 #include "decompressors/comper.h"
 #include "decompressors/kosinski.h"
 #include "decompressors/kosinskiplus.h"
@@ -216,6 +217,10 @@ int main(int argc, char **argv)
 
 				switch (mode->format)
 				{
+					case Format::CHAMELEON:
+						ClownLZSS::ChameleonDecompress(in_file, out_file);
+						break;
+
 					case Format::COMPER:
 						ClownLZSS::ComperDecompress(in_file, out_file);
 						break;
