@@ -8,8 +8,8 @@ project(clownlzss LANGUAGES C CXX)
 
 function(make_library name filename)
 	add_library(${name} STATIC
-		"${filename}.c"
-		"${filename}.h"
+		"compressors/${filename}.c"
+		"compressors/${filename}.h"
 	)
 
 	set_target_properties(${name} PROPERTIES

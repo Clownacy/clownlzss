@@ -20,7 +20,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "clownlzss.h"
 
-#include "decompressors/common.h"
+#include "../decompressors/common.h"
 
 namespace ClownLZSS
 {
