@@ -61,31 +61,31 @@ namespace ClownLZSS
 		#endif
 	}
 
-	// Input
+	// DecompressorInput
 
 	template<typename T>
-	class Input
+	class DecompressorInput
 	{
 	public:
-		Input(T input) = delete;
+		DecompressorInput(T input) = delete;
 	};
 
 	template<typename T>
-	class InputWithLength : public Input<T>
+	class DecompressorInputWithLength : public DecompressorInput<T>
 	{
 	public:
-		InputWithLength(T input, unsigned int length) = delete;
+		DecompressorInputWithLength(T input, unsigned int length) = delete;
 	};
 
 	template<typename T>
 	requires std::input_iterator<std::decay_t<T>>
-	class Input<T>
+	class DecompressorInput<T>
 	{
 	protected:
 		std::decay_t<T> input_iterator;
 
 	public:
-		Input(std::decay_t<T> input_iterator)
+		DecompressorInput(std::decay_t<T> input_iterator)
 			: input_iterator(input_iterator)
 		{}
 
@@ -96,7 +96,7 @@ namespace ClownLZSS
 			return value;
 		}
 
-		Input& operator+=(const unsigned int value)
+		DecompressorInput& operator+=(const unsigned int value)
 		{
 			input_iterator += value;
 			return *this;
@@ -105,33 +105,33 @@ namespace ClownLZSS
 
 	template<typename T>
 	requires std::random_access_iterator<std::decay_t<T>>
-	class InputWithLength<T> : public Input<T>
+	class DecompressorInputWithLength<T> : public DecompressorInput<T>
 	{
 	protected:
 		std::decay_t<T> input_end;
 
 	public:
-		InputWithLength(std::decay_t<T> input_iterator, unsigned int length)
-			: Input<T>(input_iterator)
+		DecompressorInputWithLength(std::decay_t<T> input_iterator, unsigned int length)
+			: DecompressorInput<T>(input_iterator)
 			, input_end(input_iterator + length)
 		{}
 
 		bool AtEnd() const
 		{
-			return Input<T>::input_iterator >= input_end;
+			return DecompressorInput<T>::input_iterator >= input_end;
 		}
 	};
 
 	#if __STDC_HOSTED__ == 1
 	template<typename T>
 	requires std::is_convertible_v<T&, std::istream&>
-	class Input<T>
+	class DecompressorInput<T>
 	{
 	protected:
 		std::istream &input;
 
 	public:
-		Input(std::istream &input)
+		DecompressorInput(std::istream &input)
 			: input(input)
 		{}
 
@@ -140,7 +140,7 @@ namespace ClownLZSS
 			return input.get();
 		}
 
-		Input& operator+=(const unsigned int value)
+		DecompressorInput& operator+=(const unsigned int value)
 		{
 			input.seekg(value, input.cur);
 			return *this;
@@ -149,21 +149,21 @@ namespace ClownLZSS
 
 	template<typename T>
 	requires std::is_convertible_v<T&, std::istream&>
-	class InputWithLength<T> : public Input<T>
+	class DecompressorInputWithLength<T> : public DecompressorInput<T>
 	{
 	protected:
 		unsigned int position = 0, length;
 
 	public:
-		InputWithLength(std::istream &input, unsigned int length)
-			: Input<T>(input)
+		DecompressorInputWithLength(std::istream &input, unsigned int length)
+			: DecompressorInput<T>(input)
 			, length(length)
 		{}
 
 		unsigned char Read()
 		{
 			++position;
-			return Input<T>::Read();
+			return DecompressorInput<T>::Read();
 		}
 
 		bool AtEnd() const
@@ -174,68 +174,68 @@ namespace ClownLZSS
 	#endif
 
 	template<typename T>
-	class InputSeparate : public Input<T>
+	class DecompressorInputSeparate : public DecompressorInput<T>
 	{
 	public:
-		InputSeparate(T input) = delete;
+		DecompressorInputSeparate(T input) = delete;
 	};
 
 	template<typename T>
 	requires std::random_access_iterator<std::decay_t<T>>
-	class InputSeparate<T> : public Input<T>
+	class DecompressorInputSeparate<T> : public DecompressorInput<T>
 	{
 	public:
-		using Input<T>::Input;
+		using DecompressorInput<T>::DecompressorInput;
 	};
 
 	#if __STDC_HOSTED__ == 1
 	template<typename T>
 	requires std::is_convertible_v<T&, std::istream&>
-	class InputSeparate<T> : public Input<T>
+	class DecompressorInputSeparate<T> : public DecompressorInput<T>
 	{
 	protected:
 		std::istream::pos_type position;
 
 	public:
-		InputSeparate(std::istream &input)
-			: Input<T>::Input(input)
+		DecompressorInputSeparate(std::istream &input)
+			: DecompressorInput<T>::DecompressorInput(input)
 			, position(input.tellg())
 		{}
 
 		unsigned char Read()
 		{
-			const auto previous_position = Input<T>::input.tellg();
-			Input<T>::input.seekg(position);
-			const auto value = Input<T>::Read();
-			position = Input<T>::input.tellg();
-			Input<T>::input.seekg(previous_position);
+			const auto previous_position = DecompressorInput<T>::input.tellg();
+			DecompressorInput<T>::input.seekg(position);
+			const auto value = DecompressorInput<T>::Read();
+			position = DecompressorInput<T>::input.tellg();
+			DecompressorInput<T>::input.seekg(previous_position);
 			return value;
 		}
 
-		InputSeparate& operator+=(const unsigned int value)
+		DecompressorInputSeparate& operator+=(const unsigned int value)
 		{
-			const auto previous_position = Input<T>::input.tellg();
-			Input<T>::input.seekg(position);
-			Input<T>::operator+=(value);
-			position = Input<T>::input.tellg();
-			Input<T>::input.seekg(previous_position);
+			const auto previous_position = DecompressorInput<T>::input.tellg();
+			DecompressorInput<T>::input.seekg(position);
+			DecompressorInput<T>::operator+=(value);
+			position = DecompressorInput<T>::input.tellg();
+			DecompressorInput<T>::input.seekg(previous_position);
 			return *this;
 		}
 	};
 	#endif
 
-	// Output
+	// DecompressorOutput
 
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
-	class Output
+	class DecompressorOutput
 	{
 	public:
-		Output(T output) = delete;
+		DecompressorOutput(T output) = delete;
 	};
 
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
 	requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-	class Output<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T>
+	class DecompressorOutput<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T>
 	{
 	public:
 		using pos_type = std::decay_t<T>;
@@ -269,7 +269,7 @@ namespace ClownLZSS
 	#if __STDC_HOSTED__ == 1
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
 	requires std::is_convertible_v<T&, std::ostream&>
-	class Output<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T>
+	class DecompressorOutput<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T>
 	{
 	protected:
 		std::array<char, dictionary_size + maximum_copy_length - 1> buffer;

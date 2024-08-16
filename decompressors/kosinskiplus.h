@@ -10,7 +10,7 @@ namespace ClownLZSS
 		namespace KosinskiPlus
 		{
 			template<typename T>
-			using Output = Output<T, 0x2000, 0x100>;
+			using DecompressorOutput = DecompressorOutput<T, 0x2000, 0x100>;
 
 			template<typename T1, typename T2>
 			void Decompress(T1 &&input, T2 &&output)
@@ -73,7 +73,7 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		KosinskiPlus::Decompress(Input(input), KosinskiPlus::Output(output));
+		KosinskiPlus::Decompress(DecompressorInput(input), KosinskiPlus::DecompressorOutput(output));
 	}
 }
 

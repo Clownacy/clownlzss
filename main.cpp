@@ -293,9 +293,9 @@ int main(int argc, char **argv)
 
 						case Format::COMPER:
 							if (moduled)
-								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_ComperCompress, module_size, 1);
+								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_ComperCompress, module_size, 1);
 							else
-								return ClownLZSS_ComperCompress(file_buffer.data(), file_buffer.size(), &callbacks);
+								return ClownLZSS::ComperCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::FAXMAN:
 							if (moduled)

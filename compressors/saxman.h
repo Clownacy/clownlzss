@@ -13,8 +13,8 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
-#ifndef CLOWNLZSS_SAXMAN_H
-#define CLOWNLZSS_SAXMAN_H
+#ifndef CLOWNLZSS_COMPRESSORS_SAXMAN_H
+#define CLOWNLZSS_COMPRESSORS_SAXMAN_H
 
 #include <algorithm>
 
@@ -30,22 +30,16 @@ namespace ClownLZSS
 		{
 			inline constexpr unsigned int TOTAL_DESCRIPTOR_BITS = 8;
 
-			inline std::size_t GetMatchCost(std::size_t distance, std::size_t length, void *user)
+			inline std::size_t GetMatchCost([[maybe_unused]] const std::size_t distance, [[maybe_unused]] const std::size_t length, [[maybe_unused]] void* const user)
 			{
-				(void)distance;
-				(void)length;
-				(void)user;
-
 				if (length >= 3)
-					return 1 + 16;	/* Descriptor bit, offset/length bits */
+					return 1 + 16;	// Descriptor bit, offset/length bits.
 				else
 					return 0;
 			}
 
-			inline void FindExtraMatches(const unsigned char *data, std::size_t total_values, std::size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user)
+			inline void FindExtraMatches(const unsigned char* const data, const std::size_t total_values, const std::size_t offset, ClownLZSS_GraphEdge* const node_meta_array, [[maybe_unused]] void* const user)
 			{
-				(void)user;
-
 				if (offset < 0x1000)
 				{
 					std::size_t i;
@@ -67,15 +61,16 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			inline bool Compress(const unsigned char *data, std::size_t data_size, T &&output)
+			inline bool Compress(const unsigned char* const data, const std::size_t data_size, T &&output)
 			{
 				ClownLZSS_Match *matches;
 				std::size_t total_matches;
 
-				/* Produce a series of LZSS compression matches. */
+				// Produce a series of LZSS compression matches.
 				if (!ClownLZSS_Compress(0x12, 0x1000, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
+				/* Set up the state. */
 				typename std::remove_cvref_t<T>::pos_type descriptor_position;
 				unsigned int descriptor = 0;
 				unsigned int descriptor_bits_remaining;
@@ -84,25 +79,25 @@ namespace ClownLZSS
 				{
 					descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
 
-					/* Log the placement of the descriptor field. */
+					// Log the placement of the descriptor field.
 					descriptor_position = output.Tell();
 
-					/* Insert a placeholder. */
+					// Insert a placeholder.
 					output.Write(0);
 				};
 
 				const auto FinishDescriptorField = [&]()
 				{
-					/* Back up current position. */
+					// Back up current position.
 					const auto current_position = output.Tell();
 
-					/* Go back to the descriptor field. */
+					// Go back to the descriptor field.
 					output.Seek(descriptor_position);
 
-					/* Write the complete descriptor field. */
+					// Write the complete descriptor field.
 					output.Write(descriptor & 0xFF);
 
-					/* Seek back to where we were before. */
+					// Seek back to where we were before.
 					output.Seek(current_position);
 				};
 
@@ -122,10 +117,10 @@ namespace ClownLZSS
 						descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
 				};
 
-				/* Begin first descriptor field. */
+				// Begin first descriptor field.
 				BeginDescriptorField();
 
-				/* Produce Saxman-formatted data. */
+				// Produce Saxman-formatted data.
 				for (ClownLZSS_Match *match = matches; match != &matches[total_matches]; ++match)
 				{
 					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
@@ -144,13 +139,13 @@ namespace ClownLZSS
 					}
 				}
 
-				/* We don't need the matches anymore. */
+				// We don't need the matches anymore.
 				free(matches);
 
-				/* The descriptor field may be incomplete, so move the bits into their proper place. */
+				// The descriptor field may be incomplete, so move the bits into their proper place.
 				descriptor >>= descriptor_bits_remaining;
 
-				/* Finish last descriptor field. */
+				// Finish last descriptor field.
 				FinishDescriptorField();
 
 				return true;
@@ -159,27 +154,27 @@ namespace ClownLZSS
 			template<typename T>
 			inline bool CompressWithHeader(const unsigned char* const data, const std::size_t data_size, T &&output)
 			{
-				/* Track the location of the header... */
+				// Track the location of the header...
 				const auto header_position = output.Tell();
 
-				/* ...and insert a placeholder there. */
+				// ...and insert a placeholder there.
 				output.Write(0);
 				output.Write(0);
 
 				if (!Compress(data, data_size, output))
 					return false;
 
-				/* Grab the current position for later. */
+				// Grab the current position for later.
 				const auto end_position = output.Tell();
 
-				/* Rewind to the header... */
+				// Rewind to the header...
 				output.Seek(header_position);
 
-				/* ...and complete it. */
+				// ...and complete it.
 				output.Write(((end_position - header_position - 2) >> (8 * 0)) & 0xFF);
 				output.Write(((end_position - header_position - 2) >> (8 * 1)) & 0xFF);
 
-				/* Seek back to the end of the file just as the caller might expect us to do. */
+				// Seek back to the end of the file just as the caller might expect us to do.
 				output.Seek(end_position);
 
 				return true;
@@ -210,4 +205,4 @@ namespace ClownLZSS
 	}
 }
 
-#endif /* CLOWNLZSS_SAXMAN_H */
+#endif // CLOWNLZSS_COMPRESSORS_SAXMAN_H

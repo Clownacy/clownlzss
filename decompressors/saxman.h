@@ -10,7 +10,7 @@ namespace ClownLZSS
 		namespace Saxman
 		{
 			template<typename T>
-			using Output = Output<T, 0x1000, 0xF + 3>;
+			using DecompressorOutput = DecompressorOutput<T, 0x1000, 0xF + 3>;
 
 			template<typename T1, typename T2>
 			void Decompress(T1 &&input, T2 &&output)
@@ -59,7 +59,7 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		Saxman::Decompress(InputWithLength(input, compressed_length), Saxman::Output(output));
+		Saxman::Decompress(DecompressorInputWithLength(input, compressed_length), Saxman::DecompressorOutput(output));
 	}
 
 	template<std::random_access_iterator T1, std::random_access_iterator T2>

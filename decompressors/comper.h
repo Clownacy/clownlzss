@@ -20,7 +20,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			using Output = Output<T, RawDistanceToDistance(0), RawCountToCount(0xFF)>;
+			using DecompressorOutput = DecompressorOutput<T, RawDistanceToDistance(0), RawCountToCount(0xFF)>;
 
 			template<typename T1, typename T2>
 			void Decompress(T1 &&input, T2 &&output)
@@ -58,7 +58,7 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		Comper::Decompress(Input(input), Comper::Output(output));
+		Comper::Decompress(DecompressorInput(input), Comper::DecompressorOutput(output));
 	}
 }
 
