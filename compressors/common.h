@@ -13,8 +13,8 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
-#ifndef CLOWNLZSS_COMMON_H
-#define CLOWNLZSS_COMMON_H
+#ifndef CLOWNLZSS_COMPRESSORS_COMMON_H
+#define CLOWNLZSS_COMPRESSORS_COMMON_H
 
 #include <stddef.h>
 
@@ -38,4 +38,4 @@ cc_bool ClownLZSS_ModuledCompressionWrapper(const unsigned char *data, size_t da
 }
 #endif
 
-#endif /* CLOWNLZSS_COMMON_H */
+#endif /* CLOWNLZSS_COMPRESSORS_COMMON_H */

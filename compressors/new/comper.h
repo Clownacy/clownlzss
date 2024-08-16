@@ -16,9 +16,9 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef CLOWNLZSS_COMPRESSORS_COMPER_H
 #define CLOWNLZSS_COMPRESSORS_COMPER_H
 
-#include "clownlzss.h"
+#include "../clownlzss.h"
 
-#include "../decompressors/common.h"
+#include "common.h"
 
 namespace ClownLZSS
 {

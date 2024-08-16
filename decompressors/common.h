@@ -4,63 +4,18 @@
 #include <algorithm>
 #include <array>
 #include <iterator>
+#if __STDC_HOSTED__ == 1
+	#include <istream>
+	#include <ostream>
+#endif
+#include <type_traits>
+
+#include "../common.h"
 
 #include "bitfield.h"
 
 namespace ClownLZSS
 {
-	namespace Internal
-	{
-		template<typename T>
-		concept random_access_input_output_iterator = std::random_access_iterator<T> && std::output_iterator<T, unsigned char>;
-
-		template<typename T>
-		class OutputCommon
-		{
-		public:
-			OutputCommon(T output) = delete;
-		};
-
-		template<typename T>
-		requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-		class OutputCommon<T>
-		{
-		protected:
-			std::decay_t<T> output_iterator;
-
-		public:
-			OutputCommon(std::decay_t<T> output_iterator)
-				: output_iterator(output_iterator)
-			{}
-
-			void Write(const unsigned char value)
-			{
-				*output_iterator = value;
-				++output_iterator;
-			};
-		};
-
-		#if __STDC_HOSTED__ == 1
-		template<typename T>
-		requires std::is_convertible_v<T&, std::ostream&>
-		class OutputCommon<T>
-		{
-		protected:
-			std::ostream &output;
-
-		public:
-			OutputCommon(std::ostream &output)
-				: output(output)
-			{}
-
-			void Write(const unsigned char value)
-			{
-				output.put(value);
-			};
-		};
-		#endif
-	}
-
 	// DecompressorInput
 
 	template<typename T>
@@ -311,59 +266,6 @@ namespace ClownLZSS
 				WriteToBuffer(buffer[source_index + i]);
 
 			output.write(&buffer[destination_index], count);
-		};
-	};
-	#endif
-
-	// CompressorOutput
-
-	template<typename T>
-	class CompressorOutput
-	{
-	public:
-		CompressorOutput(T output) = delete;
-	};
-
-	template<typename T>
-	requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-	class CompressorOutput<T> : public Internal::OutputCommon<T>
-	{
-	public:
-		using pos_type = std::decay_t<T>;
-
-		using Internal::OutputCommon<T>::output_iterator;
-		using Internal::OutputCommon<T>::OutputCommon;
-
-		pos_type Tell()
-		{
-			return output_iterator;
-		};
-
-		void Seek(const pos_type &position)
-		{
-			output_iterator = position;
-		};
-	};
-
-	#if __STDC_HOSTED__ == 1
-	template<typename T>
-	requires std::is_convertible_v<T&, std::ostream&>
-	class CompressorOutput<T> : public Internal::OutputCommon<T>
-	{
-	public:
-		using pos_type = std::ostream::pos_type;
-
-		using Internal::OutputCommon<T>::output;
-		using Internal::OutputCommon<T>::OutputCommon;
-
-		pos_type Tell()
-		{
-			return output.tellp();
-		};
-
-		void Seek(const pos_type &position)
-		{
-			output.seekp(position);
 		};
 	};
 	#endif
