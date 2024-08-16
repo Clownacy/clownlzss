@@ -27,7 +27,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "compressors/new/faxman.h"
 #include "compressors/new/kosinski.h"
 #include "compressors/new/kosinskiplus.h"
-#include "compressors/rage.h"
+#include "compressors/new/rage.h"
 #include "compressors/new/rocket.h"
 #include "compressors/new/saxman.h"
 
@@ -317,9 +317,9 @@ int main(int argc, char **argv)
 
 						case Format::RAGE:
 							if (moduled)
-								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_RageCompress, module_size, 1);
+								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_RageCompress, module_size, 1);
 							else
-								return ClownLZSS_RageCompress(file_buffer.data(), file_buffer.size(), &callbacks);
+								return ClownLZSS::RageCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::ROCKET:
 							if (moduled)

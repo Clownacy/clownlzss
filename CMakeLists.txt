@@ -27,7 +27,6 @@ endfunction()
 make_library(clownlzss clownlzss)
 make_library(clownlzss-common common)
 make_compression_library(chameleon)
-make_compression_library(rage)
 
 add_executable(clownlzss-tool
 	"main.cpp"
@@ -39,7 +38,7 @@ set_target_properties(clownlzss-tool PROPERTIES
 	CXX_EXTENSIONS OFF
 )
 
-target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-rage)
+target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon)
 
 # MSVC tweak
 if(MSVC)
