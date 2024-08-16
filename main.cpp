@@ -22,7 +22,9 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <string_view>
 #include <vector>
 
-#include "compressors/chameleon.h"
+#include "compressors/common.h"
+
+#include "compressors/new/chameleon.h"
 #include "compressors/new/comper.h"
 #include "compressors/new/faxman.h"
 #include "compressors/new/kosinski.h"
@@ -287,9 +289,9 @@ int main(int argc, char **argv)
 					{
 						case Format::CHAMELEON:
 							if (moduled)
-								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_ChameleonCompress, module_size, 1);
+								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_ChameleonCompress, module_size, 1);
 							else
-								return ClownLZSS_ChameleonCompress(file_buffer.data(), file_buffer.size(), &callbacks);
+								return ClownLZSS::ChameleonCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::COMPER:
 							if (moduled)
