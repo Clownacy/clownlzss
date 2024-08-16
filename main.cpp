@@ -22,8 +22,6 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <string_view>
 #include <vector>
 
-#include "compressors/common.h"
-
 #include "compressors/new/chameleon.h"
 #include "compressors/new/comper.h"
 #include "compressors/new/faxman.h"
@@ -255,34 +253,6 @@ int main(int argc, char **argv)
 			{
 				const bool success = [&]() -> bool
 				{
-					constexpr auto WriteCallback = [](void* const user_data, const unsigned char byte)
-					{
-						std::ofstream &file = *static_cast<std::ofstream*>(user_data);
-
-						file.put(byte);
-					};
-
-					constexpr auto SeekCallback = [](void* const user_data, const std::size_t position)
-					{
-						std::ofstream &file = *static_cast<std::ofstream*>(user_data);
-
-						file.seekp(position, file.beg);
-					};
-
-					constexpr auto TellCallback = [](void* const user_data)
-					{
-						std::ofstream &file = *static_cast<std::ofstream*>(user_data);
-
-						return static_cast<std::size_t>(file.tellp()); // TODO: GET RID OF THIS.
-					};
-
-					const ClownLZSS_Callbacks callbacks = {
-						.user_data = &out_file,
-						.write = WriteCallback,
-						.seek = SeekCallback,
-						.tell = TellCallback,
-					};
-
 					const auto file_buffer = FileToBuffer(in_filename);
 
 					switch (mode->format)
