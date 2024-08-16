@@ -329,15 +329,15 @@ int main(int argc, char **argv)
 
 						case Format::SAXMAN:
 							if (moduled)
-								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_SaxmanCompressWithHeader, module_size, 1);
+								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_SaxmanCompressWithHeader, module_size, 1);
 							else
-								return ClownLZSS_SaxmanCompressWithHeader(file_buffer.data(), file_buffer.size(), &callbacks);
+								return ClownLZSS::SaxmanCompressWithHeader(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::SAXMAN_NO_HEADER:
 							if (moduled)
-								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_SaxmanCompressWithoutHeader, module_size, 1);
+								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_SaxmanCompressWithoutHeader, module_size, 1);
 							else
-								return ClownLZSS_SaxmanCompressWithoutHeader(file_buffer.data(), file_buffer.size(), &callbacks);
+								return ClownLZSS::SaxmanCompressWithoutHeader(file_buffer.data(), file_buffer.size(), out_file);
 					}
 
 					return false;

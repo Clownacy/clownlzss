@@ -5,12 +5,60 @@
 #include <array>
 #include <iterator>
 
+#include "bitfield.h"
+
 namespace ClownLZSS
 {
 	namespace Internal
 	{
 		template<typename T>
 		concept random_access_input_output_iterator = std::random_access_iterator<T> && std::output_iterator<T, unsigned char>;
+
+		template<typename T>
+		class OutputCommon
+		{
+		public:
+			OutputCommon(T output) = delete;
+		};
+
+		template<typename T>
+		requires Internal::random_access_input_output_iterator<std::decay_t<T>>
+		class OutputCommon<T>
+		{
+		protected:
+			std::decay_t<T> output_iterator;
+
+		public:
+			OutputCommon(std::decay_t<T> output_iterator)
+				: output_iterator(output_iterator)
+			{}
+
+			void Write(const unsigned char value)
+			{
+				*output_iterator = value;
+				++output_iterator;
+			};
+		};
+
+		#if __STDC_HOSTED__ == 1
+		template<typename T>
+		requires std::is_convertible_v<T&, std::ostream&>
+		class OutputCommon<T>
+		{
+		protected:
+			std::ostream &output;
+
+		public:
+			OutputCommon(std::ostream &output)
+				: output(output)
+			{}
+
+			void Write(const unsigned char value)
+			{
+				output.put(value);
+			};
+		};
+		#endif
 	}
 
 	// Input
@@ -59,7 +107,7 @@ namespace ClownLZSS
 	requires std::random_access_iterator<std::decay_t<T>>
 	class InputWithLength<T> : public Input<T>
 	{
-	private:
+	protected:
 		std::decay_t<T> input_end;
 
 	public:
@@ -103,7 +151,7 @@ namespace ClownLZSS
 	requires std::is_convertible_v<T&, std::istream&>
 	class InputWithLength<T> : public Input<T>
 	{
-	private:
+	protected:
 		unsigned int position = 0, length;
 
 	public:
@@ -145,7 +193,7 @@ namespace ClownLZSS
 	requires std::is_convertible_v<T&, std::istream&>
 	class InputSeparate<T> : public Input<T>
 	{
-	private:
+	protected:
 		std::istream::pos_type position;
 
 	public:
@@ -187,20 +235,22 @@ namespace ClownLZSS
 
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
 	requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-	class Output<T, dictionary_size, maximum_copy_length>
+	class Output<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T>
 	{
-	private:
-		std::decay_t<T> output_iterator;
-
 	public:
-		Output(std::decay_t<T> output_iterator)
-			: output_iterator(output_iterator)
-		{}
+		using pos_type = std::decay_t<T>;
 
-		void Write(const unsigned char value)
+		using Internal::OutputCommon<T>::output_iterator;
+		using Internal::OutputCommon<T>::OutputCommon;
+
+		pos_type Tell()
 		{
-			*output_iterator = value;
-			++output_iterator;
+			return output_iterator;
+		};
+
+		void Seek(const pos_type &position)
+		{
+			output_iterator = position;
 		};
 
 		void Fill(const unsigned char value, const unsigned int count)
@@ -219,10 +269,9 @@ namespace ClownLZSS
 	#if __STDC_HOSTED__ == 1
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
 	requires std::is_convertible_v<T&, std::ostream&>
-	class Output<T, dictionary_size, maximum_copy_length>
+	class Output<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T>
 	{
-	private:
-		std::ostream &output;
+	protected:
 		std::array<char, dictionary_size + maximum_copy_length - 1> buffer;
 		unsigned int index = 0;
 
@@ -238,14 +287,13 @@ namespace ClownLZSS
 		};
 
 	public:
-		Output(std::ostream &output)
-			: output(output)
-		{}
+		using Internal::OutputCommon<T>::output;
+		using Internal::OutputCommon<T>::OutputCommon;
 
 		void Write(const unsigned char value)
 		{
 			WriteToBuffer(value);
-			output.put(value);
+			Internal::OutputCommon<T>::Write(value);
 		};
 
 		void Fill(const unsigned char value, const unsigned int count)
@@ -267,98 +315,58 @@ namespace ClownLZSS
 	};
 	#endif
 
-	// Bitfield
+	// CompressorOutput
 
-	namespace Internal
+	template<typename T>
+	class CompressorOutput
 	{
-		enum class ReadWhen
+	public:
+		CompressorOutput(T output) = delete;
+	};
+
+	template<typename T>
+	requires Internal::random_access_input_output_iterator<std::decay_t<T>>
+	class CompressorOutput<T> : public Internal::OutputCommon<T>
+	{
+	public:
+		using pos_type = std::decay_t<T>;
+
+		using Internal::OutputCommon<T>::output_iterator;
+		using Internal::OutputCommon<T>::OutputCommon;
+
+		pos_type Tell()
 		{
-			BeforePop,
-			AfterPop
+			return output_iterator;
 		};
 
-		enum class PopWhere
+		void Seek(const pos_type &position)
 		{
-			Low,
-			High
+			output_iterator = position;
+		};
+	};
+
+	#if __STDC_HOSTED__ == 1
+	template<typename T>
+	requires std::is_convertible_v<T&, std::ostream&>
+	class CompressorOutput<T> : public Internal::OutputCommon<T>
+	{
+	public:
+		using pos_type = std::ostream::pos_type;
+
+		using Internal::OutputCommon<T>::output;
+		using Internal::OutputCommon<T>::OutputCommon;
+
+		pos_type Tell()
+		{
+			return output.tellp();
 		};
 
-		enum class Endian
+		void Seek(const pos_type &position)
 		{
-			Big,
-			Little
+			output.seekp(position);
 		};
-
-		template<unsigned int total_bytes, ReadWhen read_when, PopWhere pop_where, Endian endian, typename Input>
-		class BitField
-		{
-		private:
-			static constexpr unsigned int total_bits = total_bytes * 8;
-
-			Input &input;
-			unsigned int bits = 0, bits_remaining;
-
-			void ReadBits()
-			{
-				bits_remaining = total_bits;
-
-				for (unsigned int i = 0; i < total_bytes; ++i)
-				{
-					if constexpr(endian == Endian::Big)
-					{
-						bits <<= 8;
-						bits |= input.Read();
-					}
-					else if constexpr(endian == Endian::Little)
-					{
-						bits >>= 8;
-						bits |= static_cast<decltype(bits)>(input.Read()) << (total_bits - 8);
-					}
-				}
-			};
-
-		public:
-			BitField(Input &input)
-				: input(input)
-			{
-				ReadBits();
-			}
-
-			bool Pop()
-			{
-				const auto &CheckReadBits = [&]()
-				{
-					if (bits_remaining == 0)
-						ReadBits();
-				};
-
-				if constexpr(read_when == ReadWhen::BeforePop)
-					CheckReadBits();
-
-				constexpr unsigned int mask = []() constexpr
-				{
-					if constexpr(pop_where == PopWhere::High)
-						return 1 << (total_bits - 1);
-					else if constexpr(pop_where == PopWhere::Low)
-						return 1;
-				}();
-
-				const bool bit = (bits & mask) != 0;
-
-				if constexpr(pop_where == PopWhere::High)
-					bits <<= 1;
-				else if constexpr(pop_where == PopWhere::Low)
-					bits >>= 1;
-
-				--bits_remaining;
-
-				if constexpr(read_when == ReadWhen::AfterPop)
-					CheckReadBits();
-
-				return bit;
-			}
-		};
-	}
+	};
+	#endif
 }
 
 #endif // CLOWNLZSS_DECOMPRESSORS_COMMON_H
