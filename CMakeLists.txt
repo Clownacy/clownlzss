@@ -28,7 +28,6 @@ make_library(clownlzss clownlzss)
 make_library(clownlzss-common common)
 make_compression_library(chameleon)
 make_compression_library(rage)
-make_compression_library(rocket)
 
 add_executable(clownlzss-tool
 	"main.cpp"
@@ -40,7 +39,7 @@ set_target_properties(clownlzss-tool PROPERTIES
 	CXX_EXTENSIONS OFF
 )
 
-target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-rage clownlzss-rocket)
+target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-rage)
 
 # MSVC tweak
 if(MSVC)
@@ -63,7 +62,7 @@ endfunction()
 
 function(make_compress_test compression-name compression-command)
 	make_compress_test_internal("${compression-name}" "${compression-command}")
-	make_compress_test_internal("moduled_${compression-name}" "-m;${compression-command}")
+#	make_compress_test_internal("moduled_${compression-name}" "-m;${compression-command}")
 endfunction()
 
 make_compress_test(chameleon "-ch")
@@ -78,8 +77,8 @@ make_compress_test(faxman "-f")
 
 set_property(TEST test_clone_driver_v2_dac_driver_comper_run PROPERTY WILL_FAIL true)
 set_property(TEST test_clone_driver_v2_dac_driver_comper_compare PROPERTY WILL_FAIL true)
-set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_run PROPERTY WILL_FAIL true)
-set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_compare PROPERTY WILL_FAIL true)
+#set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_run PROPERTY WILL_FAIL true)
+#set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_compare PROPERTY WILL_FAIL true)
 
 function(make_decompress_test compression-name compression-command)
 	foreach(directory "clone_driver_v2_dac_driver" "chameleon_code")

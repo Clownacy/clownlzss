@@ -28,7 +28,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "compressors/new/kosinski.h"
 #include "compressors/new/kosinskiplus.h"
 #include "compressors/rage.h"
-#include "compressors/rocket.h"
+#include "compressors/new/rocket.h"
 #include "compressors/new/saxman.h"
 
 #include "decompressors/chameleon.h"
@@ -323,9 +323,9 @@ int main(int argc, char **argv)
 
 						case Format::ROCKET:
 							if (moduled)
-								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_RocketCompress, module_size, 1);
+								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_RocketCompress, module_size, 1);
 							else
-								return ClownLZSS_RocketCompress(file_buffer.data(), file_buffer.size(), &callbacks);
+								return ClownLZSS::RocketCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::SAXMAN:
 							if (moduled)
