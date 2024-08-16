@@ -24,9 +24,9 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "compressors/chameleon.h"
 #include "compressors/new/comper.h"
-#include "compressors/faxman.h"
-#include "compressors/kosinski.h"
-#include "compressors/kosinskiplus.h"
+#include "compressors/new/faxman.h"
+#include "compressors/new/kosinski.h"
+#include "compressors/new/kosinskiplus.h"
 #include "compressors/rage.h"
 #include "compressors/rocket.h"
 #include "compressors/new/saxman.h"
@@ -299,21 +299,21 @@ int main(int argc, char **argv)
 
 						case Format::FAXMAN:
 							if (moduled)
-								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_FaxmanCompress, module_size, 1);
+								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_FaxmanCompress, module_size, 1);
 							else
-								return ClownLZSS_FaxmanCompress(file_buffer.data(), file_buffer.size(), &callbacks);
+								return ClownLZSS::FaxmanCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::KOSINSKI:
 							if (moduled)
-								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_KosinskiCompress, module_size, 0x10);
+								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_KosinskiCompress, module_size, 0x10);
 							else
-								return ClownLZSS_KosinskiCompress(file_buffer.data(), file_buffer.size(), &callbacks);
+								return ClownLZSS::KosinskiCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::KOSINSKIPLUS:
 							if (moduled)
-								return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_KosinskiPlusCompress, module_size, 1);
+								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_KosinskiPlusCompress, module_size, 1);
 							else
-								return ClownLZSS_KosinskiPlusCompress(file_buffer.data(), file_buffer.size(), &callbacks);
+								return ClownLZSS::KosinskiPlusCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::RAGE:
 							if (moduled)

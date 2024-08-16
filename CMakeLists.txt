@@ -27,9 +27,6 @@ endfunction()
 make_library(clownlzss clownlzss)
 make_library(clownlzss-common common)
 make_compression_library(chameleon)
-make_compression_library(faxman)
-make_compression_library(kosinski)
-make_compression_library(kosinskiplus)
 make_compression_library(rage)
 make_compression_library(rocket)
 
@@ -43,7 +40,7 @@ set_target_properties(clownlzss-tool PROPERTIES
 	CXX_EXTENSIONS OFF
 )
 
-target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-faxman clownlzss-kosinski clownlzss-kosinskiplus clownlzss-rage clownlzss-rocket)
+target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-rage clownlzss-rocket)
 
 # MSVC tweak
 if(MSVC)
