@@ -146,6 +146,12 @@ namespace ClownLZSS
 
 		return Comper::Compress(data, data_size, CompressorOutput(output));
 	}
+
+	template<typename T>
+	bool ModuledComperCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const size_t module_size, const size_t module_alignment)
+	{
+		return Internal::ModuledCompressionWrapper(data, data_size, CompressorOutput(output), ComperCompress, module_size, module_alignment);
+	}
 }
 
 #endif // CLOWNLZSS_COMPRESSORS_COMPER_H

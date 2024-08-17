@@ -202,26 +202,9 @@ namespace ClownLZSS
 	class DecompressorOutput<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T>
 	{
 	public:
-		using pos_type = std::decay_t<T>;
 
 		using Internal::OutputCommon<T>::output_iterator;
 		using Internal::OutputCommon<T>::OutputCommon;
-
-		pos_type Tell()
-		{
-			return output_iterator;
-		};
-
-		void Seek(const pos_type &position)
-		{
-			output_iterator = position;
-		};
-
-		void Fill(const unsigned char value, const unsigned int count)
-		{
-			std::fill_n(output_iterator, count, value);
-			output_iterator += count;
-		}
 
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
@@ -259,12 +242,6 @@ namespace ClownLZSS
 			WriteToBuffer(value);
 			Internal::OutputCommon<T>::Write(value);
 		};
-
-		void Fill(const unsigned char value, const unsigned int count)
-		{
-			for (unsigned int i = 0; i < count; ++i)
-				Write(value);
-		}
 
 		void Copy(const unsigned int distance, const unsigned int count)
 		{

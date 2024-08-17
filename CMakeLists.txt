@@ -77,7 +77,7 @@ endfunction()
 
 function(make_compress_test compression-name compression-command)
 	make_compress_test_internal("${compression-name}" "${compression-command}")
-#	make_compress_test_internal("moduled_${compression-name}" "-m;${compression-command}")
+	make_compress_test_internal("moduled_${compression-name}" "-m;${compression-command}")
 endfunction()
 
 make_compress_test(chameleon "-ch")
@@ -92,8 +92,8 @@ make_compress_test(faxman "-f")
 
 set_property(TEST test_clone_driver_v2_dac_driver_comper_run PROPERTY WILL_FAIL true)
 set_property(TEST test_clone_driver_v2_dac_driver_comper_compare PROPERTY WILL_FAIL true)
-#set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_run PROPERTY WILL_FAIL true)
-#set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_compare PROPERTY WILL_FAIL true)
+set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_run PROPERTY WILL_FAIL true)
+set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_compare PROPERTY WILL_FAIL true)
 
 function(make_decompress_test compression-name compression-command)
 	foreach(directory "clone_driver_v2_dac_driver" "chameleon_code")

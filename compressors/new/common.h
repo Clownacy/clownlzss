@@ -18,6 +18,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "../../common.h"
 
+#include <iterator>
 #if __STDC_HOSTED__ == 1
 	#include <ostream>
 #endif
@@ -25,6 +26,34 @@ PERFORMANCE OF THIS SOFTWARE.
 
 namespace ClownLZSS
 {
+	namespace Internal
+	{
+		template<typename T>
+		bool ModuledCompressionWrapper(const unsigned char* const data, const size_t data_size, T &&output, bool (* const compression_function)(const unsigned char *data, std::size_t data_size, T &&output), const size_t module_size, const size_t module_alignment)
+		{
+			const unsigned int header = (data_size % module_size) | ((data_size / module_size) << 12);
+
+			output.Write((header >> (8 * 1)) & 0xFF);
+			output.Write((header >> (8 * 0)) & 0xFF);
+
+			typename T::difference_type compressed_size = 0;
+			for (std::size_t i = 0; i < data_size; i += module_size)
+			{
+				if (compressed_size % module_alignment != 0)
+					output.Fill(0, module_alignment - (compressed_size % module_alignment));
+
+				const auto start_position = output.Tell();
+
+				if (!compression_function(data + i, module_size < data_size - i ? module_size : data_size - i, std::forward<T>(output)))
+					return false;
+
+				compressed_size = output.Distance(start_position, output.Tell());
+			}
+
+			return true;
+		}
+	}
+
 	// CompressorOutput
 
 	template<typename T>
@@ -40,11 +69,12 @@ namespace ClownLZSS
 	{
 	public:
 		using pos_type = std::decay_t<T>;
+		using difference_type = std::iterator_traits<std::decay_t<T>>::difference_type;
 
 		using Internal::OutputCommon<T>::output_iterator;
 		using Internal::OutputCommon<T>::OutputCommon;
 
-		pos_type Tell()
+		pos_type Tell() const
 		{
 			return output_iterator;
 		};
@@ -53,6 +83,11 @@ namespace ClownLZSS
 		{
 			output_iterator = position;
 		};
+
+		static difference_type Distance(const pos_type &first, const pos_type &last)
+		{
+			return std::distance(first, last);
+		}
 	};
 
 	#if __STDC_HOSTED__ == 1
@@ -62,11 +97,12 @@ namespace ClownLZSS
 	{
 	public:
 		using pos_type = std::ostream::pos_type;
+		using difference_type = std::ostream::off_type;
 
 		using Internal::OutputCommon<T>::output;
 		using Internal::OutputCommon<T>::OutputCommon;
 
-		pos_type Tell()
+		pos_type Tell() const
 		{
 			return output.tellp();
 		};
@@ -75,6 +111,11 @@ namespace ClownLZSS
 		{
 			output.seekp(position);
 		};
+
+		static difference_type Distance(const pos_type &first, const pos_type &last)
+		{
+			return last - first;
+		}
 	};
 	#endif
 }

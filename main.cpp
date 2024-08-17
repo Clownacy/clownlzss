@@ -259,55 +259,55 @@ int main(int argc, char **argv)
 					{
 						case Format::CHAMELEON:
 							if (moduled)
-								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_ChameleonCompress, module_size, 1);
+								return ClownLZSS::ModuledChameleonCompress(file_buffer.data(), file_buffer.size(), out_file, module_size, 1);
 							else
 								return ClownLZSS::ChameleonCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::COMPER:
 							if (moduled)
-								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_ComperCompress, module_size, 1);
+								return ClownLZSS::ModuledComperCompress(file_buffer.data(), file_buffer.size(), out_file, module_size, 1);
 							else
 								return ClownLZSS::ComperCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::FAXMAN:
 							if (moduled)
-								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_FaxmanCompress, module_size, 1);
+								return ClownLZSS::ModuledFaxmanCompress(file_buffer.data(), file_buffer.size(), out_file, module_size, 1);
 							else
 								return ClownLZSS::FaxmanCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::KOSINSKI:
 							if (moduled)
-								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_KosinskiCompress, module_size, 0x10);
+								return ClownLZSS::ModuledKosinskiCompress(file_buffer.data(), file_buffer.size(), out_file, module_size, 0x10);
 							else
 								return ClownLZSS::KosinskiCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::KOSINSKIPLUS:
 							if (moduled)
-								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_KosinskiPlusCompress, module_size, 1);
+								return ClownLZSS::ModuledKosinskiPlusCompress(file_buffer.data(), file_buffer.size(), out_file, module_size, 1);
 							else
 								return ClownLZSS::KosinskiPlusCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::RAGE:
 							if (moduled)
-								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_RageCompress, module_size, 1);
+								return ClownLZSS::ModuledRageCompress(file_buffer.data(), file_buffer.size(), out_file, module_size, 1);
 							else
 								return ClownLZSS::RageCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::ROCKET:
 							if (moduled)
-								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_RocketCompress, module_size, 1);
+								return ClownLZSS::ModuledRocketCompress(file_buffer.data(), file_buffer.size(), out_file, module_size, 1);
 							else
 								return ClownLZSS::RocketCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::SAXMAN:
 							if (moduled)
-								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_SaxmanCompressWithHeader, module_size, 1);
+								return ClownLZSS::ModuledSaxmanCompressWithHeader(file_buffer.data(), file_buffer.size(), out_file, module_size, 1);
 							else
 								return ClownLZSS::SaxmanCompressWithHeader(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::SAXMAN_NO_HEADER:
 							if (moduled)
-								;//return ClownLZSS_ModuledCompressionWrapper(file_buffer.data(), file_buffer.size(), &callbacks, ClownLZSS_SaxmanCompressWithoutHeader, module_size, 1);
+								return ClownLZSS::ModuledSaxmanCompressWithoutHeader(file_buffer.data(), file_buffer.size(), out_file, module_size, 1);
 							else
 								return ClownLZSS::SaxmanCompressWithoutHeader(file_buffer.data(), file_buffer.size(), out_file);
 					}

@@ -52,7 +52,13 @@ namespace ClownLZSS
 			{
 				*output_iterator = value;
 				++output_iterator;
-			};
+			}
+
+			void Fill(const unsigned char value, const unsigned int count)
+			{
+				std::fill_n(output_iterator, count, value);
+				output_iterator += count;
+			}
 		};
 
 		#if __STDC_HOSTED__ == 1
@@ -71,7 +77,13 @@ namespace ClownLZSS
 			void Write(const unsigned char value)
 			{
 				output.put(value);
-			};
+			}
+
+			void Fill(const unsigned char value, const unsigned int count)
+			{
+				for (unsigned int i = 0; i < count; ++i)
+					Write(value);
+			}
 		};
 		#endif
 	}
