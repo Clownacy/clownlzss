@@ -200,7 +200,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ModuledRageCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const size_t module_size, const size_t module_alignment)
+	bool ModuledRageCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size, const std::size_t module_alignment)
 	{
 		return Internal::ModuledCompressionWrapper(data, data_size, CompressorOutput(output), RageCompress, module_size, module_alignment);
 	}
