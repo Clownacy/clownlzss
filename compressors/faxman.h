@@ -13,24 +13,59 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
-#ifndef CLOWNLZSS_COMPRESSORS_ROCKET_H
-#define CLOWNLZSS_COMPRESSORS_ROCKET_H
+#ifndef CLOWNLZSS_COMPRESSORS_FAXMAN_H
+#define CLOWNLZSS_COMPRESSORS_FAXMAN_H
 
-#include "../clownlzss.h"
+#include <algorithm>
 
+#include "clownlzss.h"
 #include "common.h"
 
 namespace ClownLZSS
 {
 	namespace Internal
 	{
-		namespace Rocket
+		namespace Faxman
 		{
 			inline constexpr unsigned int TOTAL_DESCRIPTOR_BITS = 8;
 
-			inline std::size_t GetMatchCost([[maybe_unused]] const std::size_t distance, [[maybe_unused]] const std::size_t length, [[maybe_unused]] void* const user)
+			inline std::size_t GetMatchCost(const std::size_t distance, const std::size_t length, [[maybe_unused]] void* const user)
 			{
-				return 1 + 16;	// Descriptor bit, offset/length bytes.
+				if (length >= 2 && length <= 5 && distance <= 0x100)
+					return 2 + 8 + 2;
+				else if (length >= 3)
+					return 2 + 16; // Descriptor bit, offset/length bits.
+				else
+					return 0;
+			}
+
+			inline void FindExtraMatches(const unsigned char* const data, const std::size_t data_size, const std::size_t offset, ClownLZSS_GraphEdge* const node_meta_array, [[maybe_unused]] void* const user)
+			{
+				if (offset < 0x800)
+				{
+					std::size_t k;
+
+					const std::size_t max_read_ahead = std::min<std::size_t>(0x1F + 3, data_size - offset);
+
+					for (k = 0; k < max_read_ahead; ++k)
+					{
+						if (data[offset + k] == 0)
+						{
+							const unsigned int cost = (k + 1 >= 3) ? 2 + 16 : 0;
+
+							if (cost != 0 && node_meta_array[offset + k + 1].u.cost > node_meta_array[offset].u.cost + cost)
+							{
+								node_meta_array[offset + k + 1].u.cost = node_meta_array[offset].u.cost + cost;
+								node_meta_array[offset + k + 1].previous_node_index = offset;
+								node_meta_array[offset + k + 1].match_offset = offset;
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+				}
 			}
 
 			template<typename T>
@@ -39,13 +74,14 @@ namespace ClownLZSS
 				// Produce a series of LZSS compression matches.
 				ClownLZSS::Matches matches;
 				std::size_t total_matches;
-				if (!ClownLZSS::FindOptimalMatches(0x40, 0x400, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
+				if (!ClownLZSS::FindOptimalMatches(0x1F + 3, 0x800, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
 				// Set up the state.
 				typename std::remove_cvref_t<T>::pos_type descriptor_position;
 				unsigned int descriptor = 0;
 				unsigned int descriptor_bits_remaining;
+				unsigned int descriptor_bits_total = 0;
 
 				const auto BeginDescriptorField = [&]()
 				{
@@ -75,6 +111,8 @@ namespace ClownLZSS
 
 				const auto PutDescriptorBit = [&](const bool bit)
 				{
+					++descriptor_bits_total;
+
 					if (descriptor_bits_remaining == 0)
 					{
 						FinishDescriptorField();
@@ -89,11 +127,7 @@ namespace ClownLZSS
 						descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
 				};
 
-				// Write the first part of the header.
-				output.Write((data_size >> (8 * 1)) & 0xFF);
-				output.Write((data_size >> (8 * 0)) & 0xFF);
-
-				// Track the location of the seconc part of the header...
+				// Track the location of the header...
 				const auto header_position = output.Tell();
 
 				// ...and insert a placeholder there.
@@ -103,7 +137,7 @@ namespace ClownLZSS
 				// Begin first descriptor field.
 				BeginDescriptorField();
 
-				// Produce Rocket-formatted data.
+				// Produce Faxman-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
 				{
 					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
@@ -113,12 +147,24 @@ namespace ClownLZSS
 					}
 					else
 					{
-						const std::size_t offset = (match->source + 0x3C0) & 0x3FF;
+						const std::size_t distance = match->destination == match->source ? 0x800 : match->destination - match->source;
 						const std::size_t length = match->length;
 
-						PutDescriptorBit(0);
-						output.Write(((offset >> 8) & 3) | ((length - 1) << 2));
-						output.Write(offset & 0xFF);
+						if (length >= 2 && length <= 5 && distance <= 0x100)
+						{
+							PutDescriptorBit(0);
+							PutDescriptorBit(0);
+							output.Write(-distance & 0xFF);
+							PutDescriptorBit(!!((length - 2) & 2));
+							PutDescriptorBit(!!((length - 2) & 1));
+						}
+						else //if (length >= 3)
+						{
+							PutDescriptorBit(0);
+							PutDescriptorBit(1);
+							output.Write((distance - 1) & 0xFF);
+							output.Write((((distance - 1) & 0x700) >> 3) | (length - 3));
+						}
 					}
 				}
 
@@ -135,8 +181,8 @@ namespace ClownLZSS
 				output.Seek(header_position);
 
 				// ...and complete it.
-				output.Write(((end_position - header_position) >> (8 * 1)) & 0xFF);
-				output.Write(((end_position - header_position) >> (8 * 0)) & 0xFF);
+				output.Write((descriptor_bits_total >> (8 * 0)) & 0xFF);
+				output.Write((descriptor_bits_total >> (8 * 1)) & 0xFF);
 
 				// Seek back to the end of the file just as the caller might expect us to do.
 				output.Seek(end_position);
@@ -147,18 +193,18 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool RocketCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	bool FaxmanCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
-		return Rocket::Compress(data, data_size, CompressorOutput(output));
+		return Faxman::Compress(data, data_size, CompressorOutput(output));
 	}
 
 	template<typename T>
-	bool ModuledRocketCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size, const std::size_t module_alignment)
+	bool ModuledFaxmanCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size, const std::size_t module_alignment)
 	{
-		return Internal::ModuledCompressionWrapper(data, data_size, CompressorOutput(output), RocketCompress, module_size, module_alignment);
+		return Internal::ModuledCompressionWrapper(data, data_size, CompressorOutput(output), FaxmanCompress, module_size, module_alignment);
 	}
 }
 
-#endif // CLOWNLZSS_COMPRESSORS_ROCKET_H
+#endif // CLOWNLZSS_COMPRESSORS_FAXMAN_H

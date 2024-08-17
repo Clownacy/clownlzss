@@ -13,28 +13,27 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
-#ifndef CLOWNLZSS_COMPRESSORS_KOSINSKI_H
-#define CLOWNLZSS_COMPRESSORS_KOSINSKI_H
+#ifndef CLOWNLZSS_COMPRESSORS_KOSINSKIPLUS_H
+#define CLOWNLZSS_COMPRESSORS_KOSINSKIPLUS_H
 
-#include "../clownlzss.h"
-
+#include "clownlzss.h"
 #include "common.h"
 
 namespace ClownLZSS
 {
 	namespace Internal
 	{
-		namespace Kosinski
+		namespace KosinskiPlus
 		{
-			inline constexpr unsigned int TOTAL_DESCRIPTOR_BITS = 16;
+			inline constexpr unsigned int TOTAL_DESCRIPTOR_BITS = 8;
 
 			inline std::size_t GetMatchCost(const std::size_t distance, const std::size_t length, [[maybe_unused]] void* const user)
 			{
 				if (length >= 2 && length <= 5 && distance <= 0x100)
-					return 2 + 2 + 8;  // Descriptor bits, length bits, offset byte.
+					return 2 + 8 + 2;  // Descriptor bits, offset byte, length bits.
 				else if (length >= 3 && length <= 9)
 					return 2 + 16;     // Descriptor bits, offset/length bytes.
-				else if (length >= 3)
+				else if (length >= 10)
 					return 2 + 16 + 8; // Descriptor bits, offset bytes, length byte.
 				else
 					return 0;          // In the event a match cannot be compressed.
@@ -46,7 +45,7 @@ namespace ClownLZSS
 				// Produce a series of LZSS compression matches.
 				ClownLZSS::Matches matches;
 				std::size_t total_matches;
-				if (!ClownLZSS::FindOptimalMatches(0x100, 0x2000, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
+				if (!ClownLZSS::FindOptimalMatches(0x100 + 8, 0x2000, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
 				// Set up the state.
@@ -63,20 +62,18 @@ namespace ClownLZSS
 
 					// Insert a placeholder.
 					output.Write(0);
-					output.Write(0);
 				};
 
 				const auto FinishDescriptorField = [&]()
 				{
 					// Back up current position.
-					const auto current_position = output.Tell();
+					const std::size_t current_position = output.Tell();
 
 					// Go back to the descriptor field.
 					output.Seek(descriptor_position);
 
 					// Write the complete descriptor field.
-					output.Write((descriptor >> (8 * 0)) & 0xFF);
-					output.Write((descriptor >> (8 * 1)) & 0xFF);
+					output.Write(descriptor & 0xFF);
 
 					// Seek back to where we were before.
 					output.Seek(current_position);
@@ -84,24 +81,23 @@ namespace ClownLZSS
 
 				const auto PutDescriptorBit = [&](const bool bit)
 				{
-					--descriptor_bits_remaining;
-
-					descriptor >>= 1;
-
-					if (bit)
-						descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
-
 					if (descriptor_bits_remaining == 0)
 					{
 						FinishDescriptorField();
 						BeginDescriptorField();
 					}
+
+					--descriptor_bits_remaining;
+
+					descriptor <<= 1;
+
+					descriptor |= bit;
 				};
 
 				// Begin first descriptor field.
 				BeginDescriptorField();
 
-				// Produce Kosinski-formatted data.
+				// Produce Kosinski+-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
 				{
 					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
@@ -118,24 +114,24 @@ namespace ClownLZSS
 						{
 							PutDescriptorBit(0);
 							PutDescriptorBit(0);
+							output.Write(-distance & 0xFF);
 							PutDescriptorBit(!!((length - 2) & 2));
 							PutDescriptorBit(!!((length - 2) & 1));
-							output.Write(-distance & 0xFF);
 						}
 						else if (length >= 3 && length <= 9)
 						{
 							PutDescriptorBit(0);
 							PutDescriptorBit(1);
+							output.Write(((-distance >> (8 - 3)) & 0xF8) | ((10 - length) & 7));
 							output.Write(-distance & 0xFF);
-							output.Write(((-distance >> (8 - 3)) & 0xF8) | ((length - 2) & 7));
 						}
-						else //if (length >= 3)
+						else //if (length >= 10)
 						{
 							PutDescriptorBit(0);
 							PutDescriptorBit(1);
-							output.Write(-distance & 0xFF);
 							output.Write((-distance >> (8 - 3)) & 0xF8);
-							output.Write(length - 1);
+							output.Write(-distance & 0xFF);
+							output.Write(length - 9);
 						}
 					}
 				}
@@ -143,12 +139,12 @@ namespace ClownLZSS
 				// Add the terminator match.
 				PutDescriptorBit(0);
 				PutDescriptorBit(1);
-				output.Write(0x00);
 				output.Write(0xF0);
+				output.Write(0x00);
 				output.Write(0x00);
 
 				// The descriptor field may be incomplete, so move the bits into their proper place.
-				descriptor >>= descriptor_bits_remaining;
+				descriptor <<= descriptor_bits_remaining;
 
 				// Finish last descriptor field.
 				FinishDescriptorField();
@@ -159,18 +155,18 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool KosinskiCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	bool KosinskiPlusCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
-		return Kosinski::Compress(data, data_size, CompressorOutput(output));
+		return KosinskiPlus::Compress(data, data_size, CompressorOutput(output));
 	}
 
 	template<typename T>
-	bool ModuledKosinskiCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size, const std::size_t module_alignment)
+	bool ModuledKosinskiPlusCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size, const std::size_t module_alignment)
 	{
-		return Internal::ModuledCompressionWrapper(data, data_size, CompressorOutput(output), KosinskiCompress, module_size, module_alignment);
+		return Internal::ModuledCompressionWrapper(data, data_size, CompressorOutput(output), KosinskiPlusCompress, module_size, module_alignment);
 	}
 }
 
-#endif // CLOWNLZSS_COMPRESSORS_KOSINSKI_H
+#endif // CLOWNLZSS_COMPRESSORS_KOSINSKIPLUS_H

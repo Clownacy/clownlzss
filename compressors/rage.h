@@ -18,8 +18,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include <algorithm>
 
-#include "../clownlzss.h"
-
+#include "clownlzss.h"
 #include "common.h"
 
 namespace ClownLZSS

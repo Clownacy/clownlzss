@@ -13,20 +13,19 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
 
-#ifndef CLOWNLZSS_COMPRESSORS_COMPER_H
-#define CLOWNLZSS_COMPRESSORS_COMPER_H
+#ifndef CLOWNLZSS_COMPRESSORS_ROCKET_H
+#define CLOWNLZSS_COMPRESSORS_ROCKET_H
 
-#include "../clownlzss.h"
-
+#include "clownlzss.h"
 #include "common.h"
 
 namespace ClownLZSS
 {
 	namespace Internal
 	{
-		namespace Comper
+		namespace Rocket
 		{
-			inline constexpr unsigned int TOTAL_DESCRIPTOR_BITS = 16;
+			inline constexpr unsigned int TOTAL_DESCRIPTOR_BITS = 8;
 
 			inline std::size_t GetMatchCost([[maybe_unused]] const std::size_t distance, [[maybe_unused]] const std::size_t length, [[maybe_unused]] void* const user)
 			{
@@ -36,16 +35,10 @@ namespace ClownLZSS
 			template<typename T>
 			bool Compress(const unsigned char* const data, const std::size_t data_size, T &&output)
 			{
-				constexpr unsigned int bytes_per_value = 2;
-
-				// Cannot compress data that is an odd number of bytes long.
-				if (data_size % bytes_per_value != 0)
-					return false;
-
 				// Produce a series of LZSS compression matches.
 				ClownLZSS::Matches matches;
 				std::size_t total_matches;
-				if (!ClownLZSS::FindOptimalMatches(0x100, 0x100, nullptr, 1 + 16, GetMatchCost, data, bytes_per_value, data_size / bytes_per_value, &matches, &total_matches, nullptr))
+				if (!ClownLZSS::FindOptimalMatches(0x40, 0x400, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
 				// Set up the state.
@@ -62,20 +55,18 @@ namespace ClownLZSS
 
 					// Insert a placeholder.
 					output.Write(0);
-					output.Write(0);
 				};
 
 				const auto FinishDescriptorField = [&]()
 				{
 					// Back up current position.
-					const auto current_position = output.Tell();
+					const std::size_t current_position = output.Tell();
 
 					// Go back to the descriptor field.
 					output.Seek(descriptor_position);
 
 					// Write the complete descriptor field.
-					output.Write((descriptor >> (8 * 1)) & 0xFF);
-					output.Write((descriptor >> (8 * 0)) & 0xFF);
+					output.Write(descriptor & 0xFF);
 
 					// Seek back to where we were before.
 					output.Seek(current_position);
@@ -91,44 +82,63 @@ namespace ClownLZSS
 
 					--descriptor_bits_remaining;
 
-					descriptor <<= 1;
+					descriptor >>= 1;
 
-					descriptor |= bit;
+					if (bit)
+						descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
 				};
+
+				// Write the first part of the header.
+				output.Write((data_size >> (8 * 1)) & 0xFF);
+				output.Write((data_size >> (8 * 0)) & 0xFF);
+
+				// Track the location of the seconc part of the header...
+				const auto header_position = output.Tell();
+
+				// ...and insert a placeholder there.
+				output.Write(0);
+				output.Write(0);
 
 				// Begin first descriptor field.
 				BeginDescriptorField();
 
-				// Produce Comper-formatted data.
+				// Produce Rocket-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
 				{
 					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
 					{
-						PutDescriptorBit(0);
-						output.Write(data[match->destination * 2 + 0]);
-						output.Write(data[match->destination * 2 + 1]);
+						PutDescriptorBit(1);
+						output.Write(data[match->destination]);
 					}
 					else
 					{
-						const std::size_t distance = match->destination - match->source;
+						const std::size_t offset = (match->source + 0x3C0) & 0x3FF;
 						const std::size_t length = match->length;
 
-						PutDescriptorBit(1);
-						output.Write(-distance & 0xFF);
-						output.Write(length - 1);
+						PutDescriptorBit(0);
+						output.Write(((offset >> 8) & 3) | ((length - 1) << 2));
+						output.Write(offset & 0xFF);
 					}
 				}
 
-				// Add the terminator match.
-				PutDescriptorBit(1);
-				output.Write(0);
-				output.Write(0);
-
 				// The descriptor field may be incomplete, so move the bits into their proper place.
-				descriptor <<= descriptor_bits_remaining;
+				descriptor >>= descriptor_bits_remaining;
 
 				// Finish last descriptor field.
 				FinishDescriptorField();
+
+				// Grab the current position for later.
+				const auto end_position = output.Tell();
+
+				// Rewind to the header...
+				output.Seek(header_position);
+
+				// ...and complete it.
+				output.Write(((end_position - header_position) >> (8 * 1)) & 0xFF);
+				output.Write(((end_position - header_position) >> (8 * 0)) & 0xFF);
+
+				// Seek back to the end of the file just as the caller might expect us to do.
+				output.Seek(end_position);
 
 				return true;
 			}
@@ -136,18 +146,18 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ComperCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	bool RocketCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
-		return Comper::Compress(data, data_size, CompressorOutput(output));
+		return Rocket::Compress(data, data_size, CompressorOutput(output));
 	}
 
 	template<typename T>
-	bool ModuledComperCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size, const std::size_t module_alignment)
+	bool ModuledRocketCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size, const std::size_t module_alignment)
 	{
-		return Internal::ModuledCompressionWrapper(data, data_size, CompressorOutput(output), ComperCompress, module_size, module_alignment);
+		return Internal::ModuledCompressionWrapper(data, data_size, CompressorOutput(output), RocketCompress, module_size, module_alignment);
 	}
 }
 
-#endif // CLOWNLZSS_COMPRESSORS_COMPER_H
+#endif // CLOWNLZSS_COMPRESSORS_ROCKET_H

@@ -21,7 +21,7 @@ endfunction()
 
 function(make_compression_library name)
 	add_library(clownlzss-${name} INTERFACE
-		"compressors/new/${name}.h"
+		"compressors/${name}.h"
 	)
 
 	set_target_properties(clownlzss-${name} PROPERTIES

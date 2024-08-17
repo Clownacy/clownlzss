@@ -22,14 +22,14 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <string_view>
 #include <vector>
 
-#include "compressors/new/chameleon.h"
-#include "compressors/new/comper.h"
-#include "compressors/new/faxman.h"
-#include "compressors/new/kosinski.h"
-#include "compressors/new/kosinskiplus.h"
-#include "compressors/new/rage.h"
-#include "compressors/new/rocket.h"
-#include "compressors/new/saxman.h"
+#include "compressors/chameleon.h"
+#include "compressors/comper.h"
+#include "compressors/faxman.h"
+#include "compressors/kosinski.h"
+#include "compressors/kosinskiplus.h"
+#include "compressors/rage.h"
+#include "compressors/rocket.h"
+#include "compressors/saxman.h"
 
 #include "decompressors/chameleon.h"
 #include "decompressors/comper.h"
