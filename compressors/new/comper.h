@@ -42,11 +42,11 @@ namespace ClownLZSS
 				if (data_size % bytes_per_value != 0)
 					return false;
 
-				ClownLZSS_Match *matches;
-				std::size_t total_matches;
-
 				// Produce a series of LZSS compression matches.
-				if (!ClownLZSS_Compress(0x100, 0x100, NULL, 1 + 16, GetMatchCost, data, bytes_per_value, data_size / bytes_per_value, &matches, &total_matches, nullptr))
+				std::size_t total_matches;
+				const auto &matches = ClownLZSS::Compress(0x100, 0x100, nullptr, 1 + 16, GetMatchCost, data, bytes_per_value, data_size / bytes_per_value, &total_matches, nullptr);
+
+				if (!matches)
 					return false;
 
 				// Set up the state.
@@ -101,7 +101,7 @@ namespace ClownLZSS
 				BeginDescriptorField();
 
 				// Produce Comper-formatted data.
-				for (ClownLZSS_Match *match = matches; match != &matches[total_matches]; ++match)
+				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
 				{
 					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
 					{
@@ -119,9 +119,6 @@ namespace ClownLZSS
 						output.Write(length - 1);
 					}
 				}
-
-				// We don't need the matches anymore.
-				free(matches);
 
 				// Add the terminator match.
 				PutDescriptorBit(1);

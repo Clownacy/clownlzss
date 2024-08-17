@@ -55,12 +55,50 @@ int ClownLZSS_Compress(
 	const unsigned char *data,
 	size_t bytes_per_value,
 	size_t total_values,
-	ClownLZSS_Match **_matches,
-	size_t *_total_matches,
+	ClownLZSS_Match **matches,
+	size_t *total_matches,
 	const void *user
 );
 
 #ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+namespace ClownLZSS
+{
+	namespace Internal
+	{
+		struct MatchDeleter
+		{
+			void operator()(ClownLZSS_Match* const a)
+			{
+				free(a);
+			}
+		};
+
+		using MatchUniquePtr = std::unique_ptr<ClownLZSS_Match[], MatchDeleter>;
+	}
+
+	inline Internal::MatchUniquePtr Compress(
+		size_t maximum_match_length,
+		size_t maximum_match_distance,
+		void (*extra_matches_callback)(const unsigned char *data, size_t total_values, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
+		size_t literal_cost,
+		size_t (*match_cost_callback)(size_t distance, size_t length, void *user),
+		const unsigned char *data,
+		size_t bytes_per_value,
+		size_t total_values,
+		size_t *total_matches,
+		const void *user
+	)
+	{
+		ClownLZSS_Match *matches;
+		if (!ClownLZSS_Compress(maximum_match_length, maximum_match_distance, extra_matches_callback, literal_cost, match_cost_callback, data, bytes_per_value, total_values, &matches, total_matches, user))
+			return nullptr;
+
+		return Internal::MatchUniquePtr(matches);
+	}
 }
 #endif
 

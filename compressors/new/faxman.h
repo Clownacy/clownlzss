@@ -72,11 +72,11 @@ namespace ClownLZSS
 			template<typename T>
 			bool Compress(const unsigned char* const data, const std::size_t data_size, T &&output)
 			{
-				ClownLZSS_Match *matches;
-				std::size_t total_matches;
-
 				// Produce a series of LZSS compression matches.
-				if (!ClownLZSS_Compress(0x1F + 3, 0x800, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
+				std::size_t total_matches;
+				const auto &matches = ClownLZSS::Compress(0x1F + 3, 0x800, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, &total_matches, nullptr);
+
+				if (!matches)
 					return false;
 
 				// Set up the state.
@@ -140,7 +140,7 @@ namespace ClownLZSS
 				BeginDescriptorField();
 
 				// Produce Faxman-formatted data.
-				for (ClownLZSS_Match *match = matches; match != &matches[total_matches]; ++match)
+				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
 				{
 					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
 					{
@@ -169,9 +169,6 @@ namespace ClownLZSS
 						}
 					}
 				}
-
-				// We don't need the matches anymore.
-				free(matches);
 
 				// The descriptor field may be incomplete, so move the bits into their proper place.
 				descriptor >>= descriptor_bits_remaining;

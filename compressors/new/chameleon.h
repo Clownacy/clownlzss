@@ -43,12 +43,12 @@ namespace ClownLZSS
 			template<typename T>
 			bool Compress(const unsigned char* const data, const std::size_t data_size, T &&output)
 			{
-				ClownLZSS_Match *matches;
-				std::size_t total_matches;
-
 				/* Produce a series of LZSS compression matches. */
 				/* Yes, the first two values really are lower than usual by 1. */
-				if (!ClownLZSS_Compress(0xFF, 0x7FF, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
+				std::size_t total_matches;
+				const auto &matches = ClownLZSS::Compress(0xFF, 0x7FF, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &total_matches, nullptr);
+
+				if (!matches)
 					return false;
 
 				/* Set up the state. */
@@ -82,7 +82,7 @@ namespace ClownLZSS
 				/* Produce Chameleon-formatted data. */
 				/* Unlike many other LZSS formats, Chameleon stores the descriptor fields separately from the rest of the data. */
 				/* Iterate over the compression matches, outputting just the descriptor fields. */
-				for (ClownLZSS_Match *match = matches; match != &matches[total_matches]; ++match)
+				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
 				{
 					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
 					{
@@ -145,7 +145,7 @@ namespace ClownLZSS
 				output.Seek(current_position);
 
 				/* Iterate over the compression matches again, now outputting just the literals and offset/length pairs. */
-				for (ClownLZSS_Match *match = matches; match != &matches[total_matches]; ++match)
+				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
 				{
 					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
 					{
@@ -171,9 +171,6 @@ namespace ClownLZSS
 						}
 					}
 				}
-
-				/* We don't need the matches anymore. */
-				free(matches);
 
 				/* Add the terminator match. */
 				output.Write(0);

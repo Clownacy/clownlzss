@@ -87,12 +87,12 @@ namespace ClownLZSS
 			template<typename T>
 			bool Compress(const unsigned char* const data, const std::size_t data_size, T &&output)
 			{
-				ClownLZSS_Match *matches;
-				std::size_t total_matches;
-
 				// Produce a series of LZSS compression matches.
 				// TODO - Shouldn't the distance limit be 0x2000?
-				if (!ClownLZSS_Compress(0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
+				std::size_t total_matches;
+				const auto &matches = ClownLZSS::Compress(0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, 1, data_size, &total_matches, nullptr);
+
+				if (!matches)
 					return false;
 
 				// Track the location of the header...
@@ -103,7 +103,7 @@ namespace ClownLZSS
 				output.Write(0);
 
 				// Produce Rage-formatted data.
-				for (ClownLZSS_Match *match = matches; match != &matches[total_matches]; ++match)
+				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
 				{
 					const std::size_t distance = match->destination - match->source;
 					const std::size_t offset = match->source;
@@ -172,9 +172,6 @@ namespace ClownLZSS
 						}
 					}
 				}
-
-				// We don't need the matches anymore.
-				free(matches);
 
 				// Grab the current position for later.
 				const auto end_position = output.Tell();
