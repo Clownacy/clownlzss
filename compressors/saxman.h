@@ -111,8 +111,7 @@ namespace ClownLZSS
 
 					descriptor >>= 1;
 
-					if (bit)
-						descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
+					descriptor |= bit << (TOTAL_DESCRIPTOR_BITS - 1);
 				};
 
 				// Begin first descriptor field.
@@ -128,12 +127,12 @@ namespace ClownLZSS
 					}
 					else
 					{
-						const std::size_t offset = match->source - 0x12;
+						const std::size_t distance = match->source - 0x12;
 						const std::size_t length = match->length;
 
 						PutDescriptorBit(0);
-						output.Write(offset & 0xFF);
-						output.Write(((offset & 0xF00) >> 4) | (length - 3));
+						output.Write(distance & 0xFF);
+						output.Write(((distance & 0xF00) >> 4) | (length - 3));
 					}
 				}
 

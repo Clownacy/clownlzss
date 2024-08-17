@@ -87,8 +87,7 @@ namespace ClownLZSS
 
 					descriptor >>= 1;
 
-					if (bit)
-						descriptor |= 1 << (TOTAL_DESCRIPTOR_BITS - 1);
+					descriptor |= bit << (TOTAL_DESCRIPTOR_BITS - 1);
 
 					if (descriptor_bits_remaining == 0)
 					{
