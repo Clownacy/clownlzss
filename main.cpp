@@ -33,6 +33,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "decompressors/chameleon.h"
 #include "decompressors/comper.h"
+#include "decompressors/faxman.h"
 #include "decompressors/kosinski.h"
 #include "decompressors/kosinskiplus.h"
 #include "decompressors/saxman.h"
@@ -223,6 +224,10 @@ int main(int argc, char **argv)
 
 					case Format::COMPER:
 						ClownLZSS::ComperDecompress(in_file, out_file);
+						break;
+
+					case Format::FAXMAN:
+						ClownLZSS::FaxmanDecompress(in_file, out_file);
 						break;
 
 					case Format::KOSINSKI:

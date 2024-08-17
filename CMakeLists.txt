@@ -103,6 +103,7 @@ endfunction()
 
 make_decompress_test(chameleon "-ch")
 make_decompress_test(comper "-c")
+make_decompress_test(faxman "-f")
 make_decompress_test(kosinski "-k")
 make_decompress_test(kosinskiplus "-kp")
 make_decompress_test(saxman "-s")
