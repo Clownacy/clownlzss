@@ -46,7 +46,7 @@ typedef struct ClownLZSS_Match
 extern "C" {
 #endif
 
-int ClownLZSS_Compress(
+int ClownLZSS_FindOptimalMatches(
 	size_t maximum_match_length,
 	size_t maximum_match_distance,
 	void (*extra_matches_callback)(const unsigned char *data, size_t total_values, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
@@ -82,7 +82,7 @@ namespace ClownLZSS
 		using MatchUniquePtr = std::unique_ptr<ClownLZSS_Match[], MatchDeleter>;
 	}
 
-	inline Internal::MatchUniquePtr Compress(
+	inline Internal::MatchUniquePtr FindOptimalMatches(
 		size_t maximum_match_length,
 		size_t maximum_match_distance,
 		void (*extra_matches_callback)(const unsigned char *data, size_t total_values, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
@@ -96,7 +96,7 @@ namespace ClownLZSS
 	)
 	{
 		ClownLZSS_Match *matches;
-		if (!ClownLZSS_Compress(maximum_match_length, maximum_match_distance, extra_matches_callback, literal_cost, match_cost_callback, data, bytes_per_value, total_values, &matches, total_matches, user))
+		if (!ClownLZSS_FindOptimalMatches(maximum_match_length, maximum_match_distance, extra_matches_callback, literal_cost, match_cost_callback, data, bytes_per_value, total_values, &matches, total_matches, user))
 			return nullptr;
 
 		return Internal::MatchUniquePtr(matches);

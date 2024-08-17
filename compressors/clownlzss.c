@@ -18,7 +18,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <stddef.h>
 #include <stdlib.h>
 
-int ClownLZSS_Compress(
+int ClownLZSS_FindOptimalMatches(
 	const size_t maximum_match_length,
 	const size_t maximum_match_distance,
 	void (* const extra_matches_callback)(const unsigned char *data, size_t total_values, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
