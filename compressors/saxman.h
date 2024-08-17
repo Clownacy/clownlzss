@@ -199,13 +199,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ModuledSaxmanCompressWithoutHeader(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size, const std::size_t module_alignment)
-	{
-		return Internal::ModuledCompressionWrapper(data, data_size, CompressorOutput(output), SaxmanCompressWithoutHeader, module_size, module_alignment);
-	}
-
-	template<typename T>
-	bool ModuledSaxmanCompressWithHeader(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size, const std::size_t module_alignment)
+	bool ModuledSaxmanCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size, const std::size_t module_alignment)
 	{
 		return Internal::ModuledCompressionWrapper(data, data_size, CompressorOutput(output), SaxmanCompressWithHeader, module_size, module_alignment);
 	}
