@@ -30,11 +30,10 @@ function(make_compression_library name)
 		CXX_EXTENSIONS OFF
 	)
 
-	target_link_libraries(clownlzss-${name} INTERFACE clownlzss clownlzss-common)
+	target_link_libraries(clownlzss-${name} INTERFACE clownlzss)
 endfunction()
 
 make_library(clownlzss clownlzss)
-make_library(clownlzss-common common)
 make_compression_library(chameleon)
 make_compression_library(comper)
 make_compression_library(faxman)
