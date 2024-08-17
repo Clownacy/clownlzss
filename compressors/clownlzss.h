@@ -64,7 +64,8 @@ int ClownLZSS_Compress(
 }
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && __cplusplus >= 201103L
+#include <memory>
 
 namespace ClownLZSS
 {
