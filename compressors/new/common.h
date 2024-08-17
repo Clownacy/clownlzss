@@ -29,7 +29,7 @@ namespace ClownLZSS
 	namespace Internal
 	{
 		template<typename T>
-		bool ModuledCompressionWrapper(const unsigned char* const data, const size_t data_size, T &&output, bool (* const compression_function)(const unsigned char *data, std::size_t data_size, T &&output), const size_t module_size, const size_t module_alignment)
+		bool ModuledCompressionWrapper(const unsigned char* const data, const std::size_t data_size, T &&output, bool (* const compression_function)(const unsigned char *data, std::size_t data_size, T &&output), const std::size_t module_size, const std::size_t module_alignment)
 		{
 			const unsigned int header = (data_size % module_size) | ((data_size / module_size) << 12);
 

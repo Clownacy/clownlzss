@@ -28,7 +28,7 @@ namespace ClownLZSS
 		{
 			inline constexpr unsigned int TOTAL_DESCRIPTOR_BITS = 16;
 
-			inline size_t GetMatchCost(const size_t distance, const size_t length, [[maybe_unused]] void* const user)
+			inline std::size_t GetMatchCost(const std::size_t distance, const std::size_t length, [[maybe_unused]] void* const user)
 			{
 				if (length >= 2 && length <= 5 && distance <= 0x100)
 					return 2 + 2 + 8;  // Descriptor bits, length bits, offset byte.
@@ -41,10 +41,10 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const size_t data_size, T &&output)
+			bool Compress(const unsigned char* const data, const std::size_t data_size, T &&output)
 			{
 				// Produce a series of LZSS compression matches.
-				size_t total_matches;
+				std::size_t total_matches;
 				const auto &matches = ClownLZSS::Compress(0x100, 0x2000, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &total_matches, nullptr);
 
 				if (!matches)
@@ -112,8 +112,8 @@ namespace ClownLZSS
 					}
 					else
 					{
-						const size_t distance = match->destination - match->source;
-						const size_t length = match->length;
+						const std::size_t distance = match->destination - match->source;
+						const std::size_t length = match->length;
 
 						if (length >= 2 && length <= 5 && distance <= 0x100)
 						{
@@ -168,7 +168,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ModuledKosinskiCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const size_t module_size, const size_t module_alignment)
+	bool ModuledKosinskiCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size, const std::size_t module_alignment)
 	{
 		return Internal::ModuledCompressionWrapper(data, data_size, CompressorOutput(output), KosinskiCompress, module_size, module_alignment);
 	}

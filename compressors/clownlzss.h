@@ -65,6 +65,7 @@ int ClownLZSS_Compress(
 #endif
 
 #ifdef __cplusplus
+
 namespace ClownLZSS
 {
 	namespace Internal
