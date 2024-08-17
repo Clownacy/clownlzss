@@ -122,23 +122,17 @@ namespace ClownLZSS
 	class DecompressorInputWithLength<T> : public DecompressorInput<T>
 	{
 	protected:
-		unsigned int position = 0, length;
+		std::istream::off_type end;
 
 	public:
 		DecompressorInputWithLength(std::istream &input, unsigned int length)
 			: DecompressorInput<T>(input)
-			, length(length)
+			, end(input.tellg() + static_cast<std::istream::off_type>(length))
 		{}
-
-		unsigned char Read()
-		{
-			++position;
-			return DecompressorInput<T>::Read();
-		}
 
 		bool AtEnd() const
 		{
-			return position >= length;
+			return DecompressorInput<T>::input.tellg() >= end;
 		}
 	};
 	#endif
