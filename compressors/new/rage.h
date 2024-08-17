@@ -89,10 +89,9 @@ namespace ClownLZSS
 			{
 				// Produce a series of LZSS compression matches.
 				// TODO - Shouldn't the distance limit be 0x2000?
+				ClownLZSS::Matches matches;
 				std::size_t total_matches;
-				const auto &matches = ClownLZSS::FindOptimalMatches(0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, 1, data_size, &total_matches, nullptr);
-
-				if (!matches)
+				if (!ClownLZSS::FindOptimalMatches(0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
 				// Track the location of the header...

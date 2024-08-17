@@ -45,10 +45,9 @@ namespace ClownLZSS
 			{
 				/* Produce a series of LZSS compression matches. */
 				/* Yes, the first two values really are lower than usual by 1. */
+				ClownLZSS::Matches matches;
 				std::size_t total_matches;
-				const auto &matches = ClownLZSS::FindOptimalMatches(0xFF, 0x7FF, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &total_matches, nullptr);
-
-				if (!matches)
+				if (!ClownLZSS::FindOptimalMatches(0xFF, 0x7FF, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
 				/* Set up the state. */

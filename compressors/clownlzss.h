@@ -78,11 +78,11 @@ namespace ClownLZSS
 				free(a);
 			}
 		};
-
-		using MatchUniquePtr = std::unique_ptr<ClownLZSS_Match[], MatchDeleter>;
 	}
 
-	inline Internal::MatchUniquePtr FindOptimalMatches(
+	using Matches = std::unique_ptr<ClownLZSS_Match[], Internal::MatchDeleter>;
+
+	inline bool FindOptimalMatches(
 		size_t maximum_match_length,
 		size_t maximum_match_distance,
 		void (*extra_matches_callback)(const unsigned char *data, size_t total_values, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
@@ -91,15 +91,17 @@ namespace ClownLZSS
 		const unsigned char *data,
 		size_t bytes_per_value,
 		size_t total_values,
+		Matches *matches,
 		size_t *total_matches,
 		const void *user
 	)
 	{
-		ClownLZSS_Match *matches;
-		if (!ClownLZSS_FindOptimalMatches(maximum_match_length, maximum_match_distance, extra_matches_callback, literal_cost, match_cost_callback, data, bytes_per_value, total_values, &matches, total_matches, user))
-			return nullptr;
+		ClownLZSS_Match *matches_pointer;
+		const bool success = ClownLZSS_FindOptimalMatches(maximum_match_length, maximum_match_distance, extra_matches_callback, literal_cost, match_cost_callback, data, bytes_per_value, total_values, &matches_pointer, total_matches, user);
 
-		return Internal::MatchUniquePtr(matches);
+		*matches = Matches(matches_pointer);
+
+		return success;
 	}
 }
 #endif
