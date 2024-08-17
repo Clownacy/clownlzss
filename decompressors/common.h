@@ -210,7 +210,7 @@ namespace ClownLZSS
 		{
 			std::copy(output_iterator - distance, output_iterator - distance + count, output_iterator);
 			output_iterator += count;
-		};
+		}
 	};
 
 	#if __STDC_HOSTED__ == 1
@@ -231,7 +231,7 @@ namespace ClownLZSS
 				buffer[dictionary_size + index] = value;
 
 			index = (index + 1) % dictionary_size;
-		};
+		}
 
 	public:
 		using Internal::OutputCommon<T>::output;
@@ -241,7 +241,7 @@ namespace ClownLZSS
 		{
 			WriteToBuffer(value);
 			Internal::OutputCommon<T>::Write(value);
-		};
+		}
 
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
@@ -252,7 +252,13 @@ namespace ClownLZSS
 				WriteToBuffer(buffer[source_index + i]);
 
 			output.write(&buffer[destination_index], count);
-		};
+		}
+
+		void Fill(const unsigned char value, const unsigned int count)
+		{
+			for (unsigned int i = 0; i < count; ++i)
+				Write(value);
+		}
 	};
 	#endif
 }
