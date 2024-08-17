@@ -53,9 +53,9 @@ int ClownLZSS_FindOptimalMatches(
 			size_t i;
 			ClownLZSS_GraphEdge *node_meta_array;
 
-			size_t* const bytes = buffer + maximum_match_distance * 0;
-			size_t* const prev = buffer + maximum_match_distance * 1;
-			size_t* const next = buffer + maximum_match_distance * 2;
+			size_t* const bytes = &buffer[maximum_match_distance * 0];
+			size_t* const prev = &buffer[maximum_match_distance * 1];
+			size_t* const next = &buffer[maximum_match_distance * 2];
 			const size_t DUMMY = -1;
 
 			/* Initialise the string list heads */
@@ -100,19 +100,24 @@ int ClownLZSS_FindOptimalMatches(
 					{
 						size_t j;
 
-						const unsigned char *current_bytes = &data[i * bytes_per_value];
-						const unsigned char *match_bytes = &data[bytes[match_string] * bytes_per_value];
-
 						/* If `BYTES_PER_VALUE` is not 1, then we have to re-evaluate the first value, otherwise we can skip it */
-						for (j = bytes_per_value == 1; j < CLOWNLZSS_MIN(maximum_match_length, total_values - i); ++j)
+						const unsigned int start = bytes_per_value == 1;
+						const unsigned char *current_bytes = &data[(i + start) * bytes_per_value];
+						const unsigned char *match_bytes = &data[(bytes[match_string] + start) * bytes_per_value];
+						const size_t distance = (current_bytes - match_bytes) / bytes_per_value;
+
+						for (j = start; j < CLOWNLZSS_MIN(maximum_match_length, total_values - i); ++j)
 						{
-							unsigned int values_do_not_match = 0;
 							size_t l;
 
 							for (l = 0; l < bytes_per_value; ++l)
-								values_do_not_match |= current_bytes[j * bytes_per_value + l] != match_bytes[j * bytes_per_value + l];
+								if (current_bytes[l] != match_bytes[l])
+									break;
 
-							if (values_do_not_match)
+							current_bytes += bytes_per_value;
+							match_bytes += bytes_per_value;
+
+							if (l != bytes_per_value)
 							{
 								/* No match: give up on the current run */
 								break;
@@ -120,7 +125,7 @@ int ClownLZSS_FindOptimalMatches(
 							else
 							{
 								/* Figure out how much it costs to encode the current run */
-								const size_t cost = match_cost_callback((current_bytes - match_bytes) / bytes_per_value, j + 1, (void*)user);
+								const size_t cost = match_cost_callback(distance, j + 1, (void*)user);
 
 								/* Figure out if the cost is lower than that of any other runs that end at the same value as this one */
 								if (cost != 0 && node_meta_array[i + j + 1].u.cost > node_meta_array[i].u.cost + cost)
