@@ -19,6 +19,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 
 int ClownLZSS_FindOptimalMatches(
+	const int filler_value,
 	const size_t maximum_match_length,
 	const size_t maximum_match_distance,
 	void (* const extra_matches_callback)(const unsigned char *data, size_t total_values, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
@@ -63,9 +64,25 @@ int ClownLZSS_FindOptimalMatches(
 			for (i = 0; i < 0x100; ++i)
 				next[maximum_match_distance + i] = DUMMY;
 
-			/* Initialise the string list nodes */
-			for (i = 0; i < maximum_match_distance; ++i)
-				prev[i] = DUMMY;
+			if (filler_value == -1)
+			{
+				/* Initialise the string list nodes */
+				for (i = 0; i < maximum_match_distance; ++i)
+					prev[i] = DUMMY;
+			}
+			else
+			{
+				next[maximum_match_distance + filler_value] = maximum_match_distance - 1;
+				next[0] = DUMMY;
+				prev[maximum_match_distance - 1] = maximum_match_distance + filler_value;
+
+				/* Initialise the string list nodes */
+				for (i = 0; i < maximum_match_distance - 1; ++i)
+				{
+					next[i + 1] = i;
+					prev[i] = i + 1;
+				}
+			}
 
 			/* Set costs to maximum possible value, so later comparisons work */
 			node_meta_array[0].u.cost = 0;
@@ -104,16 +121,34 @@ int ClownLZSS_FindOptimalMatches(
 					{
 						size_t l;
 
-						for (l = 0; l < bytes_per_value; ++l)
+						if (match_bytes < data)
 						{
-							const unsigned char current_byte = *current_bytes;
-							const unsigned char match_byte = *match_bytes;
+							for (l = 0; l < bytes_per_value; ++l)
+							{
+								const unsigned char current_byte = *current_bytes;
+								const unsigned char match_byte = (unsigned char)filler_value;
 
-							++current_bytes;
-							++match_bytes;
+								++current_bytes;
 
-							if (current_byte != match_byte)
-								break;
+								if (current_byte != match_byte)
+									break;
+							}
+
+							match_bytes += bytes_per_value;
+						}
+						else
+						{
+							for (l = 0; l < bytes_per_value; ++l)
+							{
+								const unsigned char current_byte = *current_bytes;
+								const unsigned char match_byte = *match_bytes;
+
+								++current_bytes;
+								++match_bytes;
+
+								if (current_byte != match_byte)
+									break;
+							}
 						}
 
 						if (l != bytes_per_value)
@@ -143,7 +178,7 @@ int ClownLZSS_FindOptimalMatches(
 				{
 					node_meta_array[i + 1].u.cost = node_meta_array[i].u.cost + literal_cost;
 					node_meta_array[i + 1].previous_node_index = i;
-					node_meta_array[i + 1].match_offset = DUMMY;
+					node_meta_array[i + 1].match_offset = i + 1;
 				}
 
 				/* Replace the oldest string in the list with the new string, since it's about to be pushed out of the LZSS sliding window */

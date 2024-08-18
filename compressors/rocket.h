@@ -38,7 +38,7 @@ namespace ClownLZSS
 				// Produce a series of LZSS compression matches.
 				ClownLZSS::Matches matches;
 				std::size_t total_matches;
-				if (!ClownLZSS::FindOptimalMatches(0x40, 0x400, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
+				if (!ClownLZSS::FindOptimalMatches(0x20, 0x40, 0x400, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
 				// Set up the state.

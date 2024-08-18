@@ -90,7 +90,7 @@ namespace ClownLZSS
 				// TODO - Shouldn't the distance limit be 0x2000?
 				ClownLZSS::Matches matches;
 				std::size_t total_matches;
-				if (!ClownLZSS::FindOptimalMatches(0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
+				if (!ClownLZSS::FindOptimalMatches(-1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
 				// Track the location of the header...

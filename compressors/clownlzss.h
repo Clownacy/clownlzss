@@ -40,13 +40,14 @@ typedef struct ClownLZSS_Match
 	size_t length;
 } ClownLZSS_Match;
 
-#define CLOWNLZSS_MATCH_IS_LITERAL(match) ((match)->source == (size_t)-1)
+#define CLOWNLZSS_MATCH_IS_LITERAL(match) ((match)->source == (match)->destination + 1)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int ClownLZSS_FindOptimalMatches(
+	int filler_value,
 	size_t maximum_match_length,
 	size_t maximum_match_distance,
 	void (*extra_matches_callback)(const unsigned char *data, size_t total_values, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
@@ -83,6 +84,7 @@ namespace ClownLZSS
 	using Matches = std::unique_ptr<ClownLZSS_Match[], Internal::MatchDeleter>;
 
 	inline bool FindOptimalMatches(
+		int filler_value,
 		size_t maximum_match_length,
 		size_t maximum_match_distance,
 		void (*extra_matches_callback)(const unsigned char *data, size_t total_values, size_t offset, ClownLZSS_GraphEdge *node_meta_array, void *user),
@@ -97,7 +99,7 @@ namespace ClownLZSS
 	)
 	{
 		ClownLZSS_Match *matches_pointer;
-		const bool success = ClownLZSS_FindOptimalMatches(maximum_match_length, maximum_match_distance, extra_matches_callback, literal_cost, match_cost_callback, data, bytes_per_value, total_values, &matches_pointer, total_matches, user);
+		const bool success = ClownLZSS_FindOptimalMatches(filler_value, maximum_match_length, maximum_match_distance, extra_matches_callback, literal_cost, match_cost_callback, data, bytes_per_value, total_values, &matches_pointer, total_matches, user);
 
 		*matches = Matches(matches_pointer);
 
