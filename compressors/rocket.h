@@ -111,12 +111,12 @@ namespace ClownLZSS
 					}
 					else
 					{
-						const std::size_t distance = (match->source + 0x3C0) & 0x3FF;
+						const std::size_t offset = (match->source + 0x3C0) & 0x3FF;
 						const std::size_t length = match->length;
 
 						PutDescriptorBit(0);
-						output.Write(((distance >> 8) & 3) | ((length - 1) << 2));
-						output.Write(distance & 0xFF);
+						output.Write(((offset >> 8) & 3) | ((length - 1) << 2));
+						output.Write(offset & 0xFF);
 					}
 				}
 

@@ -55,19 +55,19 @@ namespace ClownLZSS
 					else
 					{
 						// Dictionary match.
-						unsigned int offset, count;
+						unsigned int distance, count;
 
 						if (PopDescriptorBit())
 						{
 							const unsigned int first_byte = input.Read();
 							const unsigned int second_byte = input.Read();
 
-							offset = (first_byte | ((second_byte << 3) & 0x700)) + 1;
+							distance = (first_byte | ((second_byte << 3) & 0x700)) + 1;
 							count = (second_byte & 0x1F) + 3;
 						}
 						else
 						{
-							offset = 0x100 - input.Read();
+							distance = 0x100 - input.Read();
 							count = 2;
 
 							if (PopDescriptorBit())
@@ -76,7 +76,7 @@ namespace ClownLZSS
 								count += 1;
 						}
 
-						if (offset > output_position)
+						if (distance > output_position)
 						{
 							// Zero-fill.
 							output.Fill(0, count);
@@ -84,7 +84,7 @@ namespace ClownLZSS
 						else
 						{
 							// Copy.
-							output.Copy(offset, count);
+							output.Copy(distance, count);
 						}
 
 						output_position += count;

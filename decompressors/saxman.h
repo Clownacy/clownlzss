@@ -49,9 +49,9 @@ namespace ClownLZSS
 						const unsigned int second_byte = input.Read();
 						const unsigned int dictionary_index = (first_byte | ((second_byte << 4) & 0xF00)) + (0xF + 3);
 						const unsigned int count = (second_byte & 0xF) + 3;
-						const unsigned int offset = (output_position - dictionary_index) & 0xFFF;
+						const unsigned int distance = (output_position - dictionary_index) & 0xFFF;
 
-						if (offset > output_position)
+						if (distance > output_position)
 						{
 							// Zero-fill.
 							output.Fill(0, count);
@@ -59,7 +59,7 @@ namespace ClownLZSS
 						else
 						{
 							// Copy.
-							output.Copy(offset, count);
+							output.Copy(distance, count);
 						}
 
 						output_position += count;
