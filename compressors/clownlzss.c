@@ -150,19 +150,14 @@ int ClownLZSS_FindOptimalMatches(
 
 				/* Detach the old node in this slot */
 				if (prev[current_string] != DUMMY)
-				{
-					next[prev[current_string]] = next[current_string];
-
-					if (next[current_string] != DUMMY)
-						prev[next[current_string]] = prev[current_string];
-				}
+					next[prev[current_string]] = DUMMY;
 
 				/* Replace the old node with this new one, and insert it at the start of its matching list */
 				prev[current_string] = string_list_head;
 				next[current_string] = next[string_list_head];
 
-				if (next[string_list_head] != DUMMY)
-					prev[next[string_list_head]] = current_string;
+				if (next[current_string] != DUMMY)
+					prev[next[current_string]] = current_string;
 
 				next[string_list_head] = current_string;
 			}
