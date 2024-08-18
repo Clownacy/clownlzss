@@ -111,11 +111,16 @@ int ClownLZSS_FindOptimalMatches(
 							size_t l;
 
 							for (l = 0; l < bytes_per_value; ++l)
-								if (current_bytes[l] != match_bytes[l])
-									break;
+							{
+								const unsigned char current_byte = *current_bytes;
+								const unsigned char match_byte = *match_bytes;
 
-							current_bytes += bytes_per_value;
-							match_bytes += bytes_per_value;
+								++current_bytes;
+								++match_bytes;
+
+								if (current_byte != match_byte)
+									break;
+							}
 
 							if (l != bytes_per_value)
 							{
