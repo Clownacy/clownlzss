@@ -91,7 +91,7 @@ namespace ClownLZSS
 				output.Write((data_size >> (8 * 1)) & 0xFF);
 				output.Write((data_size >> (8 * 0)) & 0xFF);
 
-				// Track the location of the seconc part of the header...
+				// Track the location of the second part of the header...
 				const auto header_position = output.Tell();
 
 				// ...and insert a placeholder there.
@@ -133,8 +133,8 @@ namespace ClownLZSS
 				output.Seek(header_position);
 
 				// ...and complete it.
-				output.Write(((end_position - header_position) >> (8 * 1)) & 0xFF);
-				output.Write(((end_position - header_position) >> (8 * 0)) & 0xFF);
+				output.Write(((end_position - header_position - 2) >> (8 * 1)) & 0xFF);
+				output.Write(((end_position - header_position - 2) >> (8 * 0)) & 0xFF);
 
 				// Seek back to the end of the file just as the caller might expect us to do.
 				output.Seek(end_position);
