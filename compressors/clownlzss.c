@@ -46,16 +46,15 @@ int ClownLZSS_FindOptimalMatches(
 	else
 	{
 		/* String list stuff */
-		size_t* const buffer = (size_t*)malloc((maximum_match_distance * 3 + 0x100) * sizeof(size_t));
+		size_t* const buffer = (size_t*)malloc((maximum_match_distance * 2 + 0x100) * sizeof(size_t));
 
 		if (buffer != NULL)
 		{
 			size_t i;
 			ClownLZSS_GraphEdge *node_meta_array;
 
-			size_t* const bytes = &buffer[maximum_match_distance * 0];
-			size_t* const prev = &buffer[maximum_match_distance * 1];
-			size_t* const next = &buffer[maximum_match_distance * 2];
+			size_t* const prev = &buffer[maximum_match_distance * 0];
+			size_t* const next = &buffer[maximum_match_distance * 1];
 			const size_t DUMMY = -1;
 
 			/* Initialise the string list heads */
@@ -100,11 +99,11 @@ int ClownLZSS_FindOptimalMatches(
 					{
 						size_t j;
 
+						const size_t distance = ((maximum_match_distance + i - match_string - 1) % maximum_match_distance) + 1;
 						/* If `BYTES_PER_VALUE` is not 1, then we have to re-evaluate the first value, otherwise we can skip it */
 						const unsigned int start = bytes_per_value == 1;
 						const unsigned char *current_bytes = &data[(i + start) * bytes_per_value];
-						const unsigned char *match_bytes = &data[(bytes[match_string] + start) * bytes_per_value];
-						const size_t distance = (current_bytes - match_bytes) / bytes_per_value;
+						const unsigned char *match_bytes = current_bytes - distance * bytes_per_value;
 
 						for (j = start; j < CLOWNLZSS_MIN(maximum_match_length, total_values - i); ++j)
 						{
@@ -138,7 +137,7 @@ int ClownLZSS_FindOptimalMatches(
 									/* Record this new best run in the graph edge assigned to the value at the end of the run */
 									node_meta_array[i + j + 1].u.cost = node_meta_array[i].u.cost + cost;
 									node_meta_array[i + j + 1].previous_node_index = i;
-									node_meta_array[i + j + 1].match_offset = bytes[match_string];
+									node_meta_array[i + j + 1].match_offset = i - distance;
 								}
 							}
 						}
@@ -164,7 +163,6 @@ int ClownLZSS_FindOptimalMatches(
 					}
 
 					/* Replace the old node with this new one, and insert it at the start of its matching list */
-					bytes[current_string] = i;
 					prev[current_string] = string_list_head;
 					next[current_string] = next[string_list_head];
 
