@@ -88,7 +88,7 @@ namespace ClownLZSS
 			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				// Produce a series of LZSS compression matches.
-				// TODO - Shouldn't the distance limit be 0x2000?
+				// Yes, the distance really is 1 lower than usual.
 				ClownLZSS::Matches matches;
 				std::size_t total_matches;
 				if (!ClownLZSS::FindOptimalMatches(-1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))

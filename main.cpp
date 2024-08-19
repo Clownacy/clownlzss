@@ -36,6 +36,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "decompressors/faxman.h"
 #include "decompressors/kosinski.h"
 #include "decompressors/kosinskiplus.h"
+#include "decompressors/rage.h"
 #include "decompressors/rocket.h"
 #include "decompressors/saxman.h"
 
@@ -237,6 +238,10 @@ int main(int argc, char **argv)
 
 					case Format::KOSINSKIPLUS:
 						ClownLZSS::KosinskiPlusDecompress(in_file, out_file);
+						break;
+
+					case Format::RAGE:
+						ClownLZSS::RageDecompress(in_file, out_file);
 						break;
 
 					case Format::ROCKET:
