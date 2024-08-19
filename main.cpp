@@ -221,31 +221,52 @@ int main(int argc, char **argv)
 				switch (mode->format)
 				{
 					case Format::CHAMELEON:
-						ClownLZSS::ChameleonDecompress(in_file, out_file);
+						if (moduled)
+							ClownLZSS::ModuledChameleonDecompress(in_file, out_file);
+						else
+							ClownLZSS::ChameleonDecompress(in_file, out_file);
 						break;
 
 					case Format::COMPER:
-						ClownLZSS::ComperDecompress(in_file, out_file);
+						if (moduled)
+							ClownLZSS::ModuledComperDecompress(in_file, out_file);
+						else
+							ClownLZSS::ComperDecompress(in_file, out_file);
 						break;
 
 					case Format::FAXMAN:
-						ClownLZSS::FaxmanDecompress(in_file, out_file);
+						if (moduled)
+							ClownLZSS::ModuledFaxmanDecompress(in_file, out_file);
+						else
+							ClownLZSS::FaxmanDecompress(in_file, out_file);
 						break;
 
 					case Format::KOSINSKI:
-						ClownLZSS::KosinskiDecompress(in_file, out_file);
+						if (moduled)
+							ClownLZSS::ModuledKosinskiDecompress(in_file, out_file);
+						else
+							ClownLZSS::KosinskiDecompress(in_file, out_file);
 						break;
 
 					case Format::KOSINSKIPLUS:
-						ClownLZSS::KosinskiPlusDecompress(in_file, out_file);
+						if (moduled)
+							ClownLZSS::ModuledKosinskiPlusDecompress(in_file, out_file);
+						else
+							ClownLZSS::KosinskiPlusDecompress(in_file, out_file);
 						break;
 
 					case Format::RAGE:
-						ClownLZSS::RageDecompress(in_file, out_file);
+						if (moduled)
+							ClownLZSS::ModuledRageDecompress(in_file, out_file);
+						else
+							ClownLZSS::RageDecompress(in_file, out_file);
 						break;
 
 					case Format::ROCKET:
-						ClownLZSS::RocketDecompress(in_file, out_file);
+						if (moduled)
+							ClownLZSS::ModuledRocketDecompress(in_file, out_file);
+						else
+							ClownLZSS::RocketDecompress(in_file, out_file);
 						break;
 
 					case Format::SAXMAN:

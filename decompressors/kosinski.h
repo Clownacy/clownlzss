@@ -100,6 +100,16 @@ namespace ClownLZSS
 		Kosinski::DecompressorOutput output_wrapped(std::forward<T2>(output));
 		Kosinski::Decompress(input_wrapped, output_wrapped);
 	}
+
+	template<typename T1, typename T2>
+	void ModuledKosinskiDecompress(T1 &&input, T2 &&output)
+	{
+		using namespace Internal;
+
+		DecompressorInput input_wrapped(std::forward<T1>(input));
+		Kosinski::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Kosinski::Decompress, 0x10);
+	}
 }
 
 #endif // CLOWNLZSS_DECOMPRESSORS_KOSINSKI_H

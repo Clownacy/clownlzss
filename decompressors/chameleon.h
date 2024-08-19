@@ -105,6 +105,16 @@ namespace ClownLZSS
 		Chameleon::DecompressorOutput output_wrapped(std::forward<T2>(output));
 		Chameleon::Decompress(input_wrapped, output_wrapped);
 	}
+
+	template<typename T1, typename T2>
+	void ModuledChameleonDecompress(T1 &&input, T2 &&output)
+	{
+		using namespace Internal;
+
+		DecompressorInput input_wrapped(std::forward<T1>(input));
+		Chameleon::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Chameleon::Decompress, 2);
+	}
 }
 
 #endif // CLOWNLZSS_DECOMPRESSORS_CHAMELEON_H

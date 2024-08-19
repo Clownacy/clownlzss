@@ -113,6 +113,16 @@ namespace ClownLZSS
 	{
 		FaxmanDecompress(input, output, input_end - input);
 	}
+
+	template<typename T1, typename T2>
+	void ModuledFaxmanDecompress(T1 &&input, T2 &&output)
+	{
+		using namespace Internal;
+
+		DecompressorInput input_wrapped(std::forward<T1>(input));
+		Faxman::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Faxman::Decompress, 2);
+	}
 }
 
 #endif // CLOWNLZSS_DECOMPRESSORS_FAXMAN_H

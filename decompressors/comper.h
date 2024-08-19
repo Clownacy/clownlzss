@@ -83,6 +83,16 @@ namespace ClownLZSS
 		Comper::DecompressorOutput output_wrapped(std::forward<T2>(output));
 		Comper::Decompress(input_wrapped, output_wrapped);
 	}
+
+	template<typename T1, typename T2>
+	void ModuledComperDecompress(T1 &&input, T2 &&output)
+	{
+		using namespace Internal;
+
+		DecompressorInput input_wrapped(std::forward<T1>(input));
+		Comper::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Comper::Decompress, 2);
+	}
 }
 
 #endif // CLOWNLZSS_DECOMPRESSORS_COMPER_H

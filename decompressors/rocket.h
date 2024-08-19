@@ -80,6 +80,16 @@ namespace ClownLZSS
 		Rocket::DecompressorOutput output_wrapped(std::forward<T2>(output));
 		Rocket::Decompress(input_wrapped, output_wrapped);
 	}
+
+	template<typename T1, typename T2>
+	void ModuledRocketDecompress(T1 &&input, T2 &&output)
+	{
+		using namespace Internal;
+
+		DecompressorInput input_wrapped(std::forward<T1>(input));
+		Rocket::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Rocket::Decompress, 2);
+	}
 }
 
 #endif // CLOWNLZSS_DECOMPRESSORS_ROCKET_H

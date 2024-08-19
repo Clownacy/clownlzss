@@ -309,6 +309,25 @@ namespace ClownLZSS
 		friend Base;
 	};
 	#endif
+
+	namespace Internal
+	{
+		template<typename T1, typename T2, unsigned int S1, unsigned int S2, int S3>
+		void ModuledDecompressionWrapper(DecompressorInput<T1> &input, DecompressorOutput<T2, S1, S2, S3> &output, void (* const decompression_function)(DecompressorInput<T1> &input, DecompressorOutput<T2, S1, S2, S3> &output), const std::size_t module_alignment)
+		{
+			const unsigned int header = input.ReadBE16();
+
+			const auto input_start_position = input.Tell();
+
+			const unsigned int total_modules = (header + (0x1000 - 1)) / 0x1000; // Round up.
+
+			for (unsigned int i = 0; i < total_modules; ++i)
+			{
+				decompression_function(input, output);
+				input += (module_alignment - (input.Distance(input_start_position) % module_alignment)) % module_alignment;
+			}
+		}
+	}
 }
 
 #endif // CLOWNLZSS_DECOMPRESSORS_COMMON_H

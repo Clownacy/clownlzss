@@ -94,11 +94,16 @@ set_property(TEST test_clone_driver_v2_dac_driver_comper_compare PROPERTY WILL_F
 set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_run PROPERTY WILL_FAIL true)
 set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_compare PROPERTY WILL_FAIL true)
 
-function(make_decompress_test compression-name compression-command)
+function(make_decompress_test_internal compression-name compression-command)
 	foreach(directory "clone_driver_v2_dac_driver" "chameleon_code")
 		add_test(NAME test_${directory}_${compression-name}_decompress_run COMMAND clownlzss-tool -d ${compression-command} "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/${compression-name}" "temp")
 		add_test(NAME test_${directory}_${compression-name}_decompress_compare COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/uncompressed" "temp")
 	endforeach()
+endfunction()
+
+function(make_decompress_test compression-name compression-command)
+	make_decompress_test_internal("${compression-name}" "${compression-command}")
+	make_decompress_test_internal("moduled_${compression-name}" "-m;${compression-command}")
 endfunction()
 
 make_decompress_test(chameleon "-ch")
@@ -113,3 +118,5 @@ make_decompress_test(saxman_no_header "-sn")
 
 set_property(TEST test_clone_driver_v2_dac_driver_comper_decompress_run PROPERTY WILL_FAIL true)
 set_property(TEST test_clone_driver_v2_dac_driver_comper_decompress_compare PROPERTY WILL_FAIL true)
+set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_decompress_run PROPERTY WILL_FAIL true)
+set_property(TEST test_clone_driver_v2_dac_driver_moduled_comper_decompress_compare PROPERTY WILL_FAIL true)

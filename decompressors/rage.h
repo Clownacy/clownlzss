@@ -111,6 +111,16 @@ namespace ClownLZSS
 		Rage::DecompressorOutput output_wrapped(std::forward<T2>(output));
 		Rage::Decompress(input_wrapped, output_wrapped);
 	}
+
+	template<typename T1, typename T2>
+	void ModuledRageDecompress(T1 &&input, T2 &&output)
+	{
+		using namespace Internal;
+
+		DecompressorInput input_wrapped(std::forward<T1>(input));
+		Rage::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Rage::Decompress, 2);
+	}
 }
 
 #endif // CLOWNLZSS_DECOMPRESSORS_RAGE_H
