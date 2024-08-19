@@ -80,12 +80,6 @@ namespace ClownLZSS
 		Rocket::DecompressorOutput output_wrapped(std::forward<T2>(output));
 		Rocket::Decompress(input_wrapped, output_wrapped);
 	}
-
-	template<std::random_access_iterator T1, std::random_access_iterator T2>
-	void RocketDecompress(T1 input, T1 input_end, T2 output)
-	{
-		RocketDecompress(input, output, input_end - input);
-	}
 }
 
 #endif // CLOWNLZSS_DECOMPRESSORS_ROCKET_H
