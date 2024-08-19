@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.7.2)
 
-if((${CMAKE_VERSION} VERSION_EQUAL 3.9) OR (${CMAKE_VERSION} VERSION_GREATER 3.9))
-	cmake_policy(SET CMP0069 NEW)
-endif()
-
 project(clownlzss LANGUAGES C CXX)
 
 function(make_library name filename)
@@ -54,11 +50,6 @@ set_target_properties(clownlzss-tool PROPERTIES
 )
 
 target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-comper clownlzss-faxman clownlzss-kosinski clownlzss-kosinskiplus clownlzss-rage clownlzss-rocket clownlzss-saxman)
-
-# MSVC tweak
-if(MSVC)
-	target_compile_definitions(clownlzss-tool PRIVATE _CRT_SECURE_NO_WARNINGS)	# Shut up those stupid warnings
-endif()
 
 
 #########
