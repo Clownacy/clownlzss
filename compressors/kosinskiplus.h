@@ -16,6 +16,8 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef CLOWNLZSS_COMPRESSORS_KOSINSKIPLUS_H
 #define CLOWNLZSS_COMPRESSORS_KOSINSKIPLUS_H
 
+#include <utility>
+
 #include "clownlzss.h"
 #include "common.h"
 
@@ -40,7 +42,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const std::size_t data_size, T &&output)
+			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				// Produce a series of LZSS compression matches.
 				ClownLZSS::Matches matches;
@@ -159,7 +161,8 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		return KosinskiPlus::Compress(data, data_size, CompressorOutput(output));
+		CompressorOutput output_wrapped(std::forward<T>(output));
+		return KosinskiPlus::Compress(data, data_size, output_wrapped);
 	}
 
 	template<typename T>
@@ -167,7 +170,8 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		return ModuledCompressionWrapper(data, data_size, CompressorOutput(output), KosinskiPlus::Compress, module_size, 1);
+		CompressorOutput output_wrapped(std::forward<T>(output));
+		return ModuledCompressionWrapper(data, data_size, output_wrapped, KosinskiPlus::Compress, module_size, 1);
 	}
 }
 

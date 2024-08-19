@@ -16,6 +16,8 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef CLOWNLZSS_COMPRESSORS_CHAMELEON_H
 #define CLOWNLZSS_COMPRESSORS_CHAMELEON_H
 
+#include <utility>
+
 #include "clownlzss.h"
 #include "common.h"
 
@@ -40,7 +42,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const std::size_t data_size, T &&output)
+			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				/* Produce a series of LZSS compression matches. */
 				/* Yes, the first two values really are lower than usual by 1. */
@@ -184,7 +186,8 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		return Chameleon::Compress(data, data_size, CompressorOutput(output));
+		CompressorOutput output_wrapped(std::forward<T>(output));
+		return Chameleon::Compress(data, data_size, output_wrapped);
 	}
 
 	template<typename T>
@@ -192,7 +195,8 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		return ModuledCompressionWrapper(data, data_size, CompressorOutput(output), Chameleon::Compress, module_size, 2);
+		CompressorOutput output_wrapped(std::forward<T>(output));
+		return ModuledCompressionWrapper(data, data_size, output_wrapped, Chameleon::Compress, module_size, 2);
 	}
 }
 

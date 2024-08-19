@@ -16,6 +16,8 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef CLOWNLZSS_COMPRESSORS_COMPER_H
 #define CLOWNLZSS_COMPRESSORS_COMPER_H
 
+#include <utility>
+
 #include "clownlzss.h"
 #include "common.h"
 
@@ -33,7 +35,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const std::size_t data_size, T &&output)
+			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				constexpr unsigned int bytes_per_value = 2;
 
@@ -139,7 +141,8 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		return Comper::Compress(data, data_size, CompressorOutput(output));
+		CompressorOutput output_wrapped(std::forward<T>(output));
+		return Comper::Compress(data, data_size, output_wrapped);
 	}
 
 	template<typename T>
@@ -147,7 +150,8 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		return ModuledCompressionWrapper(data, data_size, CompressorOutput(output), Comper::Compress, module_size, 2);
+		CompressorOutput output_wrapped(std::forward<T>(output));
+		return ModuledCompressionWrapper(data, data_size, output_wrapped, Comper::Compress, module_size, 2);
 	}
 }
 

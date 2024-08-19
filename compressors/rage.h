@@ -17,6 +17,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #define CLOWNLZSS_COMPRESSORS_RAGE_H
 
 #include <algorithm>
+#include <utility>
 
 #include "clownlzss.h"
 #include "common.h"
@@ -84,7 +85,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const std::size_t data_size, T &&output)
+			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				// Produce a series of LZSS compression matches.
 				// TODO - Shouldn't the distance limit be 0x2000?
@@ -194,7 +195,8 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		return Rage::Compress(data, data_size, CompressorOutput(output));
+		CompressorOutput output_wrapped(std::forward<T>(output));
+		return Rage::Compress(data, data_size, output_wrapped);
 	}
 
 	template<typename T>
@@ -202,7 +204,8 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		return ModuledCompressionWrapper(data, data_size, CompressorOutput(output), Rage::Compress, module_size, 2);
+		CompressorOutput output_wrapped(std::forward<T>(output));
+		return ModuledCompressionWrapper(data, data_size, output_wrapped, Rage::Compress, module_size, 2);
 	}
 }
 

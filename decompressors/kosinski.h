@@ -16,6 +16,8 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef CLOWNLZSS_DECOMPRESSORS_KOSINSKI_H
 #define CLOWNLZSS_DECOMPRESSORS_KOSINSKI_H
 
+#include <utility>
+
 #include "bitfield.h"
 #include "common.h"
 
@@ -32,7 +34,7 @@ namespace ClownLZSS
 			using BitField = BitField<2, ReadWhen::AfterPop, PopWhere::Low, Endian::Little, T>;
 
 			template<typename T1, typename T2>
-			void Decompress(DecompressorInput<T1> input, DecompressorOutput<T2> output)
+			void Decompress(DecompressorInput<T1> &input, DecompressorOutput<T2> &output)
 			{
 				BitField descriptor_bits(input);
 
@@ -94,7 +96,9 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		Kosinski::Decompress(DecompressorInput(input), Kosinski::DecompressorOutput(output));
+		DecompressorInput input_wrapped(std::forward<T1>(input));
+		Kosinski::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Kosinski::Decompress(input_wrapped, output_wrapped);
 	}
 }
 

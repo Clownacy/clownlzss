@@ -16,6 +16,8 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef CLOWNLZSS_DECOMPRESSORS_ROCKET_H
 #define CLOWNLZSS_DECOMPRESSORS_ROCKET_H
 
+#include <utility>
+
 #include "bitfield.h"
 #include "common.h"
 
@@ -32,7 +34,7 @@ namespace ClownLZSS
 			using BitField = BitField<1, ReadWhen::BeforePop, PopWhere::Low, Endian::Big, T>;
 
 			template<typename T1, typename T2>
-			void Decompress(DecompressorInput<T1> input, DecompressorOutput<T2> output)
+			void Decompress(DecompressorInput<T1> &input, DecompressorOutput<T2> &output)
 			{
 				const unsigned int uncompressed_size = input.ReadBE16();
 				const unsigned int compressed_size = input.ReadBE16();
@@ -74,7 +76,9 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		Rocket::Decompress(DecompressorInput(input), Rocket::DecompressorOutput(output));
+		DecompressorInput input_wrapped(std::forward<T1>(input));
+		Rocket::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Rocket::Decompress(input_wrapped, output_wrapped);
 	}
 
 	template<std::random_access_iterator T1, std::random_access_iterator T2>

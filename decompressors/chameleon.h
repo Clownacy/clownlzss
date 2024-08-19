@@ -16,6 +16,8 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef CLOWNLZSS_DECOMPRESSORS_CHAMELEON_H
 #define CLOWNLZSS_DECOMPRESSORS_CHAMELEON_H
 
+#include <utility>
+
 #include "bitfield.h"
 #include "common.h"
 
@@ -32,7 +34,7 @@ namespace ClownLZSS
 			using BitField = BitField<1, ReadWhen::BeforePop, PopWhere::High, Endian::Big, T>;
 
 			template<typename T1, typename T2, typename T3>
-			void Decompress(DecompressorInput<T1> input, DecompressorOutput<T2> output, DecompressorInputSeparate<T3> descriptor_input)
+			void Decompress(DecompressorInput<T1> &input, DecompressorOutput<T2> &output, DecompressorInputSeparate<T3> &descriptor_input)
 			{
 				input += input.ReadBE16();
 				descriptor_input += 2;
@@ -98,7 +100,10 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		Chameleon::Decompress(DecompressorInput(input), Chameleon::DecompressorOutput(output), DecompressorInputSeparate(input));
+		DecompressorInput input_wrapped(std::forward<T1>(input));
+		Chameleon::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		DecompressorInputSeparate input_separate(std::forward<T1>(input));
+		Chameleon::Decompress(input_wrapped, output_wrapped, input_separate);
 	}
 }
 

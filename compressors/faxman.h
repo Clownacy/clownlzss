@@ -17,6 +17,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #define CLOWNLZSS_COMPRESSORS_FAXMAN_H
 
 #include <algorithm>
+#include <utility>
 
 #include "clownlzss.h"
 #include "common.h"
@@ -69,7 +70,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const std::size_t data_size, T &&output)
+			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				// Produce a series of LZSS compression matches.
 				ClownLZSS::Matches matches;
@@ -197,7 +198,8 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		return Faxman::Compress(data, data_size, CompressorOutput(output));
+		CompressorOutput output_wrapped(std::forward<T>(output));
+		return Faxman::Compress(data, data_size, output_wrapped);
 	}
 
 	template<typename T>
@@ -205,7 +207,8 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		return ModuledCompressionWrapper(data, data_size, CompressorOutput(output), Faxman::Compress, module_size, 2);
+		CompressorOutput output_wrapped(std::forward<T>(output));
+		return ModuledCompressionWrapper(data, data_size, output_wrapped, Faxman::Compress, module_size, 2);
 	}
 }
 
