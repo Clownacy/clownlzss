@@ -32,7 +32,7 @@ namespace ClownLZSS
 			using BitField = BitField<1, ReadWhen::BeforePop, PopWhere::Low, Endian::Big, T>;
 
 			template<typename T1, typename T2>
-			void Decompress(T1 &&input, T2 &&output)
+			void Decompress(DecompressorInput<T1> input, DecompressorOutput<T2> output)
 			{
 				const unsigned int uncompressed_size = input.ReadBE16();
 				const unsigned int compressed_size = input.ReadBE16();
