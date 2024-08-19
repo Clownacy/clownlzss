@@ -68,26 +68,7 @@ namespace ClownLZSS
 	class CompressorOutput<T> : public Internal::OutputCommon<T>
 	{
 	public:
-		using pos_type = std::decay_t<T>;
-		using difference_type = std::iterator_traits<std::decay_t<T>>::difference_type;
-
-		using Internal::OutputCommon<T>::output_iterator;
 		using Internal::OutputCommon<T>::OutputCommon;
-
-		pos_type Tell() const
-		{
-			return output_iterator;
-		};
-
-		void Seek(const pos_type &position)
-		{
-			output_iterator = position;
-		};
-
-		static difference_type Distance(const pos_type &first, const pos_type &last)
-		{
-			return std::distance(first, last);
-		}
 	};
 
 	#if __STDC_HOSTED__ == 1
@@ -96,26 +77,7 @@ namespace ClownLZSS
 	class CompressorOutput<T> : public Internal::OutputCommon<T>
 	{
 	public:
-		using pos_type = std::ostream::pos_type;
-		using difference_type = std::ostream::off_type;
-
-		using Internal::OutputCommon<T>::output;
 		using Internal::OutputCommon<T>::OutputCommon;
-
-		pos_type Tell() const
-		{
-			return output.tellp();
-		};
-
-		void Seek(const pos_type &position)
-		{
-			output.seekp(position);
-		};
-
-		static difference_type Distance(const pos_type &first, const pos_type &last)
-		{
-			return last - first;
-		}
 	};
 	#endif
 }

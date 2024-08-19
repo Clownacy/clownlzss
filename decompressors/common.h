@@ -55,6 +55,9 @@ namespace ClownLZSS
 		std::decay_t<T> input_iterator;
 
 	public:
+		using pos_type = std::decay_t<T>;
+		using difference_type = std::iterator_traits<std::decay_t<T>>::difference_type;
+
 		DecompressorInput(std::decay_t<T> input_iterator)
 			: input_iterator(input_iterator)
 		{}
@@ -66,10 +69,40 @@ namespace ClownLZSS
 			return value;
 		}
 
+		// TODO: Deduplicate these, dammit.
+		unsigned int ReadBE16()
+		{
+			const unsigned int upper = Read();
+			const unsigned int lower = Read();
+			return upper << 8 | lower;
+		}
+
+		unsigned int ReadLE16()
+		{
+			const unsigned int lower = Read();
+			const unsigned int upper = Read();
+			return upper << 8 | lower;
+		}
+
 		DecompressorInput& operator+=(const unsigned int value)
 		{
 			input_iterator += value;
 			return *this;
+		}
+
+		pos_type Tell() const
+		{
+			return input_iterator;
+		};
+
+		void Seek(const pos_type &position)
+		{
+			input_iterator = position;
+		};
+
+		static difference_type Distance(const pos_type &first, const pos_type &last)
+		{
+			return std::distance(first, last);
 		}
 	};
 
@@ -101,6 +134,9 @@ namespace ClownLZSS
 		std::istream &input;
 
 	public:
+		using pos_type = std::istream::pos_type;
+		using difference_type = std::istream::off_type;
+
 		DecompressorInput(std::istream &input)
 			: input(input)
 		{}
@@ -110,10 +146,40 @@ namespace ClownLZSS
 			return input.get();
 		}
 
+		// TODO: Deduplicate these, dammit.
+		unsigned int ReadBE16()
+		{
+			const unsigned int upper = Read();
+			const unsigned int lower = Read();
+			return upper << 8 | lower;
+		}
+
+		unsigned int ReadLE16()
+		{
+			const unsigned int lower = Read();
+			const unsigned int upper = Read();
+			return upper << 8 | lower;
+		}
+
 		DecompressorInput& operator+=(const unsigned int value)
 		{
 			input.seekg(value, input.cur);
 			return *this;
+		}
+
+		pos_type Tell() const
+		{
+			return input.tellg();
+		};
+
+		void Seek(const pos_type &position)
+		{
+			input.seekg(position);
+		};
+
+		static difference_type Distance(const pos_type &first, const pos_type &last)
+		{
+			return last - first;
 		}
 	};
 
@@ -195,6 +261,7 @@ namespace ClownLZSS
 	{
 	public:
 		DecompressorOutput(T output) = delete;
+		DecompressorOutput(T output, unsigned char filler_value) = delete;
 	};
 
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
@@ -236,6 +303,12 @@ namespace ClownLZSS
 	public:
 		using Internal::OutputCommon<T>::output;
 		using Internal::OutputCommon<T>::OutputCommon;
+
+		DecompressorOutput(std::ostream &output, const int filler_value)
+			: Internal::OutputCommon<T>::OutputCommon(output)
+		{
+			buffer.fill(filler_value);
+		}
 
 		void Write(const unsigned char value)
 		{

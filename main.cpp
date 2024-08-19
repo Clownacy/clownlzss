@@ -36,6 +36,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "decompressors/faxman.h"
 #include "decompressors/kosinski.h"
 #include "decompressors/kosinskiplus.h"
+#include "decompressors/rocket.h"
 #include "decompressors/saxman.h"
 
 enum class Format
@@ -238,6 +239,10 @@ int main(int argc, char **argv)
 						ClownLZSS::KosinskiPlusDecompress(in_file, out_file);
 						break;
 
+					case Format::ROCKET:
+						ClownLZSS::RocketDecompress(in_file, out_file);
+						break;
+
 					case Format::SAXMAN:
 					{
 						const unsigned int uncompressed_length_lower_byte = in_file.get();
@@ -248,10 +253,8 @@ int main(int argc, char **argv)
 					}
 
 					case Format::SAXMAN_NO_HEADER:
-					{
 						ClownLZSS::SaxmanDecompress(in_file, out_file, std::filesystem::file_size(in_filename));
 						break;
-					}
 				}
 			}
 			else

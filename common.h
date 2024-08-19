@@ -44,6 +44,9 @@ namespace ClownLZSS
 			std::decay_t<T> output_iterator;
 
 		public:
+			using pos_type = std::decay_t<T>;
+			using difference_type = std::iterator_traits<std::decay_t<T>>::difference_type;
+
 			OutputCommon(std::decay_t<T> output_iterator)
 				: output_iterator(output_iterator)
 			{}
@@ -59,6 +62,21 @@ namespace ClownLZSS
 				std::fill_n(output_iterator, count, value);
 				output_iterator += count;
 			}
+
+			pos_type Tell() const
+			{
+				return output_iterator;
+			};
+
+			void Seek(const pos_type &position)
+			{
+				output_iterator = position;
+			};
+
+			static difference_type Distance(const pos_type &first, const pos_type &last)
+			{
+				return std::distance(first, last);
+			}
 		};
 
 		#if __STDC_HOSTED__ == 1
@@ -70,6 +88,9 @@ namespace ClownLZSS
 			std::ostream &output;
 
 		public:
+			using pos_type = std::ostream::pos_type;
+			using difference_type = std::ostream::off_type;
+
 			OutputCommon(std::ostream &output)
 				: output(output)
 			{}
@@ -83,6 +104,21 @@ namespace ClownLZSS
 			{
 				for (unsigned int i = 0; i < count; ++i)
 					Write(value);
+			}
+
+			pos_type Tell() const
+			{
+				return output.tellp();
+			};
+
+			void Seek(const pos_type &position)
+			{
+				output.seekp(position);
+			};
+
+			static difference_type Distance(const pos_type &first, const pos_type &last)
+			{
+				return last - first;
 			}
 		};
 		#endif
