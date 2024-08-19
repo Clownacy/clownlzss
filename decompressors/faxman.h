@@ -30,9 +30,7 @@ namespace ClownLZSS
 			template<typename T1, typename T2>
 			void Decompress(T1 &&input, T2 &&output)
 			{
-				const unsigned int total_descriptor_bits_lower = input.Read();
-				const unsigned int total_descriptor_bits_upper = input.Read();
-				unsigned int descriptor_bits_remaining = total_descriptor_bits_upper << 8 | total_descriptor_bits_lower;
+				unsigned int descriptor_bits_remaining = input.ReadLE16();
 
 				BitField<1, ReadWhen::BeforePop, PopWhere::Low, Endian::Little, T1> descriptor_bits(input);
 

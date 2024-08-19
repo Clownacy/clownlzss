@@ -94,9 +94,7 @@ namespace ClownLZSS
 		DecompressorInput wrapped_input(input);
 		DecompressorInputSeparate descriptor_input(input);
 
-		const unsigned int descriptor_buffer_size_upper_byte = wrapped_input.Read();
-		const unsigned int descriptor_buffer_size_lower_byte = wrapped_input.Read();
-		const unsigned int descriptor_buffer_size = descriptor_buffer_size_upper_byte << 8 | descriptor_buffer_size_lower_byte;
+		const unsigned int descriptor_buffer_size = wrapped_input.ReadBE16();
 
 		wrapped_input += descriptor_buffer_size;
 		descriptor_input += 2;

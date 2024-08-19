@@ -49,7 +49,7 @@ namespace ClownLZSS
 						const unsigned int second_byte = input.Read();
 						const unsigned int dictionary_index = (first_byte | ((second_byte << 4) & 0xF00)) + (0xF + 3);
 						const unsigned int count = (second_byte & 0xF) + 3;
-						const unsigned int distance = (output_position - dictionary_index) & 0xFFF;
+						const unsigned int distance = (output_position - dictionary_index) % 0x1000;
 
 						if (distance > output_position)
 						{
