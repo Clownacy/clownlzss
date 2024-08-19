@@ -36,10 +36,9 @@ namespace ClownLZSS
 			template<typename T1, typename T2>
 			void Decompress(DecompressorInput<T1> &input, DecompressorOutput<T2> &output)
 			{
+				const auto offset = input.ReadBE16();
 				auto descriptor_input = input.MakeSeparate();
-
-				input += input.ReadBE16();
-				descriptor_input += 2;
+				input += offset;
 
 				BitField descriptor_bits(descriptor_input);
 
