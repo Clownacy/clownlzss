@@ -111,7 +111,7 @@ namespace ClownLZSS
 					}
 					else
 					{
-						const std::size_t offset = (match->source + 0x3C0) & 0x3FF;
+						const std::size_t offset = (match->source - 0x40) % 0x400;
 						const std::size_t length = match->length;
 
 						PutDescriptorBit(0);

@@ -49,7 +49,7 @@ namespace ClownLZSS
 					{
 						// Dictionary match.
 						const unsigned int word = input.ReadBE16();
-						const unsigned int dictionary_index = (word - 0x3C0) & 0x3FF;
+						const unsigned int dictionary_index = (word + 0x40) % 0x400;
 						const unsigned int count = (word >> 10) + 1;
 						const unsigned int distance = ((0x400 + static_cast<unsigned int>(output.Tell()) - dictionary_index - 1) % 0x400) + 1;
 
