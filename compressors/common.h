@@ -26,34 +26,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 namespace ClownLZSS
 {
-	namespace Internal
-	{
-		template<typename T>
-		bool ModuledCompressionWrapper(const unsigned char* const data, const std::size_t data_size, T &&output, bool (* const compression_function)(const unsigned char *data, std::size_t data_size, T &&output), const std::size_t module_size, const std::size_t module_alignment)
-		{
-			const unsigned int header = (data_size % module_size) | ((data_size / module_size) << 12);
-
-			output.Write((header >> (8 * 1)) & 0xFF);
-			output.Write((header >> (8 * 0)) & 0xFF);
-
-			typename T::difference_type compressed_size = 0;
-			for (std::size_t i = 0; i < data_size; i += module_size)
-			{
-				if (compressed_size % module_alignment != 0)
-					output.Fill(0, module_alignment - (compressed_size % module_alignment));
-
-				const auto start_position = output.Tell();
-
-				if (!compression_function(data + i, module_size < data_size - i ? module_size : data_size - i, std::forward<T>(output)))
-					return false;
-
-				compressed_size = output.Distance(start_position);
-			}
-
-			return true;
-		}
-	}
-
 	// CompressorOutput
 
 	template<typename T>
@@ -86,6 +58,34 @@ namespace ClownLZSS
 		using Base::OutputCommon;
 	};
 	#endif
+
+	namespace Internal
+	{
+		template<typename T>
+		bool ModuledCompressionWrapper(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> output, bool (* const compression_function)(const unsigned char *data, std::size_t data_size, CompressorOutput<T> &output), const std::size_t module_size, const std::size_t module_alignment)
+		{
+			const unsigned int header = (data_size % module_size) | ((data_size / module_size) << 12);
+
+			output.Write((header >> (8 * 1)) & 0xFF);
+			output.Write((header >> (8 * 0)) & 0xFF);
+
+			typename CompressorOutput<T>::difference_type compressed_size = 0;
+			for (std::size_t i = 0; i < data_size; i += module_size)
+			{
+				if (compressed_size % module_alignment != 0)
+					output.Fill(0, module_alignment - (compressed_size % module_alignment));
+
+				const auto start_position = output.Tell();
+
+				if (!compression_function(data + i, module_size < data_size - i ? module_size : data_size - i, output))
+					return false;
+
+				compressed_size = output.Distance(start_position);
+			}
+
+			return true;
+		}
+	}
 }
 
 #endif // CLOWNLZSS_COMPRESSORS_COMMON_H
