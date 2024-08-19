@@ -116,6 +116,11 @@ namespace ClownLZSS
 				output.seekp(position);
 			};
 
+			difference_type Distance(const pos_type &first) const
+			{
+				return Distance(first, Tell());
+			}
+
 			static difference_type Distance(const pos_type &first, const pos_type &last)
 			{
 				return last - first;

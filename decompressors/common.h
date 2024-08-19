@@ -100,28 +100,14 @@ namespace ClownLZSS
 			input_iterator = position;
 		};
 
+		difference_type Distance(const pos_type &first) const
+		{
+			return Distance(first, Tell());
+		}
+
 		static difference_type Distance(const pos_type &first, const pos_type &last)
 		{
 			return std::distance(first, last);
-		}
-	};
-
-	template<typename T>
-	requires std::random_access_iterator<std::decay_t<T>>
-	class DecompressorInputWithLength<T> : public DecompressorInput<T>
-	{
-	protected:
-		std::decay_t<T> input_end;
-
-	public:
-		DecompressorInputWithLength(std::decay_t<T> input_iterator, unsigned int length)
-			: DecompressorInput<T>(input_iterator)
-			, input_end(input_iterator + length)
-		{}
-
-		bool AtEnd() const
-		{
-			return DecompressorInput<T>::input_iterator >= input_end;
 		}
 	};
 
@@ -176,6 +162,11 @@ namespace ClownLZSS
 		{
 			input.seekg(position);
 		};
+
+		difference_type Distance(const pos_type &first) const
+		{
+			return Distance(first, Tell());
+		}
 
 		static difference_type Distance(const pos_type &first, const pos_type &last)
 		{

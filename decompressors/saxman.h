@@ -28,19 +28,19 @@ namespace ClownLZSS
 			using DecompressorOutput = DecompressorOutput<T, 0x1000, 0xF + 3>;
 
 			template<typename T1, typename T2>
-			void Decompress(T1 &&input, T2 &&output)
+			void Decompress(T1 &&input, T2 &&output, const unsigned int compressed_length)
 			{
+				const auto input_start_position = input.Tell();
+				const auto output_start_position = output.Tell();
+
 				BitField<1, ReadWhen::BeforePop, PopWhere::Low, Endian::Little, T1> descriptor_bits(input);
 
-				unsigned int output_position = 0;
-
-				while (!input.AtEnd())
+				while (input.Distance(input_start_position) < compressed_length)
 				{
 					if (descriptor_bits.Pop())
 					{
 						// Uncompressed.
 						output.Write(input.Read());
-						++output_position;
 					}
 					else
 					{
@@ -49,6 +49,7 @@ namespace ClownLZSS
 						const unsigned int second_byte = input.Read();
 						const unsigned int dictionary_index = (first_byte | ((second_byte << 4) & 0xF00)) + (0xF + 3);
 						const unsigned int count = (second_byte & 0xF) + 3;
+						const unsigned int output_position = output.Distance(output_start_position);
 						const unsigned int distance = (output_position - dictionary_index) % 0x1000;
 
 						if (distance > output_position)
@@ -61,8 +62,6 @@ namespace ClownLZSS
 							// Copy.
 							output.Copy(distance, count);
 						}
-
-						output_position += count;
 					}
 				}
 			}
@@ -74,7 +73,7 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		Saxman::Decompress(DecompressorInputWithLength(input, compressed_length), Saxman::DecompressorOutput(output));
+		Saxman::Decompress(DecompressorInput(input), Saxman::DecompressorOutput(output), compressed_length);
 	}
 
 	template<std::random_access_iterator T1, std::random_access_iterator T2>

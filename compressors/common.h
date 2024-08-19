@@ -47,7 +47,7 @@ namespace ClownLZSS
 				if (!compression_function(data + i, module_size < data_size - i ? module_size : data_size - i, std::forward<T>(output)))
 					return false;
 
-				compressed_size = output.Distance(start_position, output.Tell());
+				compressed_size = output.Distance(start_position);
 			}
 
 			return true;

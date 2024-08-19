@@ -38,8 +38,13 @@ namespace ClownLZSS
 
 				BitField<1, ReadWhen::BeforePop, PopWhere::Low, Endian::Big, T1> descriptor_bits(input);
 
-				while (input.Distance(input_start_position, input.Tell()) < compressed_size && output.Distance(output_start_position, output.Tell()) < uncompressed_size)
+				while (input.Distance(input_start_position) < compressed_size)
 				{
+					const unsigned int output_position = output.Distance(output_start_position);
+
+					if (output_position >= uncompressed_size)
+						break;
+
 					if (descriptor_bits.Pop())
 					{
 						// Uncompressed.
@@ -51,7 +56,7 @@ namespace ClownLZSS
 						const unsigned int word = input.ReadBE16();
 						const unsigned int dictionary_index = (word + 0x40) % 0x400;
 						const unsigned int count = (word >> 10) + 1;
-						const unsigned int distance = ((0x400 + static_cast<unsigned int>(output.Tell()) - dictionary_index - 1) % 0x400) + 1;
+						const unsigned int distance = ((0x400 + output_position - dictionary_index - 1) % 0x400) + 1;
 
 						output.Copy(distance, count);
 					}
