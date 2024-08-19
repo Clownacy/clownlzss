@@ -181,36 +181,58 @@ namespace ClownLZSS
 
 	// DecompressorOutput
 
-	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
+	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length, int filler_value = -1>
 	class DecompressorOutput
 	{
 	public:
 		DecompressorOutput(T output) = delete;
-		DecompressorOutput(T output, unsigned char filler_value) = delete;
 	};
 
-	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
+	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length, int filler_value>
 	requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-	class DecompressorOutput<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>
+	class DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value> : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>
 	{
 	protected:
 		using Base = Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>;
+		using Iterator = Base::Iterator;
 		using Base::iterator;
+
+		Iterator start_iterator;
 
 	public:
 		using Base::OutputCommon;
 
+		DecompressorOutput(Iterator iterator)
+			: Base::OutputCommon(iterator)
+		{
+			if constexpr(filler_value != -1)
+				start_iterator = iterator;
+		}
+
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
-			std::copy(iterator - distance, iterator - distance + count, iterator);
+			if constexpr(filler_value != -1)
+			{
+				const unsigned int limit = Base::Distance(start_iterator);
+				const unsigned int capped_distance = std::min(distance, limit);
+				const unsigned int fill_amount = distance - capped_distance;
+
+				Base::Fill(filler_value, fill_amount);
+				std::copy(iterator - distance + fill_amount, iterator - distance + count, iterator);
+			}
+			else
+			{
+				std::copy(iterator - distance, iterator - distance + count, iterator);
+			}
+
 			iterator += count;
 		}
 	};
 
 	#if __STDC_HOSTED__ == 1
-	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
+	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length, int filler_value>
 	requires std::is_convertible_v<T&, std::ostream&>
-	class DecompressorOutput<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>
+	class DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value> : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>
 	{
 	protected:
 		using Base = Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>;
@@ -237,12 +259,11 @@ namespace ClownLZSS
 		}
 
 	public:
-		using Base::OutputCommon;
-
-		DecompressorOutput(std::ostream &output, const int filler_value)
+		DecompressorOutput(std::ostream &output)
 			: Base::OutputCommon(output)
 		{
-			buffer.fill(filler_value);
+			if constexpr(filler_value != -1)
+				buffer.fill(filler_value);
 		}
 
 		void Copy(const unsigned int distance, const unsigned int count)

@@ -25,7 +25,7 @@ namespace ClownLZSS
 		namespace Rocket
 		{
 			template<typename T>
-			using DecompressorOutput = DecompressorOutput<T, 0x400, 0x40>;
+			using DecompressorOutput = DecompressorOutput<T, 0x400, 0x40, 0x20>;
 
 			template<typename T1, typename T2>
 			void Decompress(T1 &&input, T2 &&output)
@@ -70,7 +70,7 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		Rocket::Decompress(DecompressorInput(input), Rocket::DecompressorOutput(output, 0x20));
+		Rocket::Decompress(DecompressorInput(input), Rocket::DecompressorOutput(output));
 	}
 
 	template<std::random_access_iterator T1, std::random_access_iterator T2>
