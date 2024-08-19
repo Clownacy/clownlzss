@@ -233,8 +233,7 @@ namespace ClownLZSS
 		DecompressorOutput(Iterator iterator)
 			: Base::OutputCommon(iterator)
 		{
-			if constexpr(filler_value != -1)
-				start_iterator = iterator;
+			Reset();
 		}
 
 		void Copy(const unsigned int distance, const unsigned int count)
@@ -254,6 +253,12 @@ namespace ClownLZSS
 			}
 
 			iterator += count;
+		}
+
+		void Reset()
+		{
+			if constexpr(filler_value != -1)
+				start_iterator = iterator;
 		}
 	};
 
@@ -291,8 +296,7 @@ namespace ClownLZSS
 		DecompressorOutput(std::ostream &output)
 			: Base::OutputCommon(output)
 		{
-			if constexpr(filler_value != -1)
-				buffer.fill(filler_value);
+			Reset();
 		}
 
 		void Copy(const unsigned int distance, const unsigned int count)
@@ -304,6 +308,12 @@ namespace ClownLZSS
 				WriteToBuffer(buffer[source_index + i]);
 
 			output.write(&buffer[destination_index], count);
+		}
+
+		void Reset()
+		{
+			if constexpr(filler_value != -1)
+				buffer.fill(filler_value);
 		}
 
 		friend Base;
@@ -321,11 +331,14 @@ namespace ClownLZSS
 
 			const unsigned int total_modules = (header + (0x1000 - 1)) / 0x1000; // Round up.
 
-			for (unsigned int i = 0; i < total_modules; ++i)
+			for (unsigned int i = 0; i < total_modules - 1; ++i)
 			{
 				decompression_function(input, output);
 				input += (module_alignment - (input.Distance(input_start_position) % module_alignment)) % module_alignment;
+				output.Reset();
 			}
+
+			decompression_function(input, output);
 		}
 	}
 }
