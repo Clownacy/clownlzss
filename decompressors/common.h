@@ -27,8 +27,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "../common.h"
 
-#include "bitfield.h"
-
 namespace ClownLZSS
 {
 	// DecompressorInput

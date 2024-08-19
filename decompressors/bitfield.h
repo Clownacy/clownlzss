@@ -16,6 +16,8 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef CLOWNLZSS_BITFIELD_H
 #define CLOWNLZSS_BITFIELD_H
 
+#include "common.h"
+
 namespace ClownLZSS
 {
 	namespace Internal

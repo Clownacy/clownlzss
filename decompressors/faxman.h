@@ -16,6 +16,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef CLOWNLZSS_DECOMPRESSORS_FAXMAN_H
 #define CLOWNLZSS_DECOMPRESSORS_FAXMAN_H
 
+#include "bitfield.h"
 #include "common.h"
 
 namespace ClownLZSS
@@ -27,12 +28,15 @@ namespace ClownLZSS
 			template<typename T>
 			using DecompressorOutput = DecompressorOutput<T, 0x800, 0x1F + 3>;
 
+			template<typename T>
+			using BitField = BitField<1, ReadWhen::BeforePop, PopWhere::Low, Endian::Little, T>;
+
 			template<typename T1, typename T2>
 			void Decompress(T1 &&input, T2 &&output)
 			{
 				unsigned int descriptor_bits_remaining = input.ReadLE16();
 
-				BitField<1, ReadWhen::BeforePop, PopWhere::Low, Endian::Little, T1> descriptor_bits(input);
+				BitField descriptor_bits(input);
 
 				const auto PopDescriptorBit = [&]()
 				{
