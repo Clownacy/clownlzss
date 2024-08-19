@@ -57,10 +57,10 @@ namespace ClownLZSS
 	// CompressorOutput
 
 	template<typename T>
-	class CompressorOutput
+	class CompressorOutput : public Internal::OutputCommon<T, CompressorOutput<T>>
 	{
 	public:
-		CompressorOutput(T output) = delete;
+		CompressorOutput(T output);
 	};
 
 	template<typename T>

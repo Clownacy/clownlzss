@@ -35,7 +35,7 @@ namespace ClownLZSS
 	class DecompressorInputBase : public Internal::InputCommon<Derived>
 	{
 	public:
-		DecompressorInputBase(T input) = delete;
+		DecompressorInputBase(T input);
 	};
 
 	template<typename T, typename Derived>
@@ -139,7 +139,7 @@ namespace ClownLZSS
 	class DecompressorInput : public DecompressorInputBase<T, DecompressorInput<T>>
 	{
 	public:
-		DecompressorInput(T input) = delete;
+		DecompressorInput(T input);
 	};
 
 	template<typename T>
@@ -166,7 +166,7 @@ namespace ClownLZSS
 	class DecompressorInputSeparate : public DecompressorInputBase<T, DecompressorInputSeparate<T>>
 	{
 	public:
-		DecompressorInputSeparate(T input) = delete;
+		DecompressorInputSeparate(T input);
 	};
 
 	template<typename T>
@@ -224,7 +224,7 @@ namespace ClownLZSS
 	class DecompressorOutput : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>
 	{
 	public:
-		DecompressorOutput(T output) = delete;
+		DecompressorOutput(T output);
 	};
 
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length, int filler_value>

@@ -94,7 +94,7 @@ namespace ClownLZSS
 		class OutputCommon
 		{
 		public:
-			OutputCommon(T output) = delete;
+			OutputCommon(T output);
 		};
 
 		template<typename T, typename Derived>
