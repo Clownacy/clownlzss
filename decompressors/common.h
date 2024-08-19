@@ -49,10 +49,19 @@ namespace ClownLZSS
 
 	template<typename T>
 	requires std::input_iterator<std::decay_t<T>>
-	class DecompressorInput<T>
+	class DecompressorInput<T> : public Internal::InputCommon<DecompressorInput<T>>
 	{
 	protected:
+		using Base = Internal::InputCommon<DecompressorInput<T>>;
+
 		std::decay_t<T> input_iterator;
+
+		unsigned char ReadImplementation()
+		{
+			const auto value = *input_iterator;
+			++input_iterator;
+			return value;
+		}
 
 	public:
 		using pos_type = std::decay_t<T>;
@@ -61,28 +70,6 @@ namespace ClownLZSS
 		DecompressorInput(std::decay_t<T> input_iterator)
 			: input_iterator(input_iterator)
 		{}
-
-		unsigned char Read()
-		{
-			const auto value = *input_iterator;
-			++input_iterator;
-			return value;
-		}
-
-		// TODO: Deduplicate these, dammit.
-		unsigned int ReadBE16()
-		{
-			const unsigned int upper = Read();
-			const unsigned int lower = Read();
-			return upper << 8 | lower;
-		}
-
-		unsigned int ReadLE16()
-		{
-			const unsigned int lower = Read();
-			const unsigned int upper = Read();
-			return upper << 8 | lower;
-		}
 
 		DecompressorInput& operator+=(const unsigned int value)
 		{
@@ -109,15 +96,24 @@ namespace ClownLZSS
 		{
 			return std::distance(first, last);
 		}
+
+		friend Base;
 	};
 
 	#if __STDC_HOSTED__ == 1
 	template<typename T>
 	requires std::is_convertible_v<T&, std::istream&>
-	class DecompressorInput<T>
+	class DecompressorInput<T> : public Internal::InputCommon<DecompressorInput<T>>
 	{
 	protected:
+		using Base = Internal::InputCommon<DecompressorInput<T>>;
+
 		std::istream &input;
+
+		unsigned char ReadImplementation()
+		{
+			return input.get();
+		}
 
 	public:
 		using pos_type = std::istream::pos_type;
@@ -126,26 +122,6 @@ namespace ClownLZSS
 		DecompressorInput(std::istream &input)
 			: input(input)
 		{}
-
-		unsigned char Read()
-		{
-			return input.get();
-		}
-
-		// TODO: Deduplicate these, dammit.
-		unsigned int ReadBE16()
-		{
-			const unsigned int upper = Read();
-			const unsigned int lower = Read();
-			return upper << 8 | lower;
-		}
-
-		unsigned int ReadLE16()
-		{
-			const unsigned int lower = Read();
-			const unsigned int upper = Read();
-			return upper << 8 | lower;
-		}
 
 		DecompressorInput& operator+=(const unsigned int value)
 		{
@@ -172,6 +148,8 @@ namespace ClownLZSS
 		{
 			return last - first;
 		}
+
+		friend Base;
 	};
 
 	template<typename T>

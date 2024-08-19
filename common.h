@@ -29,6 +29,30 @@ namespace ClownLZSS
 		template<typename T>
 		concept random_access_input_output_iterator = std::random_access_iterator<T> && std::output_iterator<T, unsigned char>;
 
+		template<typename Derived>
+		class InputCommon
+		{
+		public:
+			unsigned char Read()
+			{
+				return static_cast<Derived*>(this)->ReadImplementation();
+			}
+
+			unsigned int ReadBE16()
+			{
+				const unsigned int upper = Read();
+				const unsigned int lower = Read();
+				return upper << 8 | lower;
+			}
+
+			unsigned int ReadLE16()
+			{
+				const unsigned int lower = Read();
+				const unsigned int upper = Read();
+				return upper << 8 | lower;
+			}
+		};
+
 		template<typename T, typename Derived>
 		class OutputCommon
 		{
