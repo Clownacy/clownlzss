@@ -68,9 +68,10 @@ endif()
 enable_testing()
 
 function(make_compress_test_internal compression-name compression-command)
-	foreach(directory "clone_driver_v2_dac_driver" "chameleon_code")
-		add_test(NAME ${compression-name}_run_${directory} COMMAND clownlzss-tool ${compression-command} "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/uncompressed" "temp")
-		add_test(NAME ${compression-name}_compare_${directory} COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/${compression-name}" "temp")
+	foreach(directory "clone_driver_v2_dac_driver" "chameleon_code" "executable")
+		add_test(NAME ${compression-name}_run_${directory} COMMAND clownlzss-tool ${compression-command} "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/uncompressed" "zzzz_${compression-name}_${directory}")
+		add_test(NAME ${compression-name}_compare_${directory} COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/${compression-name}" "zzzz_${compression-name}_${directory}")
+		set_tests_properties(${compression-name}_compare_${directory} PROPERTIES DEPENDS "${compression-name}_run_${directory}")
 	endforeach()
 endfunction()
 
@@ -95,9 +96,10 @@ set_property(TEST comper_moduled_run_clone_driver_v2_dac_driver PROPERTY WILL_FA
 set_property(TEST comper_moduled_compare_clone_driver_v2_dac_driver PROPERTY WILL_FAIL true)
 
 function(make_decompress_test_internal compression-name compression-command)
-	foreach(directory "clone_driver_v2_dac_driver" "chameleon_code")
-		add_test(NAME ${compression-name}_decompress_run_${directory} COMMAND clownlzss-tool -d ${compression-command} "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/${compression-name}" "temp")
-		add_test(NAME ${compression-name}_decompress_compare_${directory} COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/uncompressed" "temp")
+	foreach(directory "clone_driver_v2_dac_driver" "chameleon_code" "executable")
+		add_test(NAME ${compression-name}_decompress_run_${directory} COMMAND clownlzss-tool -d ${compression-command} "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/${compression-name}" "zzzz_${compression-name}_decompress_${directory}")
+		add_test(NAME ${compression-name}_decompress_compare_${directory} COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/uncompressed" "zzzz_${compression-name}_decompress_${directory}")
+		set_tests_properties(${compression-name}_decompress_compare_${directory} PROPERTIES DEPENDS "${compression-name}_decompress_run_${directory}")
 	endforeach()
 endfunction()
 
