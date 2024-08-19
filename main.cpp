@@ -270,16 +270,17 @@ int main(int argc, char **argv)
 						break;
 
 					case Format::SAXMAN:
-					{
-						const unsigned int uncompressed_length_lower_byte = in_file.get();
-						const unsigned int uncompressed_length_upper_byte = in_file.get();
-						const unsigned int uncompressed_length = uncompressed_length_upper_byte << 8 | uncompressed_length_lower_byte;
-						ClownLZSS::SaxmanDecompress(in_file, out_file, uncompressed_length);
+						if (moduled)
+							ClownLZSS::ModuledSaxmanDecompress(in_file, out_file);
+						else
+							ClownLZSS::SaxmanDecompress(in_file, out_file);
 						break;
-					}
 
 					case Format::SAXMAN_NO_HEADER:
-						ClownLZSS::SaxmanDecompress(in_file, out_file, std::filesystem::file_size(in_filename));
+						if (moduled)
+							ClownLZSS::ModuledSaxmanDecompress(in_file, out_file);
+						else
+							ClownLZSS::SaxmanDecompress(in_file, out_file, std::filesystem::file_size(in_filename));
 						break;
 				}
 			}

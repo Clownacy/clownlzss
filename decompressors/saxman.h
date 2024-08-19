@@ -71,6 +71,14 @@ namespace ClownLZSS
 					}
 				}
 			}
+
+			template<typename T1, typename T2>
+			void Decompress(DecompressorInput<T1> &input, DecompressorOutput<T2> &output)
+			{
+				const unsigned int compressed_length = input.ReadLE16();
+
+				SaxmanDecompress(input, output, compressed_length);
+			}
 		}
 	}
 
@@ -84,10 +92,30 @@ namespace ClownLZSS
 		Saxman::Decompress(input_wrapped, output_wrapped, compressed_length);
 	}
 
+	template<typename T1, typename T2>
+	void SaxmanDecompress(T1 &&input, T2 &&output)
+	{
+		using namespace Internal;
+
+		DecompressorInput input_wrapped(std::forward<T1>(input));
+		Saxman::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Saxman::Decompress(input_wrapped, output_wrapped);
+	}
+
 	template<std::random_access_iterator T1, std::random_access_iterator T2>
 	void SaxmanDecompress(T1 input, T1 input_end, T2 output)
 	{
 		SaxmanDecompress(input, output, input_end - input);
+	}
+
+	template<typename T1, typename T2>
+	void ModuledSaxmanDecompress(T1 &&input, T2 &&output)
+	{
+		using namespace Internal;
+
+		DecompressorInput input_wrapped(std::forward<T1>(input));
+		Saxman::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Saxman::Decompress, 2);
 	}
 }
 
