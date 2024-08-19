@@ -257,12 +257,14 @@ namespace ClownLZSS
 
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
 	requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-	class DecompressorOutput<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T>
+	class DecompressorOutput<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>
 	{
-	public:
+	protected:
+		using Base = Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>;
+		using Base::output_iterator;
 
-		using Internal::OutputCommon<T>::output_iterator;
-		using Internal::OutputCommon<T>::OutputCommon;
+	public:
+		using Base::OutputCommon;
 
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
@@ -274,9 +276,12 @@ namespace ClownLZSS
 	#if __STDC_HOSTED__ == 1
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length>
 	requires std::is_convertible_v<T&, std::ostream&>
-	class DecompressorOutput<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T>
+	class DecompressorOutput<T, dictionary_size, maximum_copy_length> : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>
 	{
 	protected:
+		using Base = Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>;
+		using Base::output;
+
 		std::array<char, dictionary_size + maximum_copy_length - 1> buffer;
 		unsigned int index = 0;
 
@@ -291,20 +296,19 @@ namespace ClownLZSS
 			index = (index + 1) % dictionary_size;
 		}
 
-	public:
-		using Internal::OutputCommon<T>::output;
-		using Internal::OutputCommon<T>::OutputCommon;
-
-		DecompressorOutput(std::ostream &output, const int filler_value)
-			: Internal::OutputCommon<T>::OutputCommon(output)
-		{
-			buffer.fill(filler_value);
-		}
-
-		void Write(const unsigned char value)
+		void WriteImplementation(const unsigned char value)
 		{
 			WriteToBuffer(value);
-			Internal::OutputCommon<T>::Write(value);
+			Base::WriteImplementation(value);
+		}
+
+	public:
+		using Base::OutputCommon;
+
+		DecompressorOutput(std::ostream &output, const int filler_value)
+			: Base::OutputCommon(output)
+		{
+			buffer.fill(filler_value);
 		}
 
 		void Copy(const unsigned int distance, const unsigned int count)
@@ -318,11 +322,7 @@ namespace ClownLZSS
 			output.write(&buffer[destination_index], count);
 		}
 
-		void Fill(const unsigned char value, const unsigned int count)
-		{
-			for (unsigned int i = 0; i < count; ++i)
-				Write(value);
-		}
+		friend Base;
 	};
 	#endif
 }

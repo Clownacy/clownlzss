@@ -65,19 +65,23 @@ namespace ClownLZSS
 
 	template<typename T>
 	requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-	class CompressorOutput<T> : public Internal::OutputCommon<T>
+	class CompressorOutput<T> : public Internal::OutputCommon<T, CompressorOutput<T>>
 	{
 	public:
-		using Internal::OutputCommon<T>::OutputCommon;
+		using Base = Internal::OutputCommon<T, CompressorOutput<T>>;
+
+		using Base::OutputCommon;
 	};
 
 	#if __STDC_HOSTED__ == 1
 	template<typename T>
 	requires std::is_convertible_v<T&, std::ostream&>
-	class CompressorOutput<T> : public Internal::OutputCommon<T>
+	class CompressorOutput<T> : public Internal::OutputCommon<T, CompressorOutput<T>>
 	{
 	public:
-		using Internal::OutputCommon<T>::OutputCommon;
+		using Base = Internal::OutputCommon<T, CompressorOutput<T>>;
+
+		using Base::OutputCommon;
 	};
 	#endif
 }

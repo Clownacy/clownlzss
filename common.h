@@ -29,19 +29,25 @@ namespace ClownLZSS
 		template<typename T>
 		concept random_access_input_output_iterator = std::random_access_iterator<T> && std::output_iterator<T, unsigned char>;
 
-		template<typename T>
+		template<typename T, typename Derived>
 		class OutputCommon
 		{
 		public:
 			OutputCommon(T output) = delete;
 		};
 
-		template<typename T>
+		template<typename T, typename Derived>
 		requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-		class OutputCommon<T>
+		class OutputCommon<T, Derived>
 		{
 		protected:
 			std::decay_t<T> output_iterator;
+
+			void WriteImplementation(const unsigned char value)
+			{
+				*output_iterator = value;
+				++output_iterator;
+			}
 
 		public:
 			using pos_type = std::decay_t<T>;
@@ -53,8 +59,7 @@ namespace ClownLZSS
 
 			void Write(const unsigned char value)
 			{
-				*output_iterator = value;
-				++output_iterator;
+				static_cast<Derived*>(this)->WriteImplementation(value);
 			}
 
 			void Fill(const unsigned char value, const unsigned int count)
@@ -80,12 +85,17 @@ namespace ClownLZSS
 		};
 
 		#if __STDC_HOSTED__ == 1
-		template<typename T>
+		template<typename T, typename Derived>
 		requires std::is_convertible_v<T&, std::ostream&>
-		class OutputCommon<T>
+		class OutputCommon<T, Derived>
 		{
 		protected:
 			std::ostream &output;
+
+			void WriteImplementation(const unsigned char value)
+			{
+				output.put(value);
+			}
 
 		public:
 			using pos_type = std::ostream::pos_type;
@@ -97,7 +107,7 @@ namespace ClownLZSS
 
 			void Write(const unsigned char value)
 			{
-				output.put(value);
+				static_cast<Derived*>(this)->WriteImplementation(value);
 			}
 
 			void Fill(const unsigned char value, const unsigned int count)
