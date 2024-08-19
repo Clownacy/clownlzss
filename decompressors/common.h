@@ -277,6 +277,7 @@ namespace ClownLZSS
 		using Base = Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>;
 		using Base::output;
 
+		// TODO: Round 'dictionary_size' to the next power-of-two, for improved performance.
 		std::array<char, dictionary_size + maximum_copy_length - 1> buffer;
 		unsigned int index = 0;
 
