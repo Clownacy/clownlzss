@@ -65,7 +65,9 @@ namespace ClownLZSS
 		class OutputCommon<T, Derived>
 		{
 		protected:
-			std::decay_t<T> output_iterator;
+			using Iterator = std::decay_t<T>;
+
+			Iterator output_iterator;
 
 			void WriteImplementation(const unsigned char value)
 			{
@@ -74,10 +76,10 @@ namespace ClownLZSS
 			}
 
 		public:
-			using pos_type = std::decay_t<T>;
-			using difference_type = std::iterator_traits<std::decay_t<T>>::difference_type;
+			using pos_type = Iterator;
+			using difference_type = std::iterator_traits<Iterator>::difference_type;
 
-			OutputCommon(std::decay_t<T> output_iterator)
+			OutputCommon(Iterator output_iterator)
 				: output_iterator(output_iterator)
 			{}
 

@@ -46,8 +46,9 @@ namespace ClownLZSS
 	{
 	protected:
 		using Base = Internal::InputCommon<DecompressorInput<T>>;
+		using Iterator = std::decay_t<T>;
 
-		std::decay_t<T> input_iterator;
+		Iterator input_iterator;
 
 		unsigned char ReadImplementation()
 		{
@@ -57,10 +58,10 @@ namespace ClownLZSS
 		}
 
 	public:
-		using pos_type = std::decay_t<T>;
-		using difference_type = std::iterator_traits<std::decay_t<T>>::difference_type;
+		using pos_type = Iterator;
+		using difference_type = std::iterator_traits<Iterator>::difference_type;
 
-		DecompressorInput(std::decay_t<T> input_iterator)
+		DecompressorInput(Iterator input_iterator)
 			: input_iterator(input_iterator)
 		{}
 
@@ -167,31 +168,33 @@ namespace ClownLZSS
 	class DecompressorInputSeparate<T> : public DecompressorInput<T>
 	{
 	protected:
-		std::istream::pos_type position;
+		using Base = DecompressorInput<T>;
+
+		Base::pos_type position;
 
 	public:
 		DecompressorInputSeparate(std::istream &input)
-			: DecompressorInput<T>::DecompressorInput(input)
-			, position(input.tellg())
+			: Base::DecompressorInput(input)
+			, position(Base::Tell())
 		{}
 
 		unsigned char Read()
 		{
-			const auto previous_position = DecompressorInput<T>::input.tellg();
-			DecompressorInput<T>::input.seekg(position);
-			const auto value = DecompressorInput<T>::Read();
-			position = DecompressorInput<T>::input.tellg();
-			DecompressorInput<T>::input.seekg(previous_position);
+			const auto previous_position = Base::Tell();
+			Base::Seek(position);
+			const auto value = Base::Read();
+			position = Base::Tell();
+			Base::Seek(previous_position);
 			return value;
 		}
 
 		DecompressorInputSeparate& operator+=(const unsigned int value)
 		{
-			const auto previous_position = DecompressorInput<T>::input.tellg();
-			DecompressorInput<T>::input.seekg(position);
-			DecompressorInput<T>::operator+=(value);
-			position = DecompressorInput<T>::input.tellg();
-			DecompressorInput<T>::input.seekg(previous_position);
+			const auto previous_position = Base::Tell();
+			Base::Seek(position);
+			Base::operator+=(value);
+			position = Base::Tell();
+			Base::Seek(previous_position);
 			return *this;
 		}
 	};

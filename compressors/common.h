@@ -67,9 +67,10 @@ namespace ClownLZSS
 	requires Internal::random_access_input_output_iterator<std::decay_t<T>>
 	class CompressorOutput<T> : public Internal::OutputCommon<T, CompressorOutput<T>>
 	{
-	public:
+	protected:
 		using Base = Internal::OutputCommon<T, CompressorOutput<T>>;
 
+	public:
 		using Base::OutputCommon;
 	};
 
@@ -78,9 +79,10 @@ namespace ClownLZSS
 	requires std::is_convertible_v<T&, std::ostream&>
 	class CompressorOutput<T> : public Internal::OutputCommon<T, CompressorOutput<T>>
 	{
-	public:
+	protected:
 		using Base = Internal::OutputCommon<T, CompressorOutput<T>>;
 
+	public:
 		using Base::OutputCommon;
 	};
 	#endif
