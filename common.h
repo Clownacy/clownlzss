@@ -17,7 +17,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #define CLOWNLZSS_COMMON_H
 
 #include <iterator>
-#if __STDC_HOSTED__ == 1
+#if __STDC_HOSTED__
 	#include <ostream>
 #endif
 #include <type_traits>
@@ -129,7 +129,7 @@ namespace ClownLZSS
 			}
 		};
 
-		#if __STDC_HOSTED__ == 1
+		#if __STDC_HOSTED__
 		template<typename T, typename Derived>
 		requires std::is_convertible_v<T&, std::ostream&>
 		class OutputCommon<T, Derived>

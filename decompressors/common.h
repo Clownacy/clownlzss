@@ -19,7 +19,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <algorithm>
 #include <array>
 #include <iterator>
-#if __STDC_HOSTED__ == 1
+#if __STDC_HOSTED__
 	#include <istream>
 	#include <ostream>
 #endif
@@ -73,7 +73,7 @@ namespace ClownLZSS
 		friend Base;
 	};
 
-	#if __STDC_HOSTED__ == 1
+	#if __STDC_HOSTED__
 	template<typename T, typename Derived>
 	requires std::is_convertible_v<T&, std::istream&>
 	class DecompressorInputBase<T, Derived> : public Internal::InputCommon<Derived>
@@ -150,7 +150,7 @@ namespace ClownLZSS
 		using DecompressorInputBase<T, DecompressorInput<T>>::DecompressorInputBase;
 	};
 
-	#if __STDC_HOSTED__ == 1
+	#if __STDC_HOSTED__
 	template<typename T>
 	requires std::is_convertible_v<T&, std::istream&>
 	class DecompressorInput<T> : public DecompressorInputBase<T, DecompressorInput<T>>
@@ -177,7 +177,7 @@ namespace ClownLZSS
 		using DecompressorInputBase<T, DecompressorInputSeparate<T>>::DecompressorInputBase;
 	};
 
-	#if __STDC_HOSTED__ == 1
+	#if __STDC_HOSTED__
 	template<typename T>
 	requires std::is_convertible_v<T&, std::istream&>
 	class DecompressorInputSeparate<T> : public DecompressorInputBase<T, DecompressorInputSeparate<T>>
@@ -268,7 +268,7 @@ namespace ClownLZSS
 		}
 	};
 
-	#if __STDC_HOSTED__ == 1
+	#if __STDC_HOSTED__
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length, int filler_value>
 	requires std::is_convertible_v<T&, std::ostream&>
 	class DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value> : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>

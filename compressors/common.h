@@ -19,7 +19,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "../common.h"
 
 #include <iterator>
-#if __STDC_HOSTED__ == 1
+#if __STDC_HOSTED__
 	#include <ostream>
 #endif
 #include <type_traits>
@@ -74,7 +74,7 @@ namespace ClownLZSS
 		using Base::OutputCommon;
 	};
 
-	#if __STDC_HOSTED__ == 1
+	#if __STDC_HOSTED__
 	template<typename T>
 	requires std::is_convertible_v<T&, std::ostream&>
 	class CompressorOutput<T> : public Internal::OutputCommon<T, CompressorOutput<T>>
