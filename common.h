@@ -29,6 +29,43 @@ namespace ClownLZSS
 		template<typename T>
 		concept random_access_input_output_iterator = std::random_access_iterator<T> && std::output_iterator<T, unsigned char>;
 
+		template<typename T>
+		class IOIteratorCommon
+		{
+		protected:
+			using Iterator = std::decay_t<T>;
+
+			Iterator iterator;
+
+		public:
+			using pos_type = Iterator;
+			using difference_type = std::iterator_traits<Iterator>::difference_type;
+
+			IOIteratorCommon(Iterator iterator)
+				: iterator(iterator)
+			{}
+
+			pos_type Tell() const
+			{
+				return iterator;
+			};
+
+			void Seek(const pos_type &position)
+			{
+				iterator = position;
+			};
+
+			difference_type Distance(const pos_type &first) const
+			{
+				return Distance(first, Tell());
+			}
+
+			static difference_type Distance(const pos_type &first, const pos_type &last)
+			{
+				return std::distance(first, last);
+			}
+		};
+
 		template<typename Derived>
 		class InputCommon
 		{
@@ -62,25 +99,22 @@ namespace ClownLZSS
 
 		template<typename T, typename Derived>
 		requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-		class OutputCommon<T, Derived>
+		class OutputCommon<T, Derived> : public IOIteratorCommon<T>
 		{
 		protected:
-			using Iterator = std::decay_t<T>;
+			using Iterator = IOIteratorCommon<T>::Iterator;
 
-			Iterator output_iterator;
+			using IOIteratorCommon<T>::iterator;
 
 			void WriteImplementation(const unsigned char value)
 			{
-				*output_iterator = value;
-				++output_iterator;
+				*iterator = value;
+				++iterator;
 			}
 
 		public:
-			using pos_type = Iterator;
-			using difference_type = std::iterator_traits<Iterator>::difference_type;
-
-			OutputCommon(Iterator output_iterator)
-				: output_iterator(output_iterator)
+			OutputCommon(Iterator iterator)
+				: IOIteratorCommon<T>(iterator)
 			{}
 
 			void Write(const unsigned char value)
@@ -90,23 +124,8 @@ namespace ClownLZSS
 
 			void Fill(const unsigned char value, const unsigned int count)
 			{
-				std::fill_n(output_iterator, count, value);
-				output_iterator += count;
-			}
-
-			pos_type Tell() const
-			{
-				return output_iterator;
-			};
-
-			void Seek(const pos_type &position)
-			{
-				output_iterator = position;
-			};
-
-			static difference_type Distance(const pos_type &first, const pos_type &last)
-			{
-				return std::distance(first, last);
+				std::fill_n(iterator, count, value);
+				iterator += count;
 			}
 		};
 

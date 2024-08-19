@@ -42,53 +42,32 @@ namespace ClownLZSS
 
 	template<typename T>
 	requires std::input_iterator<std::decay_t<T>>
-	class DecompressorInput<T> : public Internal::InputCommon<DecompressorInput<T>>
+	class DecompressorInput<T> : public Internal::InputCommon<DecompressorInput<T>>, public Internal::IOIteratorCommon<T>
 	{
 	protected:
 		using Base = Internal::InputCommon<DecompressorInput<T>>;
-		using Iterator = std::decay_t<T>;
 
-		Iterator input_iterator;
+		using IOIteratorCommon = Internal::IOIteratorCommon<T>;
+		using Iterator = IOIteratorCommon::Iterator;
+
+		using IOIteratorCommon::iterator;
 
 		unsigned char ReadImplementation()
 		{
-			const auto value = *input_iterator;
-			++input_iterator;
+			const auto value = *iterator;
+			++iterator;
 			return value;
 		}
 
 	public:
-		using pos_type = Iterator;
-		using difference_type = std::iterator_traits<Iterator>::difference_type;
-
-		DecompressorInput(Iterator input_iterator)
-			: input_iterator(input_iterator)
+		DecompressorInput(Iterator iterator)
+			: IOIteratorCommon::IOIteratorCommon(iterator)
 		{}
 
 		DecompressorInput& operator+=(const unsigned int value)
 		{
-			input_iterator += value;
+			iterator += value;
 			return *this;
-		}
-
-		pos_type Tell() const
-		{
-			return input_iterator;
-		};
-
-		void Seek(const pos_type &position)
-		{
-			input_iterator = position;
-		};
-
-		difference_type Distance(const pos_type &first) const
-		{
-			return Distance(first, Tell());
-		}
-
-		static difference_type Distance(const pos_type &first, const pos_type &last)
-		{
-			return std::distance(first, last);
 		}
 
 		friend Base;
@@ -216,15 +195,15 @@ namespace ClownLZSS
 	{
 	protected:
 		using Base = Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>;
-		using Base::output_iterator;
+		using Base::iterator;
 
 	public:
 		using Base::OutputCommon;
 
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
-			std::copy(output_iterator - distance, output_iterator - distance + count, output_iterator);
-			output_iterator += count;
+			std::copy(iterator - distance, iterator - distance + count, iterator);
+			iterator += count;
 		}
 	};
 
