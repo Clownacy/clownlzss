@@ -33,9 +33,11 @@ namespace ClownLZSS
 			template<typename T>
 			using BitField = BitField<1, ReadWhen::BeforePop, PopWhere::High, Endian::Big, T>;
 
-			template<typename T1, typename T2, typename T3>
-			void Decompress(DecompressorInput<T1> &input, DecompressorOutput<T2> &output, DecompressorInputSeparate<T3> &descriptor_input)
+			template<typename T1, typename T2>
+			void Decompress(DecompressorInput<T1> &input, DecompressorOutput<T2> &output)
 			{
+				auto descriptor_input = input.MakeSeparate();
+
 				input += input.ReadBE16();
 				descriptor_input += 2;
 
@@ -102,8 +104,7 @@ namespace ClownLZSS
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
 		Chameleon::DecompressorOutput output_wrapped(std::forward<T2>(output));
-		DecompressorInputSeparate input_separate(std::forward<T1>(input));
-		Chameleon::Decompress(input_wrapped, output_wrapped, input_separate);
+		Chameleon::Decompress(input_wrapped, output_wrapped);
 	}
 }
 

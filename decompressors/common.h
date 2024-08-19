@@ -70,6 +70,11 @@ namespace ClownLZSS
 			return *this;
 		}
 
+		auto MakeSeparate()
+		{
+			return *this;
+		}
+
 		friend Base;
 	};
 
@@ -95,6 +100,43 @@ namespace ClownLZSS
 		}
 
 	public:
+		class Separate : public DecompressorInputBase<T, Separate>
+		{
+		protected:
+			using Base = DecompressorInputBase<T, Separate>;
+
+			Base::pos_type position;
+
+			unsigned char ReadImplementation()
+			{
+				const auto previous_position = Base::Tell();
+				Base::Seek(position);
+				const auto value = Base::ReadImplementation();
+				position = Base::Tell();
+				Base::Seek(previous_position);
+				return value;
+			}
+
+			Separate& AdditionAssignImplementation(const unsigned int value)
+			{
+				const auto previous_position = Base::Tell();
+				Base::Seek(position);
+				Base::AdditionAssignImplementation(value);
+				position = Base::Tell();
+				Base::Seek(previous_position);
+				return *this;
+			}
+
+		public:
+			Separate(std::istream &input)
+				: Base::DecompressorInputBase(input)
+				, position(Base::Tell())
+			{}
+
+			friend Base;
+			friend Internal::InputCommon<Separate>;
+		};
+
 		using pos_type = std::istream::pos_type;
 		using difference_type = std::istream::off_type;
 
@@ -129,6 +171,11 @@ namespace ClownLZSS
 			return last - first;
 		}
 
+		auto MakeSeparate()
+		{
+			return Separate(input);
+		}
+
 		friend Base;
 	};
 	#endif
@@ -157,64 +204,6 @@ namespace ClownLZSS
 	{
 	public:
 		using DecompressorInputBase<T, DecompressorInput<T>>::DecompressorInputBase;
-	};
-	#endif
-
-	// DecompressorInputSeparate
-
-	template<typename T>
-	class DecompressorInputSeparate : public DecompressorInputBase<T, DecompressorInputSeparate<T>>
-	{
-	public:
-		DecompressorInputSeparate(T input);
-	};
-
-	template<typename T>
-	requires std::random_access_iterator<std::decay_t<T>>
-	class DecompressorInputSeparate<T> : public DecompressorInputBase<T, DecompressorInputSeparate<T>>
-	{
-	public:
-		using DecompressorInputBase<T, DecompressorInputSeparate<T>>::DecompressorInputBase;
-	};
-
-	#if __STDC_HOSTED__
-	template<typename T>
-	requires std::is_convertible_v<T&, std::istream&>
-	class DecompressorInputSeparate<T> : public DecompressorInputBase<T, DecompressorInputSeparate<T>>
-	{
-	protected:
-		using Base = DecompressorInputBase<T, DecompressorInputSeparate<T>>;
-
-		Base::pos_type position;
-
-		unsigned char ReadImplementation()
-		{
-			const auto previous_position = Base::Tell();
-			Base::Seek(position);
-			const auto value = Base::ReadImplementation();
-			position = Base::Tell();
-			Base::Seek(previous_position);
-			return value;
-		}
-
-		DecompressorInputSeparate& AdditionAssignImplementation(const unsigned int value)
-		{
-			const auto previous_position = Base::Tell();
-			Base::Seek(position);
-			Base::AdditionAssignImplementation(value);
-			position = Base::Tell();
-			Base::Seek(previous_position);
-			return *this;
-		}
-
-	public:
-		DecompressorInputSeparate(std::istream &input)
-			: Base::DecompressorInputBase(input)
-			, position(Base::Tell())
-		{}
-
-		friend Base;
-		friend Internal::InputCommon<DecompressorInputSeparate<T>>;
 	};
 	#endif
 
