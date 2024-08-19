@@ -32,8 +32,11 @@ namespace ClownLZSS
 			using BitField = BitField<1, ReadWhen::BeforePop, PopWhere::High, Endian::Big, T>;
 
 			template<typename T1, typename T2, typename T3>
-			void Decompress(T1 &&input, T2 &&output, T3 &&descriptor_input)
+			void Decompress(DecompressorInput<T1> input, DecompressorOutput<T2> output, DecompressorInputSeparate<T3> descriptor_input)
 			{
+				input += input.ReadBE16();
+				descriptor_input += 2;
+
 				BitField descriptor_bits(descriptor_input);
 
 				for (;;)
@@ -95,15 +98,7 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
-		DecompressorInput wrapped_input(input);
-		DecompressorInputSeparate descriptor_input(input);
-
-		const unsigned int descriptor_buffer_size = wrapped_input.ReadBE16();
-
-		wrapped_input += descriptor_buffer_size;
-		descriptor_input += 2;
-
-		Chameleon::Decompress(wrapped_input, Chameleon::DecompressorOutput(output), descriptor_input);
+		Chameleon::Decompress(DecompressorInput(input), Chameleon::DecompressorOutput(output), DecompressorInputSeparate(input));
 	}
 }
 
