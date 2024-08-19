@@ -41,13 +41,6 @@ namespace ClownLZSS
 	};
 
 	template<typename T>
-	class DecompressorInputWithLength : public DecompressorInput<T>
-	{
-	public:
-		DecompressorInputWithLength(T input, unsigned int length) = delete;
-	};
-
-	template<typename T>
 	requires std::input_iterator<std::decay_t<T>>
 	class DecompressorInput<T> : public Internal::InputCommon<DecompressorInput<T>>
 	{
@@ -150,25 +143,6 @@ namespace ClownLZSS
 		}
 
 		friend Base;
-	};
-
-	template<typename T>
-	requires std::is_convertible_v<T&, std::istream&>
-	class DecompressorInputWithLength<T> : public DecompressorInput<T>
-	{
-	protected:
-		std::istream::off_type end;
-
-	public:
-		DecompressorInputWithLength(std::istream &input, unsigned int length)
-			: DecompressorInput<T>(input)
-			, end(input.tellg() + static_cast<std::istream::off_type>(length))
-		{}
-
-		bool AtEnd() const
-		{
-			return DecompressorInput<T>::input.tellg() >= end;
-		}
 	};
 	#endif
 
