@@ -105,7 +105,7 @@ namespace ClownLZSS
 	template<std::random_access_iterator T1, std::random_access_iterator T2>
 	void SaxmanDecompress(T1 input, T1 input_end, T2 output)
 	{
-		SaxmanDecompress(input, output, input_end - input);
+		SaxmanDecompress(input, output, std::distance(input, input_end));
 	}
 
 	template<typename T1, typename T2>
