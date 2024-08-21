@@ -36,6 +36,8 @@ namespace ClownLZSS
 			template<typename T1, typename T2>
 			void Decompress(DecompressorInput<T1> &input, DecompressorOutput<T2> &output)
 			{
+				const auto output_start_position = output.Tell();
+
 				unsigned int descriptor_bits_remaining = input.ReadLE16();
 
 				BitField descriptor_bits(input);
@@ -46,15 +48,12 @@ namespace ClownLZSS
 					return descriptor_bits.Pop();
 				};
 
-				unsigned int output_position = 0;
-
 				while (descriptor_bits_remaining != 0)
 				{
 					if (PopDescriptorBit())
 					{
 						// Uncompressed.
 						output.Write(input.Read());
-						++output_position;
 					}
 					else
 					{
@@ -80,6 +79,8 @@ namespace ClownLZSS
 								count += 1;
 						}
 
+						const unsigned int output_position = output.Distance(output_start_position);
+
 						if (distance > output_position)
 						{
 							// Zero-fill.
@@ -90,8 +91,6 @@ namespace ClownLZSS
 							// Copy.
 							output.Copy(distance, count);
 						}
-
-						output_position += count;
 					}
 				}
 			}
