@@ -18,7 +18,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include <utility>
 
-#include "bitfield.h"
+#include "../bitfield.h"
 #include "common.h"
 
 namespace ClownLZSS
@@ -41,7 +41,7 @@ namespace ClownLZSS
 			using DecompressorOutput = DecompressorOutput<T, RawDistanceToDistance(0), RawCountToCount(0xFF)>;
 
 			template<typename T>
-			using BitField = BitField<2, ReadWhen::BeforePop, PopWhere::High, Endian::Big, T>;
+			using BitField = BitField::Reader<2, BitField::ReadWhen::BeforePop, BitField::PopWhere::High, BitField::Endian::Big, T>;
 
 			template<typename T1, typename T2>
 			void Decompress(DecompressorInput<T1> &input, DecompressorOutput<T2> &output)
