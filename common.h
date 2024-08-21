@@ -120,6 +120,12 @@ namespace ClownLZSS
 				Write(value >> 8);
 			}
 
+			void Fill(const unsigned char value, const unsigned int count)
+			{
+				for (unsigned int i = 0; i < count; ++i)
+					Write(value);
+			}
+
 			void Reset()
 			{
 				static_cast<Derived*>(this)->ResetImplementation();
@@ -154,13 +160,6 @@ namespace ClownLZSS
 				: IOIteratorCommon<T>(iterator)
 			{}
 
-			void Fill(const unsigned char value, const unsigned int count)
-			{
-				// TODO: This should be calling Write?
-				std::fill_n(iterator, count, value);
-				iterator += count;
-			}
-
 			friend Base;
 		};
 
@@ -186,12 +185,6 @@ namespace ClownLZSS
 			OutputCommon(std::ostream &output)
 				: output(output)
 			{}
-
-			void Fill(const unsigned char value, const unsigned int count)
-			{
-				for (unsigned int i = 0; i < count; ++i)
-					this->Write(value);
-			}
 
 			pos_type Tell() const
 			{
