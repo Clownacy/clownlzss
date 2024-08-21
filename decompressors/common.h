@@ -210,7 +210,7 @@ namespace ClownLZSS
 	// DecompressorOutput
 
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length, int filler_value = -1>
-	class DecompressorOutput : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>
+	class DecompressorOutput : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value>>
 	{
 	public:
 		DecompressorOutput(T output);
@@ -218,10 +218,10 @@ namespace ClownLZSS
 
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length, int filler_value>
 	requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-	class DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value> : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>
+	class DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value> : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value>>
 	{
 	protected:
-		using Base = Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>;
+		using Base = Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value>>;
 		using Iterator = Base::Iterator;
 		using Base::iterator;
 
@@ -265,10 +265,10 @@ namespace ClownLZSS
 	#if __STDC_HOSTED__
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length, int filler_value>
 	requires std::is_convertible_v<T&, std::ostream&>
-	class DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value> : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>
+	class DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value> : public Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value>>
 	{
 	protected:
-		using Base = Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length>>;
+		using Base = Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value>>;
 		using Base::output;
 
 		// TODO: Round 'dictionary_size' to the next power-of-two, for improved performance.
