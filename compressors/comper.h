@@ -62,8 +62,7 @@ namespace ClownLZSS
 					descriptor_position = output.Tell();
 
 					// Insert a placeholder.
-					output.Write(0);
-					output.Write(0);
+					output.WriteBE16(0);
 				};
 
 				const auto FinishDescriptorField = [&]()
@@ -75,8 +74,7 @@ namespace ClownLZSS
 					output.Seek(descriptor_position);
 
 					// Write the complete descriptor field.
-					output.Write((descriptor >> (8 * 1)) & 0xFF);
-					output.Write((descriptor >> (8 * 0)) & 0xFF);
+					output.WriteBE16(descriptor);
 
 					// Seek back to where we were before.
 					output.Seek(current_position);

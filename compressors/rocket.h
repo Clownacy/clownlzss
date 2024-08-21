@@ -68,7 +68,7 @@ namespace ClownLZSS
 					output.Seek(descriptor_position);
 
 					// Write the complete descriptor field.
-					output.Write(descriptor & 0xFF);
+					output.Write(descriptor);
 
 					// Seek back to where we were before.
 					output.Seek(current_position);
@@ -90,15 +90,13 @@ namespace ClownLZSS
 				};
 
 				// Write the first part of the header.
-				output.Write((data_size >> (8 * 1)) & 0xFF);
-				output.Write((data_size >> (8 * 0)) & 0xFF);
+				output.WriteBE16(data_size);
 
 				// Track the location of the second part of the header...
 				const auto header_position = output.Tell();
 
 				// ...and insert a placeholder there.
-				output.Write(0);
-				output.Write(0);
+				output.WriteBE16(0);
 
 				// Begin first descriptor field.
 				BeginDescriptorField();
@@ -135,8 +133,7 @@ namespace ClownLZSS
 				output.Seek(header_position);
 
 				// ...and complete it.
-				output.Write(((end_position - header_position - 2) >> (8 * 1)) & 0xFF);
-				output.Write(((end_position - header_position - 2) >> (8 * 0)) & 0xFF);
+				output.WriteBE16(end_position - header_position - 2);
 
 				// Seek back to the end of the file just as the caller might expect us to do.
 				output.Seek(end_position);

@@ -76,8 +76,7 @@ namespace ClownLZSS
 				const auto header_position = output.Tell();
 
 				/* ...and insert a placeholder there. */
-				output.Write(0);
-				output.Write(0);
+				output.WriteBE16(0);
 
 				/* Produce Chameleon-formatted data. */
 				/* Unlike many other LZSS formats, Chameleon stores the descriptor fields separately from the rest of the data. */
@@ -140,8 +139,7 @@ namespace ClownLZSS
 				/* Chameleon's header contains the size of the descriptor fields, so, now that we know that, let's fill it in. */
 				const auto current_position = output.Tell();
 				output.Seek(header_position);
-				output.Write(((current_position - header_position - 2) >> (8 * 1)) & 0xFF);
-				output.Write(((current_position - header_position - 2) >> (8 * 0)) & 0xFF);
+				output.WriteBE16(current_position - header_position - 2);
 				output.Seek(current_position);
 
 				/* Iterate over the compression matches again, now outputting just the literals and offset/length pairs. */
