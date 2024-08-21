@@ -46,98 +46,89 @@ namespace ClownLZSS
 
 				for (;;)
 				{
-					const auto GetCountValue = [&]()
+					const auto GetInlineValue = [&]()
 					{
-						return input_bits.Pop(4) + 1;	
+						unsigned int render_flags = 0;
+
+						// The Enigma decompressor in the Sonic games only does 5 bits.
+						for (unsigned int i = 0; i < 5; ++i)
+						{
+							const unsigned int bit_index = 5 - i - 1;
+
+							render_flags <<= 1;
+
+							if ((render_flags_mask & 1 << bit_index) != 0)
+								render_flags |= input_bits.Pop();
+						}
+
+						render_flags <<= 3 + 8;
+
+						return render_flags | input_bits.Pop(total_inline_copy_bits);
 					};
 
-					if (!input_bits.Pop())
+					const unsigned int action = input_bits.Pop() ? 2 + input_bits.Pop(2) : input_bits.Pop();
+
+					const unsigned int count = input_bits.Pop(4) + 1;
+
+					if (count == 0x10 && action == 5)
+						break;
+
+					switch (action)
 					{
-						const bool bit = input_bits.Pop();
-
-						const unsigned int count = GetCountValue();
-
-						if (!bit)
-						{
+						case 0:
 							for (unsigned int i = 0; i < count; ++i)
 								output.WriteBE16(incremental_copy_word);
 
 							++incremental_copy_word;
-						}
-						else
-						{
+							break;
+
+						case 1:
 							for (unsigned int i = 0; i < count; ++i)
 								output.WriteBE16(literal_copy_word);
-						}
-					}
-					else
-					{
-						const auto GetInlineValue = [&]()
+
+							break;
+
+						case 2:
 						{
-							unsigned int render_flags = 0;
+							const unsigned int inline_value = GetInlineValue();
 
-							// TODO: Does the Enigma decompressor in the Sonic games do 5 bits or all 8 bits?
-							for (unsigned int i = 0; i < 5; ++i)
-							{
-								const unsigned int bit_index = 5 - i - 1;
+							for (unsigned int i = 0; i < count; ++i)
+								output.WriteBE16(inline_value);
 
-								render_flags <<= 1;
-
-								if ((render_flags_mask & 1 << bit_index) != 0)
-									render_flags |= input_bits.Pop();
-							}
-
-							render_flags <<= 3 + 8;
-
-							return render_flags | input_bits.Pop(total_inline_copy_bits);
-						};
-
-						const bool bit1 = input_bits.Pop();
-						const bool bit2 = input_bits.Pop();
-
-						const unsigned int count = GetCountValue();
-
-						if (!bit1)
-						{
-							if (!bit2)
-							{
-								const unsigned int inline_value = GetInlineValue();
-
-								for (unsigned int i = 0; i < count; ++i)
-									output.WriteBE16(inline_value);
-							}
-							else
-							{
-								unsigned int inline_value = GetInlineValue();
-
-								for (unsigned int i = 0; i < count; ++i)
-								{
-									output.WriteBE16(inline_value);
-									++inline_value;
-								}
-							}
+							break;
 						}
-						else
+
+						case 3:
 						{
-							if (!bit2)
-							{
-								unsigned int inline_value = GetInlineValue();
+							unsigned int inline_value = GetInlineValue();
 
-								for (unsigned int i = 0; i < count; ++i)
-								{
-									output.WriteBE16(inline_value);
-									--inline_value;
-								}
-							}
-							else
+							for (unsigned int i = 0; i < count; ++i)
 							{
-								if (count == 0x10)
-									break;
-
-								for (unsigned int i = 0; i < count; ++i)
-									output.WriteBE16(GetInlineValue());
+								output.WriteBE16(inline_value);
+								++inline_value;
 							}
+
+							break;
 						}
+
+						case 4:
+						{
+							unsigned int inline_value = GetInlineValue();
+
+							for (unsigned int i = 0; i < count; ++i)
+							{
+								output.WriteBE16(inline_value);
+								--inline_value;
+							}
+
+							break;
+						}
+
+						case 5:
+							for (unsigned int i = 0; i < count; ++i)
+								output.WriteBE16(GetInlineValue());
+
+							break;
 					}
 				}
 			}
