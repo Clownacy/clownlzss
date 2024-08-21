@@ -18,6 +18,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include <utility>
 
+#include "../bitfield.h"
 #include "clownlzss.h"
 #include "common.h"
 
@@ -27,7 +28,8 @@ namespace ClownLZSS
 	{
 		namespace KosinskiPlus
 		{
-			inline constexpr unsigned int TOTAL_DESCRIPTOR_BITS = 8;
+			template<typename T>
+			using BitFieldWriter = BitField::Writer<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::Low, BitField::Endian::Big, T>;
 
 			inline std::size_t GetMatchCost(const std::size_t distance, const std::size_t length, [[maybe_unused]] void* const user)
 			{
@@ -50,61 +52,14 @@ namespace ClownLZSS
 				if (!ClownLZSS::FindOptimalMatches(-1, 0x100 + 8, 0x2000, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
-				// Set up the state.
-				typename std::remove_cvref_t<T>::pos_type descriptor_position;
-				unsigned int descriptor = 0;
-				unsigned int descriptor_bits_remaining;
-
-				const auto BeginDescriptorField = [&]()
-				{
-					descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-
-					// Log the placement of the descriptor field.
-					descriptor_position = output.Tell();
-
-					// Insert a placeholder.
-					output.Write(0);
-				};
-
-				const auto FinishDescriptorField = [&]()
-				{
-					// Back up current position.
-					const std::size_t current_position = output.Tell();
-
-					// Go back to the descriptor field.
-					output.Seek(descriptor_position);
-
-					// Write the complete descriptor field.
-					output.Write(descriptor & 0xFF);
-
-					// Seek back to where we were before.
-					output.Seek(current_position);
-				};
-
-				const auto PutDescriptorBit = [&](const bool bit)
-				{
-					if (descriptor_bits_remaining == 0)
-					{
-						FinishDescriptorField();
-						BeginDescriptorField();
-					}
-
-					--descriptor_bits_remaining;
-
-					descriptor <<= 1;
-
-					descriptor |= bit;
-				};
-
-				// Begin first descriptor field.
-				BeginDescriptorField();
+				BitFieldWriter descriptor_bits(output);
 
 				// Produce Kosinski+-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
 				{
 					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
 					{
-						PutDescriptorBit(1);
+						descriptor_bits.Push(1);
 						output.Write(data[match->destination]);
 					}
 					else
@@ -114,23 +69,23 @@ namespace ClownLZSS
 
 						if (length >= 2 && length <= 5 && distance <= 0x100)
 						{
-							PutDescriptorBit(0);
-							PutDescriptorBit(0);
+							descriptor_bits.Push(0);
+							descriptor_bits.Push(0);
 							output.Write(-distance & 0xFF);
-							PutDescriptorBit(!!((length - 2) & 2));
-							PutDescriptorBit(!!((length - 2) & 1));
+							descriptor_bits.Push(!!((length - 2) & 2));
+							descriptor_bits.Push(!!((length - 2) & 1));
 						}
 						else if (length >= 3 && length <= 9)
 						{
-							PutDescriptorBit(0);
-							PutDescriptorBit(1);
+							descriptor_bits.Push(0);
+							descriptor_bits.Push(1);
 							output.Write(((-distance >> (8 - 3)) & 0xF8) | ((10 - length) & 7));
 							output.Write(-distance & 0xFF);
 						}
 						else //if (length >= 10)
 						{
-							PutDescriptorBit(0);
-							PutDescriptorBit(1);
+							descriptor_bits.Push(0);
+							descriptor_bits.Push(1);
 							output.Write((-distance >> (8 - 3)) & 0xF8);
 							output.Write(-distance & 0xFF);
 							output.Write(length - 9);
@@ -139,17 +94,11 @@ namespace ClownLZSS
 				}
 
 				// Add the terminator match.
-				PutDescriptorBit(0);
-				PutDescriptorBit(1);
+				descriptor_bits.Push(0);
+				descriptor_bits.Push(1);
 				output.Write(0xF0);
 				output.Write(0x00);
 				output.Write(0x00);
-
-				// The descriptor field may be incomplete, so move the bits into their proper place.
-				descriptor <<= descriptor_bits_remaining;
-
-				// Finish last descriptor field.
-				FinishDescriptorField();
 
 				return true;
 			}

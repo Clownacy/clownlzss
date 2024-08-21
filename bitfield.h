@@ -30,7 +30,19 @@ namespace ClownLZSS
 				AfterPop
 			};
 
+			enum class WriteWhen
+			{
+				BeforePush,
+				AfterPush
+			};
+
 			enum class PopWhere
+			{
+				Low,
+				High
+			};
+
+			enum class PushWhere
 			{
 				Low,
 				High
@@ -122,6 +134,115 @@ namespace ClownLZSS
 					}
 
 					return value;
+				}
+			};
+
+			template<unsigned int total_bytes, WriteWhen write_when, PushWhere push_where, Endian endian, typename Output>
+			class Writer
+			{
+			private:
+				static constexpr unsigned int total_bits = total_bytes * 8;
+
+				Output &output;
+				typename std::remove_cvref_t<Output>::pos_type descriptor_position;
+				unsigned int bits = 0, bits_remaining;
+
+				void WriteBits()
+				{
+					for (unsigned int i = 0; i < total_bytes; ++i)
+					{
+						unsigned int shift;
+
+						if constexpr(endian == Endian::Big)
+							shift = total_bytes - i - 1;
+						else //if constexpr(endian == Endian::Little)
+							shift = i;
+
+						output.Write((bits >> (shift * 8)) & 0xFF);
+					}
+				}
+
+				void BeginDescriptorField()
+				{
+					bits_remaining = total_bits;
+
+					// Log the placement of the descriptor field.
+					descriptor_position = output.Tell();
+
+					// Insert a placeholder.
+					output.Fill(0, total_bytes);
+				}
+
+				void FinishDescriptorField()
+				{
+					// Back up current position.
+					const auto current_position = output.Tell();
+
+					// Go back to the descriptor field.
+					output.Seek(descriptor_position);
+
+					// Write the complete descriptor field.
+					WriteBits();
+
+					// Seek back to where we were before.
+					output.Seek(current_position);
+				}
+
+			public:
+				Writer(Output &output)
+					: output(output)
+				{
+					BeginDescriptorField();
+				}
+
+				~Writer()
+				{
+					if (bits_remaining != total_bits)
+					{
+						if constexpr(push_where == PushWhere::High)
+							bits >>= bits_remaining;
+						else if constexpr(push_where == PushWhere::Low)
+							bits <<= bits_remaining;
+
+						FinishDescriptorField();
+					}
+				}
+
+				void Push(const bool bit)
+				{
+					const auto &CheckWriteBits = [&]()
+					{
+						if (bits_remaining == 0)
+						{
+							FinishDescriptorField();
+							BeginDescriptorField();
+						}
+					};
+
+					if constexpr(write_when == WriteWhen::BeforePush)
+						CheckWriteBits();
+
+					if constexpr(push_where == PushWhere::High)
+					{
+						bits >>= 1;
+						bits |= bit << (total_bits - 1);
+					}
+					else if constexpr(push_where == PushWhere::Low)
+					{
+						bits <<= 1;
+						bits |= bit;
+					}
+
+					--bits_remaining;
+
+					if constexpr(write_when == WriteWhen::AfterPush)
+						CheckWriteBits();
+				}
+
+				void Push(const unsigned int value, const unsigned int total_bits)
+				{
+					for (unsigned int i = 0; i < total_bits; ++i)
+						Push((value & 1 << (total_bits - i - 1)) != 0);
 				}
 			};
 		}

@@ -28,8 +28,6 @@ namespace ClownLZSS
 	{
 		namespace Rage
 		{
-			inline constexpr unsigned int TOTAL_DESCRIPTOR_BITS = 8;
-
 			inline std::size_t GetMatchCost([[maybe_unused]] const std::size_t distance, [[maybe_unused]] const std::size_t length, [[maybe_unused]] void* const user)
 			{
 				if (length >= 4)

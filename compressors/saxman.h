@@ -19,6 +19,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <algorithm>
 #include <utility>
 
+#include "../bitfield.h"
 #include "clownlzss.h"
 #include "common.h"
 
@@ -28,7 +29,8 @@ namespace ClownLZSS
 	{
 		namespace Saxman
 		{
-			inline constexpr unsigned int TOTAL_DESCRIPTOR_BITS = 8;
+			template<typename T>
+			using BitFieldWriter = BitField::Writer<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::High, BitField::Endian::Little, T>;
 
 			inline std::size_t GetMatchCost([[maybe_unused]] const std::size_t distance, [[maybe_unused]] const std::size_t length, [[maybe_unused]] void* const user)
 			{
@@ -69,61 +71,14 @@ namespace ClownLZSS
 				if (!ClownLZSS::FindOptimalMatches(-1, 0x12, 0x1000, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
-				/* Set up the state. */
-				typename std::remove_cvref_t<T>::pos_type descriptor_position;
-				unsigned int descriptor = 0;
-				unsigned int descriptor_bits_remaining;
-
-				const auto BeginDescriptorField = [&]()
-				{
-					descriptor_bits_remaining = TOTAL_DESCRIPTOR_BITS;
-
-					// Log the placement of the descriptor field.
-					descriptor_position = output.Tell();
-
-					// Insert a placeholder.
-					output.Write(0);
-				};
-
-				const auto FinishDescriptorField = [&]()
-				{
-					// Back up current position.
-					const auto current_position = output.Tell();
-
-					// Go back to the descriptor field.
-					output.Seek(descriptor_position);
-
-					// Write the complete descriptor field.
-					output.Write(descriptor);
-
-					// Seek back to where we were before.
-					output.Seek(current_position);
-				};
-
-				const auto PutDescriptorBit = [&](const bool bit)
-				{
-					if (descriptor_bits_remaining == 0)
-					{
-						FinishDescriptorField();
-						BeginDescriptorField();
-					}
-
-					--descriptor_bits_remaining;
-
-					descriptor >>= 1;
-
-					descriptor |= bit << (TOTAL_DESCRIPTOR_BITS - 1);
-				};
-
-				// Begin first descriptor field.
-				BeginDescriptorField();
+				BitFieldWriter descriptor_bits(output);
 
 				// Produce Saxman-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
 				{
 					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
 					{
-						PutDescriptorBit(1);
+						descriptor_bits.Push(1);
 						output.Write(data[match->destination]);
 					}
 					else
@@ -131,17 +86,11 @@ namespace ClownLZSS
 						const std::size_t offset = match->source - 0x12;
 						const std::size_t length = match->length;
 
-						PutDescriptorBit(0);
+						descriptor_bits.Push(0);
 						output.Write(offset & 0xFF);
 						output.Write(((offset & 0xF00) >> 4) | (length - 3));
 					}
 				}
-
-				// The descriptor field may be incomplete, so move the bits into their proper place.
-				descriptor >>= descriptor_bits_remaining;
-
-				// Finish last descriptor field.
-				FinishDescriptorField();
 
 				return true;
 			}
