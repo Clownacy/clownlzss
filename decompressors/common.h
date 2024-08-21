@@ -207,6 +207,33 @@ namespace ClownLZSS
 	};
 	#endif
 
+	// DecompressorOuputBasic
+
+	template<typename T>
+	class DecompressorOuputBasic : public Internal::OutputCommon<T, DecompressorOuputBasic<T>>
+	{
+	public:
+		DecompressorOuputBasic(T output);
+	};
+
+	template<typename T>
+	requires std::random_access_iterator<std::decay_t<T>>
+	class DecompressorOuputBasic<T> : public Internal::OutputCommon<T, DecompressorOuputBasic<T>>
+	{
+	public:
+		using Internal::OutputCommon<T, DecompressorOuputBasic<T>>::OutputCommon;
+	};
+
+	#if __STDC_HOSTED__
+	template<typename T>
+	requires std::is_convertible_v<T&, std::ostream&>
+	class DecompressorOuputBasic<T> : public Internal::OutputCommon<T, DecompressorOuputBasic<T>>
+	{
+	public:
+		using Internal::OutputCommon<T, DecompressorOuputBasic<T>>::OutputCommon;
+	};
+	#endif
+
 	// DecompressorOutput
 
 	template<typename T, unsigned int dictionary_size, unsigned int maximum_copy_length, int filler_value = -1>
@@ -227,14 +254,14 @@ namespace ClownLZSS
 
 		Iterator start_iterator;
 
+		void ResetImplementation()
+		{
+			if constexpr(filler_value != -1)
+				start_iterator = iterator;
+		}
+
 	public:
 		using Base::OutputCommon;
-
-		DecompressorOutput(Iterator iterator)
-			: Base::OutputCommon(iterator)
-		{
-			Reset();
-		}
 
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
@@ -253,12 +280,6 @@ namespace ClownLZSS
 			}
 
 			iterator += count;
-		}
-
-		void Reset()
-		{
-			if constexpr(filler_value != -1)
-				start_iterator = iterator;
 		}
 	};
 
@@ -292,12 +313,14 @@ namespace ClownLZSS
 			Base::WriteImplementation(value);
 		}
 
-	public:
-		DecompressorOutput(std::ostream &output)
-			: Base::OutputCommon(output)
+		void ResetImplementation()
 		{
-			Reset();
+			if constexpr(filler_value != -1)
+				buffer.fill(filler_value);
 		}
+
+	public:
+		using Base::OutputCommon;
 
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
@@ -310,20 +333,14 @@ namespace ClownLZSS
 			output.write(&buffer[destination_index], count);
 		}
 
-		void Reset()
-		{
-			if constexpr(filler_value != -1)
-				buffer.fill(filler_value);
-		}
-
-		friend Base;
+		friend Internal::OutputCommonBase<DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value>>;
 	};
 	#endif
 
 	namespace Internal
 	{
-		template<typename T1, typename T2, unsigned int S1, unsigned int S2, int S3>
-		void ModuledDecompressionWrapper(DecompressorInput<T1> &input, DecompressorOutput<T2, S1, S2, S3> &output, void (* const decompression_function)(DecompressorInput<T1> &input, DecompressorOutput<T2, S1, S2, S3> &output), const std::size_t module_alignment)
+		template<typename T1, typename T2>
+		void ModuledDecompressionWrapper(DecompressorInput<T1> &input, T2 &output, void (* const decompression_function)(DecompressorInput<T1> &input, T2 &output), const std::size_t module_alignment)
 		{
 			const unsigned int header = input.ReadBE16();
 

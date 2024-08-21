@@ -108,6 +108,19 @@ namespace ClownLZSS
 
 				return bit;
 			}
+
+			unsigned int Pop(const unsigned int total_bits)
+			{
+				unsigned int value = 0;
+
+				for (unsigned int i = 0; i < total_bits; ++i)
+				{
+					value <<= 1;
+					value |= Pop();
+				}
+
+				return value;
+			}
 		};
 	}
 }

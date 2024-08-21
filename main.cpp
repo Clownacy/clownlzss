@@ -33,6 +33,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "decompressors/chameleon.h"
 #include "decompressors/comper.h"
+#include "decompressors/enigma.h"
 #include "decompressors/faxman.h"
 #include "decompressors/kosinski.h"
 #include "decompressors/kosinskiplus.h"
@@ -44,6 +45,7 @@ enum class Format
 {
 	CHAMELEON,
 	COMPER,
+	ENIGMA,
 	FAXMAN,
 	KOSINSKI,
 	KOSINSKIPLUS,
@@ -64,6 +66,7 @@ struct Mode
 static const auto modes = std::to_array<Mode>({
 	{"-ch", Format::CHAMELEON,        "out.cham", "out.chamm"},
 	{"-c",  Format::COMPER,           "out.comp", "out.compm"},
+	{"-e",  Format::ENIGMA,           "out.eni",  "out.enim" },
 	{"-f",  Format::FAXMAN,           "out.fax",  "out.faxm" },
 	{"-k",  Format::KOSINSKI,         "out.kos",  "out.kosm" },
 	{"-kp", Format::KOSINSKIPLUS,     "out.kosp", "out.kospm"},
@@ -85,6 +88,7 @@ static void PrintUsage(void)
 		" Format:\n"
 		"  -ch    Chameleon\n"
 		"  -c     Comper\n"
+		"  -e     Enigma\n"
 		"  -f     Faxman\n"
 		"  -k     Kosinski\n"
 		"  -kp    Kosinski+\n"
@@ -232,6 +236,13 @@ int main(int argc, char **argv)
 							ClownLZSS::ModuledComperDecompress(in_file, out_file);
 						else
 							ClownLZSS::ComperDecompress(in_file, out_file);
+						break;
+
+					case Format::ENIGMA:
+						if (moduled)
+							ClownLZSS::ModuledEnigmaDecompress(in_file, out_file);
+						else
+							ClownLZSS::EnigmaDecompress(in_file, out_file);
 						break;
 
 					case Format::FAXMAN:

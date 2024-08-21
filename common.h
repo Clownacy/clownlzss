@@ -90,8 +90,44 @@ namespace ClownLZSS
 			}
 		};
 
+		template<typename Derived>
+		class OutputCommonBase
+		{
+		protected:
+			void ResetImplementation()
+			{}
+
+		public:
+			OutputCommonBase()
+			{
+				Reset();
+			}
+
+			void Write(const unsigned char value)
+			{
+				static_cast<Derived*>(this)->WriteImplementation(value);
+			}
+
+			void WriteBE16(const unsigned int value)
+			{
+				Write(value >> 8);
+				Write(value & 0xFF);
+			}
+
+			void WriteLE16(const unsigned int value)
+			{
+				Write(value & 0xFF);
+				Write(value >> 8);
+			}
+
+			void Reset()
+			{
+				static_cast<Derived*>(this)->ResetImplementation();
+			}
+		};
+
 		template<typename T, typename Derived>
-		class OutputCommon
+		class OutputCommon : public OutputCommonBase<Derived>
 		{
 		public:
 			OutputCommon(T output);
@@ -99,9 +135,10 @@ namespace ClownLZSS
 
 		template<typename T, typename Derived>
 		requires Internal::random_access_input_output_iterator<std::decay_t<T>>
-		class OutputCommon<T, Derived> : public IOIteratorCommon<T>
+		class OutputCommon<T, Derived> : public OutputCommonBase<Derived>, public IOIteratorCommon<T>
 		{
 		protected:
+			using Base = OutputCommonBase<Derived>;
 			using Iterator = IOIteratorCommon<T>::Iterator;
 
 			using IOIteratorCommon<T>::iterator;
@@ -117,24 +154,24 @@ namespace ClownLZSS
 				: IOIteratorCommon<T>(iterator)
 			{}
 
-			void Write(const unsigned char value)
-			{
-				static_cast<Derived*>(this)->WriteImplementation(value);
-			}
-
 			void Fill(const unsigned char value, const unsigned int count)
 			{
+				// TODO: This should be calling Write?
 				std::fill_n(iterator, count, value);
 				iterator += count;
 			}
+
+			friend Base;
 		};
 
 		#if __STDC_HOSTED__
 		template<typename T, typename Derived>
 		requires std::is_convertible_v<T&, std::ostream&>
-		class OutputCommon<T, Derived>
+		class OutputCommon<T, Derived> : public OutputCommonBase<Derived>
 		{
 		protected:
+			using Base = OutputCommonBase<Derived>;
+
 			std::ostream &output;
 
 			void WriteImplementation(const unsigned char value)
@@ -150,15 +187,10 @@ namespace ClownLZSS
 				: output(output)
 			{}
 
-			void Write(const unsigned char value)
-			{
-				static_cast<Derived*>(this)->WriteImplementation(value);
-			}
-
 			void Fill(const unsigned char value, const unsigned int count)
 			{
 				for (unsigned int i = 0; i < count; ++i)
-					Write(value);
+					this->Write(value);
 			}
 
 			pos_type Tell() const
@@ -180,6 +212,8 @@ namespace ClownLZSS
 			{
 				return last - first;
 			}
+
+			friend Base;
 		};
 		#endif
 	}
