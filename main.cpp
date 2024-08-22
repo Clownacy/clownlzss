@@ -24,6 +24,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include "compressors/chameleon.h"
 #include "compressors/comper.h"
+#include "compressors/enigma.h"
 #include "compressors/faxman.h"
 #include "compressors/kosinski.h"
 #include "compressors/kosinskiplus.h"
@@ -314,6 +315,12 @@ int main(int argc, char **argv)
 								return ClownLZSS::ModuledComperCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
 							else
 								return ClownLZSS::ComperCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+						case Format::ENIGMA:
+							if (moduled)
+								return ClownLZSS::ModuledEnigmaCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+							else
+								return ClownLZSS::EnigmaCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::FAXMAN:
 							if (moduled)
