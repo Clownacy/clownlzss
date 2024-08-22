@@ -29,7 +29,7 @@ namespace ClownLZSS
 		namespace Rocket
 		{
 			template<typename T>
-			using BitFieldWriter = BitField::Writer<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::High, BitField::Endian::Big, T>;
+			using DescriptorFieldWriter = BitField::DescriptorFieldWriter<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::High, BitField::Endian::Big, T>;
 
 			inline std::size_t GetMatchCost([[maybe_unused]] const std::size_t distance, [[maybe_unused]] const std::size_t length, [[maybe_unused]] void* const user)
 			{
@@ -54,7 +54,7 @@ namespace ClownLZSS
 				// ...and insert a placeholder there.
 				output.WriteBE16(0);
 
-				BitFieldWriter descriptor_bits(output);
+				DescriptorFieldWriter descriptor_bits(output);
 
 				// Produce Rocket-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)

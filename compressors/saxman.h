@@ -30,7 +30,7 @@ namespace ClownLZSS
 		namespace Saxman
 		{
 			template<typename T>
-			using BitFieldWriter = BitField::Writer<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::High, BitField::Endian::Little, T>;
+			using DescriptorFieldWriter = BitField::DescriptorFieldWriter<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::High, BitField::Endian::Little, T>;
 
 			inline std::size_t GetMatchCost([[maybe_unused]] const std::size_t distance, [[maybe_unused]] const std::size_t length, [[maybe_unused]] void* const user)
 			{
@@ -71,7 +71,7 @@ namespace ClownLZSS
 				if (!ClownLZSS::FindOptimalMatches(-1, 0x12, 0x1000, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
-				BitFieldWriter descriptor_bits(output);
+				DescriptorFieldWriter descriptor_bits(output);
 
 				// Produce Saxman-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)

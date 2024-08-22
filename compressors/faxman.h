@@ -30,7 +30,7 @@ namespace ClownLZSS
 		namespace Faxman
 		{
 			template<typename T>
-			using BitFieldWriter = BitField::Writer<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::High, BitField::Endian::Little, T>;
+			using DescriptorFieldWriter = BitField::DescriptorFieldWriter<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::High, BitField::Endian::Little, T>;
 
 			inline std::size_t GetMatchCost(const std::size_t distance, const std::size_t length, [[maybe_unused]] void* const user)
 			{
@@ -86,7 +86,7 @@ namespace ClownLZSS
 				// ...and insert a placeholder there.
 				output.WriteLE16(0);
 
-				BitFieldWriter descriptor_bits(output);
+				DescriptorFieldWriter descriptor_bits(output);
 				unsigned int descriptor_bits_total = 0;
 
 				const auto PushDescriptorBit = [&](const bool value)

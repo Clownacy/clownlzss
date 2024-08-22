@@ -29,7 +29,7 @@ namespace ClownLZSS
 		namespace Comper
 		{
 			template<typename T>
-			using BitFieldWriter = BitField::Writer<2, BitField::WriteWhen::BeforePush, BitField::PushWhere::Low, BitField::Endian::Big, T>;
+			using DescriptorFieldWriter = BitField::DescriptorFieldWriter<2, BitField::WriteWhen::BeforePush, BitField::PushWhere::Low, BitField::Endian::Big, T>;
 
 			inline std::size_t GetMatchCost([[maybe_unused]] const std::size_t distance, [[maybe_unused]] const std::size_t length, [[maybe_unused]] void* const user)
 			{
@@ -51,7 +51,7 @@ namespace ClownLZSS
 				if (!ClownLZSS::FindOptimalMatches(-1, 0x100, 0x100, nullptr, 1 + 16, GetMatchCost, data, bytes_per_value, data_size / bytes_per_value, &matches, &total_matches, nullptr))
 					return false;
 
-				BitFieldWriter descriptor_bits(output);
+				DescriptorFieldWriter descriptor_bits(output);
 
 				// Produce Comper-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)

@@ -29,7 +29,7 @@ namespace ClownLZSS
 		namespace KosinskiPlus
 		{
 			template<typename T>
-			using BitFieldWriter = BitField::Writer<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::Low, BitField::Endian::Big, T>;
+			using DescriptorFieldWriter = BitField::DescriptorFieldWriter<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::Low, BitField::Endian::Big, T>;
 
 			inline std::size_t GetMatchCost(const std::size_t distance, const std::size_t length, [[maybe_unused]] void* const user)
 			{
@@ -52,7 +52,7 @@ namespace ClownLZSS
 				if (!ClownLZSS::FindOptimalMatches(-1, 0x100 + 8, 0x2000, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
-				BitFieldWriter descriptor_bits(output);
+				DescriptorFieldWriter descriptor_bits(output);
 
 				// Produce Kosinski+-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)

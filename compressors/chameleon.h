@@ -59,59 +59,61 @@ namespace ClownLZSS
 				/* ...and insert a placeholder there. */
 				output.WriteBE16(0);
 
-				BitFieldWriter descriptor_bits(output);
-
-				/* Produce Chameleon-formatted data. */
-				/* Unlike many other LZSS formats, Chameleon stores the descriptor fields separately from the rest of the data. */
-				/* Iterate over the compression matches, outputting just the descriptor fields. */
-				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
 				{
-					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
-					{
-						descriptor_bits.Push(1);
-					}
-					else
-					{
-						const std::size_t distance = match->destination - match->source;
-						const std::size_t length = match->length;
+					BitFieldWriter descriptor_bits(output);
 
-						if (length >= 2 && length <= 3 && distance < 0x100)
+					/* Produce Chameleon-formatted data. */
+					/* Unlike many other LZSS formats, Chameleon stores the descriptor fields separately from the rest of the data. */
+					/* Iterate over the compression matches, outputting just the descriptor fields. */
+					for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
+					{
+						if (CLOWNLZSS_MATCH_IS_LITERAL(match))
 						{
-							descriptor_bits.Push(0);
-							descriptor_bits.Push(0);
-							descriptor_bits.Push(length == 3);
+							descriptor_bits.Push(1);
 						}
-						else if (length >= 3 && length <= 5)
+						else
 						{
-							descriptor_bits.Push(0);
-							descriptor_bits.Push(1);
-							descriptor_bits.Push(!!(distance & (1 << 10)));
-							descriptor_bits.Push(!!(distance & (1 << 9)));
-							descriptor_bits.Push(!!(distance & (1 << 8)));
-							descriptor_bits.Push(length == 5);
-							descriptor_bits.Push(length == 4);
-						}
-						else /*if (length >= 6)*/
-						{
-							descriptor_bits.Push(0);
-							descriptor_bits.Push(1);
-							descriptor_bits.Push(!!(distance & (1 << 10)));
-							descriptor_bits.Push(!!(distance & (1 << 9)));
-							descriptor_bits.Push(!!(distance & (1 << 8)));
-							descriptor_bits.Push(1);
-							descriptor_bits.Push(1);
+							const std::size_t distance = match->destination - match->source;
+							const std::size_t length = match->length;
+
+							if (length >= 2 && length <= 3 && distance < 0x100)
+							{
+								descriptor_bits.Push(0);
+								descriptor_bits.Push(0);
+								descriptor_bits.Push(length == 3);
+							}
+							else if (length >= 3 && length <= 5)
+							{
+								descriptor_bits.Push(0);
+								descriptor_bits.Push(1);
+								descriptor_bits.Push(!!(distance & (1 << 10)));
+								descriptor_bits.Push(!!(distance & (1 << 9)));
+								descriptor_bits.Push(!!(distance & (1 << 8)));
+								descriptor_bits.Push(length == 5);
+								descriptor_bits.Push(length == 4);
+							}
+							else /*if (length >= 6)*/
+							{
+								descriptor_bits.Push(0);
+								descriptor_bits.Push(1);
+								descriptor_bits.Push(!!(distance & (1 << 10)));
+								descriptor_bits.Push(!!(distance & (1 << 9)));
+								descriptor_bits.Push(!!(distance & (1 << 8)));
+								descriptor_bits.Push(1);
+								descriptor_bits.Push(1);
+							}
 						}
 					}
+
+					/* Add the terminator match. */
+					descriptor_bits.Push(0);
+					descriptor_bits.Push(1);
+					descriptor_bits.Push(0);
+					descriptor_bits.Push(0);
+					descriptor_bits.Push(0);
+					descriptor_bits.Push(1);
+					descriptor_bits.Push(1);
 				}
-
-				/* Add the terminator match. */
-				descriptor_bits.Push(0);
-				descriptor_bits.Push(1);
-				descriptor_bits.Push(0);
-				descriptor_bits.Push(0);
-				descriptor_bits.Push(0);
-				descriptor_bits.Push(1);
-				descriptor_bits.Push(1);
 
 				/* Chameleon's header contains the size of the descriptor fields, so, now that we know that, let's fill it in. */
 				const auto current_position = output.Tell();

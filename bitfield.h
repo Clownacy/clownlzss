@@ -137,17 +137,16 @@ namespace ClownLZSS
 				}
 			};
 
-			template<unsigned int total_bytes, WriteWhen write_when, PushWhere push_where, Endian endian, typename Output>
-			class Writer
+			template<unsigned int total_bytes, WriteWhen write_when, PushWhere push_where, Endian endian, typename Output, typename Derived>
+			class WriterBase
 			{
-			private:
+			protected:
 				static constexpr unsigned int total_bits = total_bytes * 8;
 
 				Output &output;
-				typename std::remove_cvref_t<Output>::pos_type descriptor_position;
-				unsigned int bits = 0, bits_remaining;
+				unsigned int bits = 0, bits_remaining = total_bits;
 
-				void WriteBits()
+				void WriteBitsImplementation()
 				{
 					for (unsigned int i = 0; i < total_bytes; ++i)
 					{
@@ -160,52 +159,36 @@ namespace ClownLZSS
 
 						output.Write((bits >> (shift * 8)) & 0xFF);
 					}
-				}
 
-				void BeginDescriptorField()
-				{
 					bits_remaining = total_bits;
-
-					// Log the placement of the descriptor field.
-					descriptor_position = output.Tell();
-
-					// Insert a placeholder.
-					output.Fill(0, total_bytes);
 				}
 
-				void FinishDescriptorField()
+				void WriteBits()
 				{
-					// Back up current position.
-					const auto current_position = output.Tell();
-
-					// Go back to the descriptor field.
-					output.Seek(descriptor_position);
-
-					// Write the complete descriptor field.
-					WriteBits();
-
-					// Seek back to where we were before.
-					output.Seek(current_position);
+					static_cast<Derived*>(this)->WriteBitsImplementation();
 				}
 
-			public:
-				Writer(Output &output)
-					: output(output)
-				{
-					BeginDescriptorField();
-				}
-
-				~Writer()
+				void Flush()
 				{
 					if (bits_remaining != total_bits)
 					{
 						if constexpr(push_where == PushWhere::High)
 							bits >>= bits_remaining;
-						else if constexpr(push_where == PushWhere::Low)
+						else //if constexpr(push_where == PushWhere::Low)
 							bits <<= bits_remaining;
 
-						FinishDescriptorField();
+						WriteBitsImplementation();
 					}
+				}
+
+			public:
+				WriterBase(Output &output)
+					: output(output)
+				{}
+
+				~WriterBase()
+				{
+					Flush();
 				}
 
 				void Push(const bool bit)
@@ -214,8 +197,7 @@ namespace ClownLZSS
 					{
 						if (bits_remaining == 0)
 						{
-							FinishDescriptorField();
-							BeginDescriptorField();
+							WriteBits();
 						}
 					};
 
@@ -227,7 +209,7 @@ namespace ClownLZSS
 						bits >>= 1;
 						bits |= bit << (total_bits - 1);
 					}
-					else if constexpr(push_where == PushWhere::Low)
+					else //if constexpr(push_where == PushWhere::Low)
 					{
 						bits <<= 1;
 						bits |= bit;
@@ -244,6 +226,71 @@ namespace ClownLZSS
 					for (unsigned int i = 0; i < total_bits; ++i)
 						Push((value & 1 << (total_bits - i - 1)) != 0);
 				}
+			};
+
+			template<unsigned int total_bytes, WriteWhen write_when, PushWhere push_where, Endian endian, typename Output>
+			class Writer : public WriterBase<total_bytes, write_when, push_where, endian, Output, Writer<total_bytes, write_when, push_where, endian, Output>>
+			{
+			public:
+				Writer(Output &output)
+					: WriterBase<total_bytes, write_when, push_where, endian, Output, Writer<total_bytes, write_when, push_where, endian, Output>>::WriterBase(output)
+				{}
+			};
+
+			template<unsigned int total_bytes, WriteWhen write_when, PushWhere push_where, Endian endian, typename Output>
+			class DescriptorFieldWriter : public WriterBase<total_bytes, write_when, push_where, endian, Output, DescriptorFieldWriter<total_bytes, write_when, push_where, endian, Output>>
+			{
+			protected:
+				using Base = WriterBase<total_bytes, write_when, push_where, endian, Output, DescriptorFieldWriter<total_bytes, write_when, push_where, endian, Output>>;
+
+				using Base::output;
+
+				typename std::remove_cvref_t<Output>::pos_type descriptor_position;
+
+				void Begin()
+				{
+					// Log the placement of the descriptor field.
+					descriptor_position = output.Tell();
+
+					// Insert a placeholder.
+					output.Fill(0, total_bytes);
+				}
+
+				template<typename T>
+				void Finish(T &&function)
+				{
+					// Back up current position.
+					const auto current_position = output.Tell();
+
+					// Go back to the descriptor field.
+					output.Seek(descriptor_position);
+
+					// Write the complete descriptor field.
+					function();
+
+					// Seek back to where we were before.
+					output.Seek(current_position);
+				}
+
+				void WriteBitsImplementation()
+				{
+					Finish([this](){Base::WriteBitsImplementation();});
+					Begin();
+				}
+
+			public:
+				DescriptorFieldWriter(Output &output)
+					: Base::WriterBase(output)
+				{
+					Begin();
+				}
+
+				~DescriptorFieldWriter()
+				{
+					Finish([this](){Base::Flush();});
+				}
+
+				friend Base;
 			};
 		}
 	}
