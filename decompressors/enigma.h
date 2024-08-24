@@ -77,9 +77,11 @@ namespace ClownLZSS
 					{
 						case 0:
 							for (unsigned int i = 0; i < count; ++i)
+							{
 								output.WriteBE16(incremental_copy_word);
+								++incremental_copy_word;
+							}
 
-							++incremental_copy_word;
 							break;
 
 						case 1:
