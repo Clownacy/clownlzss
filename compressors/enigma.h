@@ -147,7 +147,7 @@ namespace ClownLZSS
 				output.WriteBE16(special_values->lowest);
 				output.WriteBE16(special_values->most_common);
 
-				BitFieldWriter bits(output);
+				BitFieldWriter<decltype(output)> bits(output);
 
 				const unsigned char* const input_end = data + data_size;
 

@@ -71,7 +71,7 @@ namespace ClownLZSS
 				if (!ClownLZSS::FindOptimalMatches(-1, 0x12, 0x1000, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
-				DescriptorFieldWriter descriptor_bits(output);
+				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
 
 				// Produce Saxman-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)

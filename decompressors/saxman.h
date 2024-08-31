@@ -39,7 +39,7 @@ namespace ClownLZSS
 				const auto input_start_position = input.Tell();
 				const auto output_start_position = output.Tell();
 
-				BitField descriptor_bits(input);
+				BitField<decltype(input)> descriptor_bits(input);
 
 				while (input.Distance(input_start_position) < compressed_length)
 				{
@@ -77,7 +77,7 @@ namespace ClownLZSS
 			{
 				const unsigned int compressed_length = input.ReadLE16();
 
-				SaxmanDecompress(input, output, compressed_length);
+				Decompress(input, output, compressed_length);
 			}
 		}
 	}
@@ -88,7 +88,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Saxman::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Saxman::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		Saxman::Decompress(input_wrapped, output_wrapped, compressed_length);
 	}
 
@@ -98,7 +98,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Saxman::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Saxman::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		Saxman::Decompress(input_wrapped, output_wrapped);
 	}
 
@@ -114,7 +114,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Saxman::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Saxman::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Saxman::Decompress, 2);
 	}
 }

@@ -54,7 +54,7 @@ namespace ClownLZSS
 				// ...and insert a placeholder there.
 				output.WriteBE16(0);
 
-				DescriptorFieldWriter descriptor_bits(output);
+				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
 
 				// Produce Rocket-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)

@@ -46,7 +46,7 @@ namespace ClownLZSS
 			template<typename T1, typename T2>
 			void Decompress(DecompressorInput<T1> &input, DecompressorOutput<T2> &output)
 			{
-				BitField descriptor_bits(input);
+				BitField<decltype(input)> descriptor_bits(input);
 
 				for (;;)
 				{
@@ -80,7 +80,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Comper::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Comper::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		Comper::Decompress(input_wrapped, output_wrapped);
 	}
 
@@ -90,7 +90,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Comper::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Comper::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Comper::Decompress, 2);
 	}
 }

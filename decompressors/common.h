@@ -261,7 +261,7 @@ namespace ClownLZSS
 		}
 
 	public:
-		using Base::OutputCommon;
+		using Base::Base;
 
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
@@ -320,7 +320,7 @@ namespace ClownLZSS
 		}
 
 	public:
-		using Base::OutputCommon;
+		using Base::Base;
 
 		void Copy(const unsigned int distance, const unsigned int count)
 		{

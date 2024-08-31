@@ -51,7 +51,7 @@ namespace ClownLZSS
 				if (!ClownLZSS::FindOptimalMatches(-1, 0x100, 0x100, nullptr, 1 + 16, GetMatchCost, data, bytes_per_value, data_size / bytes_per_value, &matches, &total_matches, nullptr))
 					return false;
 
-				DescriptorFieldWriter descriptor_bits(output);
+				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
 
 				// Produce Comper-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)

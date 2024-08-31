@@ -40,7 +40,7 @@ namespace ClownLZSS
 
 				unsigned int descriptor_bits_remaining = input.ReadLE16();
 
-				BitField descriptor_bits(input);
+				BitField<decltype(input)> descriptor_bits(input);
 
 				const auto PopDescriptorBit = [&]()
 				{
@@ -103,7 +103,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Faxman::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Faxman::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		Faxman::Decompress(input_wrapped, output_wrapped);
 	}
 
@@ -119,7 +119,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Faxman::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Faxman::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Faxman::Decompress, 2);
 	}
 }

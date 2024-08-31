@@ -60,7 +60,7 @@ namespace ClownLZSS
 				output.WriteBE16(0);
 
 				{
-					BitFieldWriter descriptor_bits(output);
+					BitFieldWriter<decltype(output)> descriptor_bits(output);
 
 					/* Produce Chameleon-formatted data. */
 					/* Unlike many other LZSS formats, Chameleon stores the descriptor fields separately from the rest of the data. */

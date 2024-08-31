@@ -40,7 +40,7 @@ namespace ClownLZSS
 				auto descriptor_input = input.MakeSeparate();
 				input += offset;
 
-				BitField descriptor_bits(descriptor_input);
+				BitField<decltype(descriptor_input)> descriptor_bits(descriptor_input);
 
 				for (;;)
 				{
@@ -102,7 +102,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Chameleon::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Chameleon::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		Chameleon::Decompress(input_wrapped, output_wrapped);
 	}
 
@@ -112,7 +112,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Chameleon::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Chameleon::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Chameleon::Decompress, 2);
 	}
 }

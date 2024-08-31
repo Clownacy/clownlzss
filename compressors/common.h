@@ -43,7 +43,7 @@ namespace ClownLZSS
 		using Base = Internal::OutputCommon<T, CompressorOutput<T>>;
 
 	public:
-		using Base::OutputCommon;
+		using Base::Base;
 	};
 
 	#if __STDC_HOSTED__
@@ -55,7 +55,7 @@ namespace ClownLZSS
 		using Base = Internal::OutputCommon<T, CompressorOutput<T>>;
 
 	public:
-		using Base::OutputCommon;
+		using Base::Base;
 	};
 	#endif
 

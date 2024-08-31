@@ -86,7 +86,7 @@ namespace ClownLZSS
 				// ...and insert a placeholder there.
 				output.WriteLE16(0);
 
-				DescriptorFieldWriter descriptor_bits(output);
+				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
 				unsigned int descriptor_bits_total = 0;
 
 				const auto PushDescriptorBit = [&](const bool value)

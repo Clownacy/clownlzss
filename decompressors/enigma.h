@@ -42,7 +42,7 @@ namespace ClownLZSS
 				unsigned int incremental_copy_word = input.ReadBE16();
 				const unsigned int literal_copy_word = input.ReadBE16();
 
-				BitField input_bits(input);
+				BitField<decltype(input)> input_bits(input);
 
 				for (;;)
 				{
@@ -143,7 +143,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Enigma::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Enigma::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		Enigma::Decompress(input_wrapped, output_wrapped);
 	}
 
@@ -153,7 +153,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Enigma::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Enigma::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Enigma::Decompress, 2);
 	}
 }

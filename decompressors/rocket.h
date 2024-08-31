@@ -42,7 +42,7 @@ namespace ClownLZSS
 				const auto input_start_position = input.Tell();
 				const auto output_start_position = output.Tell();
 
-				BitField descriptor_bits(input);
+				BitField<decltype(input)> descriptor_bits(input);
 
 				while (input.Distance(input_start_position) < compressed_size)
 				{
@@ -77,7 +77,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Rocket::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Rocket::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		Rocket::Decompress(input_wrapped, output_wrapped);
 	}
 
@@ -87,7 +87,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Rocket::DecompressorOutput output_wrapped(std::forward<T2>(output));
+		Rocket::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
 		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Rocket::Decompress, 2);
 	}
 }

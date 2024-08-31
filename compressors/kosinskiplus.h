@@ -52,7 +52,7 @@ namespace ClownLZSS
 				if (!ClownLZSS::FindOptimalMatches(-1, 0x100 + 8, 0x2000, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
 					return false;
 
-				DescriptorFieldWriter descriptor_bits(output);
+				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
 
 				// Produce Kosinski+-formatted data.
 				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
