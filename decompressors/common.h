@@ -281,6 +281,8 @@ namespace ClownLZSS
 
 			iterator += count;
 		}
+
+		friend Base::Base;
 	};
 
 	#if __STDC_HOSTED__
@@ -333,7 +335,7 @@ namespace ClownLZSS
 			output.write(&buffer[destination_index], count);
 		}
 
-		friend Internal::OutputCommonBase<DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value>>;
+		friend Base::Base;
 	};
 	#endif
 
