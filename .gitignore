@@ -4,3 +4,6 @@
 # Makefile output
 /clownlzss
 /clownlzss.exe
+
+# Qt Creator
+CMakeLists.txt.user

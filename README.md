@@ -27,6 +27,9 @@ Formats supported by the supplied utilities include:
   ground up with a focus on decompression speed on the Motorola 68000. This
   comes at a significant cost to compression ratio
 
+- GBA BIOS - LZSS compression as implemented in the Gameboy Advance BIOS.
+  Both normal and VRAM safe mode are supported.
+
 clownlzss utilises graph theory to perform optimal compression: naive "greedy
 algorithm" compressors prefer to compress the longest runs possible, but this
 does not guarantee the best compression ratio. Graph-based compressors resolve

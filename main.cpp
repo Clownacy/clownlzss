@@ -26,6 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "compressors/comper.h"
 #include "compressors/enigma.h"
 #include "compressors/faxman.h"
+#include "compressors/gba.h"
 #include "compressors/kosinski.h"
 #include "compressors/kosinskiplus.h"
 #include "compressors/rage.h"
@@ -36,6 +37,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "decompressors/comper.h"
 #include "decompressors/enigma.h"
 #include "decompressors/faxman.h"
+#include "decompressors/gba.h"
 #include "decompressors/kosinski.h"
 #include "decompressors/kosinskiplus.h"
 #include "decompressors/rage.h"
@@ -48,6 +50,8 @@ enum class Format
 	COMPER,
 	ENIGMA,
 	FAXMAN,
+	GBA,
+	GBA_VRAM_SAFE,
 	KOSINSKI,
 	KOSINSKIPLUS,
 	RAGE,
@@ -69,6 +73,8 @@ static const auto modes = std::to_array<Mode>({
 	{"-c",  Format::COMPER,           "out.comp", "out.compm"},
 	{"-e",  Format::ENIGMA,           "out.eni",  "out.enim" },
 	{"-f",  Format::FAXMAN,           "out.fax",  "out.faxm" },
+	{"-g",  Format::GBA,              "out.gba",  "out.gbam" },
+	{"-gv", Format::GBA_VRAM_SAFE,    "out.gba",  "out.gbam" },
 	{"-k",  Format::KOSINSKI,         "out.kos",  "out.kosm" },
 	{"-kp", Format::KOSINSKIPLUS,     "out.kosp", "out.kospm"},
 	{"-ra", Format::RAGE,             "out.rage", "out.ragem"},
@@ -91,6 +97,8 @@ static void PrintUsage(void)
 		"  -c     Comper\n"
 		"  -e     Enigma\n"
 		"  -f     Faxman\n"
+		"  -g     GBA BIOS\n"
+		"  -gv    GBA BIOS (VRAM safe)\n"
 		"  -k     Kosinski\n"
 		"  -kp    Kosinski+\n"
 		"  -ra    Rage\n"
@@ -253,6 +261,14 @@ int main(int argc, char **argv)
 							ClownLZSS::FaxmanDecompress(in_file, out_file);
 						break;
 
+					case Format::GBA:
+					case Format::GBA_VRAM_SAFE:
+						if (moduled)
+							ClownLZSS::ModuledGbaDecompress(in_file, out_file);
+						else
+							ClownLZSS::GbaDecompress(in_file, out_file);
+						break;
+
 					case Format::KOSINSKI:
 						if (moduled)
 							ClownLZSS::ModuledKosinskiDecompress(in_file, out_file);
@@ -294,6 +310,7 @@ int main(int argc, char **argv)
 						else
 							ClownLZSS::SaxmanDecompress(in_file, out_file, std::filesystem::file_size(in_filename));
 						break;
+
 				}
 			}
 			else
@@ -327,6 +344,18 @@ int main(int argc, char **argv)
 								return ClownLZSS::ModuledFaxmanCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
 							else
 								return ClownLZSS::FaxmanCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+						case Format::GBA:
+							if (moduled)
+								return ClownLZSS::ModuledGbaCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+							else
+								return ClownLZSS::GbaCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+						case Format::GBA_VRAM_SAFE:
+							if (moduled)
+								return ClownLZSS::ModuledGbaVramSafeCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+							else
+								return ClownLZSS::GbaVramSafeCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 						case Format::KOSINSKI:
 							if (moduled)
