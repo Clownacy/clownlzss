@@ -51,6 +51,7 @@ set_target_properties(clownlzss-tool PROPERTIES
 )
 
 target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-comper clownlzss-faxman clownlzss-kosinski clownlzss-kosinskiplus clownlzss-rage clownlzss-rocket clownlzss-saxman)
+install(TARGETS clownlzss-tool DESTINATION bin)
 
 
 #########
