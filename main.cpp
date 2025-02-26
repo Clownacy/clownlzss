@@ -213,166 +213,174 @@ int main(int argc, char **argv)
 			if (out_filename.empty())
 				out_filename = moduled ? mode->moduled_default_filename : mode->normal_default_filename;
 
-			std::ofstream out_file;
-			out_file.exceptions(out_file.badbit | out_file.eofbit | out_file.failbit);
-			out_file.open(out_filename, decompress ? out_file.trunc | out_file.in | out_file.out | out_file.binary : out_file.out | out_file.binary);
-
-			if (decompress)
+			try
 			{
-				std::ifstream in_file;
-				in_file.exceptions(in_file.badbit | in_file.eofbit | in_file.failbit);
-				in_file.open(in_filename, in_file.in | in_file.binary);
+				std::ofstream out_file;
+				out_file.exceptions(out_file.badbit | out_file.eofbit | out_file.failbit);
+				out_file.open(out_filename, decompress ? out_file.trunc | out_file.in | out_file.out | out_file.binary : out_file.out | out_file.binary);
 
-				switch (mode->format)
+				if (decompress)
 				{
-					case Format::CHAMELEON:
-						if (moduled)
-							ClownLZSS::ModuledChameleonDecompress(in_file, out_file);
-						else
-							ClownLZSS::ChameleonDecompress(in_file, out_file);
-						break;
-
-					case Format::COMPER:
-						if (moduled)
-							ClownLZSS::ModuledComperDecompress(in_file, out_file);
-						else
-							ClownLZSS::ComperDecompress(in_file, out_file);
-						break;
-
-					case Format::ENIGMA:
-						if (moduled)
-							ClownLZSS::ModuledEnigmaDecompress(in_file, out_file);
-						else
-							ClownLZSS::EnigmaDecompress(in_file, out_file);
-						break;
-
-					case Format::FAXMAN:
-						if (moduled)
-							ClownLZSS::ModuledFaxmanDecompress(in_file, out_file);
-						else
-							ClownLZSS::FaxmanDecompress(in_file, out_file);
-						break;
-
-					case Format::KOSINSKI:
-						if (moduled)
-							ClownLZSS::ModuledKosinskiDecompress(in_file, out_file);
-						else
-							ClownLZSS::KosinskiDecompress(in_file, out_file);
-						break;
-
-					case Format::KOSINSKIPLUS:
-						if (moduled)
-							ClownLZSS::ModuledKosinskiPlusDecompress(in_file, out_file);
-						else
-							ClownLZSS::KosinskiPlusDecompress(in_file, out_file);
-						break;
-
-					case Format::RAGE:
-						if (moduled)
-							ClownLZSS::ModuledRageDecompress(in_file, out_file);
-						else
-							ClownLZSS::RageDecompress(in_file, out_file);
-						break;
-
-					case Format::ROCKET:
-						if (moduled)
-							ClownLZSS::ModuledRocketDecompress(in_file, out_file);
-						else
-							ClownLZSS::RocketDecompress(in_file, out_file);
-						break;
-
-					case Format::SAXMAN:
-						if (moduled)
-							ClownLZSS::ModuledSaxmanDecompress(in_file, out_file);
-						else
-							ClownLZSS::SaxmanDecompress(in_file, out_file);
-						break;
-
-					case Format::SAXMAN_NO_HEADER:
-						if (moduled)
-							ClownLZSS::ModuledSaxmanDecompress(in_file, out_file);
-						else
-							ClownLZSS::SaxmanDecompress(in_file, out_file, std::filesystem::file_size(in_filename));
-						break;
-				}
-			}
-			else
-			{
-				const bool success = [&]() -> bool
-				{
-					const auto file_buffer = FileToBuffer(in_filename);
+					std::ifstream in_file;
+					in_file.exceptions(in_file.badbit | in_file.eofbit | in_file.failbit);
+					in_file.open(in_filename, in_file.in | in_file.binary);
 
 					switch (mode->format)
 					{
 						case Format::CHAMELEON:
 							if (moduled)
-								return ClownLZSS::ModuledChameleonCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								ClownLZSS::ModuledChameleonDecompress(in_file, out_file);
 							else
-								return ClownLZSS::ChameleonCompress(file_buffer.data(), file_buffer.size(), out_file);
+								ClownLZSS::ChameleonDecompress(in_file, out_file);
+							break;
 
 						case Format::COMPER:
 							if (moduled)
-								return ClownLZSS::ModuledComperCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								ClownLZSS::ModuledComperDecompress(in_file, out_file);
 							else
-								return ClownLZSS::ComperCompress(file_buffer.data(), file_buffer.size(), out_file);
+								ClownLZSS::ComperDecompress(in_file, out_file);
+							break;
 
 						case Format::ENIGMA:
 							if (moduled)
-								return ClownLZSS::ModuledEnigmaCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								ClownLZSS::ModuledEnigmaDecompress(in_file, out_file);
 							else
-								return ClownLZSS::EnigmaCompress(file_buffer.data(), file_buffer.size(), out_file);
+								ClownLZSS::EnigmaDecompress(in_file, out_file);
+							break;
 
 						case Format::FAXMAN:
 							if (moduled)
-								return ClownLZSS::ModuledFaxmanCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								ClownLZSS::ModuledFaxmanDecompress(in_file, out_file);
 							else
-								return ClownLZSS::FaxmanCompress(file_buffer.data(), file_buffer.size(), out_file);
+								ClownLZSS::FaxmanDecompress(in_file, out_file);
+							break;
 
 						case Format::KOSINSKI:
 							if (moduled)
-								return ClownLZSS::ModuledKosinskiCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								ClownLZSS::ModuledKosinskiDecompress(in_file, out_file);
 							else
-								return ClownLZSS::KosinskiCompress(file_buffer.data(), file_buffer.size(), out_file);
+								ClownLZSS::KosinskiDecompress(in_file, out_file);
+							break;
 
 						case Format::KOSINSKIPLUS:
 							if (moduled)
-								return ClownLZSS::ModuledKosinskiPlusCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								ClownLZSS::ModuledKosinskiPlusDecompress(in_file, out_file);
 							else
-								return ClownLZSS::KosinskiPlusCompress(file_buffer.data(), file_buffer.size(), out_file);
+								ClownLZSS::KosinskiPlusDecompress(in_file, out_file);
+							break;
 
 						case Format::RAGE:
 							if (moduled)
-								return ClownLZSS::ModuledRageCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								ClownLZSS::ModuledRageDecompress(in_file, out_file);
 							else
-								return ClownLZSS::RageCompress(file_buffer.data(), file_buffer.size(), out_file);
+								ClownLZSS::RageDecompress(in_file, out_file);
+							break;
 
 						case Format::ROCKET:
 							if (moduled)
-								return ClownLZSS::ModuledRocketCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								ClownLZSS::ModuledRocketDecompress(in_file, out_file);
 							else
-								return ClownLZSS::RocketCompress(file_buffer.data(), file_buffer.size(), out_file);
+								ClownLZSS::RocketDecompress(in_file, out_file);
+							break;
 
 						case Format::SAXMAN:
 							if (moduled)
-								return ClownLZSS::ModuledSaxmanCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								ClownLZSS::ModuledSaxmanDecompress(in_file, out_file);
 							else
-								return ClownLZSS::SaxmanCompressWithHeader(file_buffer.data(), file_buffer.size(), out_file);
+								ClownLZSS::SaxmanDecompress(in_file, out_file);
+							break;
 
 						case Format::SAXMAN_NO_HEADER:
 							if (moduled)
-								return ClownLZSS::ModuledSaxmanCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								ClownLZSS::ModuledSaxmanDecompress(in_file, out_file);
 							else
-								return ClownLZSS::SaxmanCompressWithoutHeader(file_buffer.data(), file_buffer.size(), out_file);
+								ClownLZSS::SaxmanDecompress(in_file, out_file, std::filesystem::file_size(in_filename));
+							break;
 					}
-
-					return false;
-				}();
-
-				if (!success)
-				{
-					exit_code = EXIT_FAILURE;
-					std::cerr << "Error: File could not be compressed\n";
 				}
+				else
+				{
+					const bool success = [&]() -> bool
+					{
+						const auto file_buffer = FileToBuffer(in_filename);
+
+						switch (mode->format)
+						{
+							case Format::CHAMELEON:
+								if (moduled)
+									return ClownLZSS::ModuledChameleonCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::ChameleonCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+							case Format::COMPER:
+								if (moduled)
+									return ClownLZSS::ModuledComperCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::ComperCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+							case Format::ENIGMA:
+								if (moduled)
+									return ClownLZSS::ModuledEnigmaCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::EnigmaCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+							case Format::FAXMAN:
+								if (moduled)
+									return ClownLZSS::ModuledFaxmanCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::FaxmanCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+							case Format::KOSINSKI:
+								if (moduled)
+									return ClownLZSS::ModuledKosinskiCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::KosinskiCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+							case Format::KOSINSKIPLUS:
+								if (moduled)
+									return ClownLZSS::ModuledKosinskiPlusCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::KosinskiPlusCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+							case Format::RAGE:
+								if (moduled)
+									return ClownLZSS::ModuledRageCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::RageCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+							case Format::ROCKET:
+								if (moduled)
+									return ClownLZSS::ModuledRocketCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::RocketCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+							case Format::SAXMAN:
+								if (moduled)
+									return ClownLZSS::ModuledSaxmanCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::SaxmanCompressWithHeader(file_buffer.data(), file_buffer.size(), out_file);
+
+							case Format::SAXMAN_NO_HEADER:
+								if (moduled)
+									return ClownLZSS::ModuledSaxmanCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::SaxmanCompressWithoutHeader(file_buffer.data(), file_buffer.size(), out_file);
+						}
+
+						return false;
+					}();
+
+					if (!success)
+					{
+						exit_code = EXIT_FAILURE;
+						std::cerr << "Error: File could not be compressed\n";
+					}
+				}
+			}
+			catch (const std::ios_base::failure& fail)
+			{
+				exit_code = EXIT_FAILURE;
+				std::cerr << "Error: File IO failure with description '" << fail.what() << "'\n";
 			}
 		}
 	}
