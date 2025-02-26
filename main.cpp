@@ -264,16 +264,11 @@ int main(int argc, char **argv)
 							break;
 
 						case Format::GBA:
-							if (moduled)
-								return ClownLZSS::ModuledGbaCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
-							else
-								return ClownLZSS::GbaCompress(file_buffer.data(), file_buffer.size(), out_file);
-
 						case Format::GBA_VRAM_SAFE:
 							if (moduled)
-								return ClownLZSS::ModuledGbaVramSafeCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								ClownLZSS::ModuledGbaDecompress(in_file, out_file);
 							else
-								return ClownLZSS::GbaVramSafeCompress(file_buffer.data(), file_buffer.size(), out_file);
+								ClownLZSS::GbaDecompress(in_file, out_file);
 
 						case Format::KOSINSKI:
 							if (moduled)
@@ -349,6 +344,18 @@ int main(int argc, char **argv)
 									return ClownLZSS::ModuledFaxmanCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
 								else
 									return ClownLZSS::FaxmanCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+							case Format::GBA:
+								if (moduled)
+									return ClownLZSS::ModuledGbaCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::GbaCompress(file_buffer.data(), file_buffer.size(), out_file);
+
+							case Format::GBA_VRAM_SAFE:
+								if (moduled)
+									return ClownLZSS::ModuledGbaVramSafeCompress(file_buffer.data(), file_buffer.size(), out_file, module_size);
+								else
+									return ClownLZSS::GbaVramSafeCompress(file_buffer.data(), file_buffer.size(), out_file);
 
 							case Format::KOSINSKI:
 								if (moduled)

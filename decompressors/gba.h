@@ -30,12 +30,8 @@ namespace ClownLZSS
 				inline constexpr auto maximum_match_length = 18;
 				inline constexpr auto minimum_match_distance = 1;
 				inline constexpr auto maximum_match_distance = 0x1000;
-
-				// Not sure what the right value for module_alignment should be.
-				// The GBA BIOS processes things in 32 bit chunks, so it requires modules to be 4-byte aligned.
-				// A moduled file however has a 2 byte header followed by the modules.
-				// Due to the way ModuledCompressionWrapper is written, the modules are never 4-byte aligned.
-				constexpr auto module_alignment = 4;
+				inline constexpr auto module_header_size = 4;
+				inline constexpr auto module_alignment = 4;
 			}
 
 			template<typename T>
@@ -103,7 +99,7 @@ namespace ClownLZSS
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
 		Gba::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
-		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Gba::Decompress, Gba::Decompressor::module_alignment);
+		ModuledDecompressionWrapper<Gba::Decompressor::module_header_size, Endian::Little>(input_wrapped, output_wrapped, Gba::Decompress, Gba::Decompressor::module_alignment);
 	}
 }
 

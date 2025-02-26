@@ -43,12 +43,8 @@ namespace ClownLZSS
 				inline constexpr auto bytes_per_value = 1;
 				inline constexpr auto maximum_encoded_length = 0xfu;
 				inline constexpr auto maximum_encoded_offset = 0xfffu;
-
-				// Not sure what the right value for module_alignment should be.
-				// The GBA BIOS processes things in 32 bit chunks, so it requires modules to be 4-byte aligned.
-				// A moduled file however has a 2 byte header followed by the modules.
-				// Due to the way ModuledCompressionWrapper is written, the modules are never 4-byte aligned.
-				constexpr auto module_alignment = 4;
+				inline constexpr auto module_header_size = 4;
+				inline constexpr auto module_alignment = 4;
 			}
 
 			template<typename T>
@@ -204,7 +200,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		CompressorOutput output_wrapped(std::forward<T>(output));
-		return ModuledCompressionWrapper(data, data_size, output_wrapped, Gba::Compress, module_size, Gba::Compressor::module_alignment);
+		return ModuledCompressionWrapper<Gba::Compressor::module_header_size, Endian::Little>(data, data_size, output_wrapped, Gba::Compress, module_size, Gba::Compressor::module_alignment);
 	}
 
 	template<typename T>
@@ -213,7 +209,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		CompressorOutput output_wrapped(std::forward<T>(output));
-		return ModuledCompressionWrapper(data, data_size, output_wrapped, Gba::CompressVramSafe, module_size, Gba::Compressor::module_alignment);
+		return ModuledCompressionWrapper<Gba::Compressor::module_header_size, Endian::Little>(data, data_size, output_wrapped, Gba::CompressVramSafe, module_size, Gba::Compressor::module_alignment);
 	}
 }
 
