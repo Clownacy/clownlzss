@@ -55,13 +55,15 @@ namespace ClownLZSS
 			};
 
 			template<unsigned int total_bytes, ReadWhen read_when, PopWhere pop_where, Endian endian, typename Input>
+			requires (total_bytes >= 1) && (total_bytes <= 4)
 			class Reader
 			{
 			private:
 				static constexpr unsigned int total_bits = total_bytes * 8;
 
 				Input &input;
-				unsigned int bits = 0, bits_remaining;
+				unsigned long bits = 0;
+				unsigned int bits_remaining;
 
 				void ReadBits()
 				{
@@ -138,13 +140,15 @@ namespace ClownLZSS
 			};
 
 			template<unsigned int total_bytes, WriteWhen write_when, PushWhere push_where, Endian endian, typename Output, typename Derived>
+			requires (total_bytes >= 1) && (total_bytes <= 4)
 			class WriterBase
 			{
 			protected:
 				static constexpr unsigned int total_bits = total_bytes * 8;
 
 				Output &output;
-				unsigned int bits = 0, bits_remaining = total_bits;
+				unsigned long bits = 0;
+				unsigned int bits_remaining = total_bits;
 
 				void WriteBitsImplementation()
 				{
