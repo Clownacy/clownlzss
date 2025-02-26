@@ -26,6 +26,9 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "clownlzss.h"
 #include "common.h"
 
+// TODO: Temporary!
+#include <sstream>
+
 namespace ClownLZSS
 {
 	namespace Internal
@@ -36,7 +39,7 @@ namespace ClownLZSS
 			using BitFieldWriter = BitField::Writer<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::Low, BitField::Endian::Big, T>;
 
 			template<typename T>
-			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output, const unsigned int selected_lowest)
 			{
 				if (data_size == 0)
 					return true;
@@ -60,7 +63,7 @@ namespace ClownLZSS
 				struct SpecialValues
 				{
 					unsigned int most_common;
-					unsigned int lowest;
+					std::array<unsigned int, 2> lowest;
 				};
 
 				const auto FindSpecialValues = [&ReadWord, &GetTileIndex](const unsigned char* const data, const std::size_t data_size) -> std::optional<SpecialValues>
@@ -75,20 +78,6 @@ namespace ClownLZSS
 					for (std::size_t i = 0; i < data_size; i += bytes_per_value)
 						sort_buffer[i / bytes_per_value] = ReadWord(data + i);
 
-					// Emulate the bizarre quirk where the incremental copy word is set to zero if,
-					// and only if, the data begins with a series of zeroes followed by a one.
-					unsigned int lowest_value = 0xFFFF;
-
-					for (std::size_t i = 1; i < total_values; ++i)
-					{
-						if (sort_buffer[i] == sort_buffer[i - 1] + 1)
-						{
-							if (GetTileIndex(sort_buffer[i - 1]) == 0)
-								lowest_value = sort_buffer[0];
-							break;
-						}
-					}
-
 					// Sort the input buffer.
 					std::sort(&sort_buffer[0], &sort_buffer[total_values]);
 
@@ -99,12 +88,16 @@ namespace ClownLZSS
 					unsigned int longest_run_length = run_length;
 					unsigned int longest_run_value = run_value;
 
+					std::array<unsigned int, 2> lowest_values = {0xFFFF, 0xFFFF};
+
 					for (std::size_t i = 0; i < total_values; ++i)
 					{
 						const unsigned int this_value = sort_buffer[i];
 
+						lowest_values[0] = std::min(lowest_values[0], this_value);
+
 						if (GetTileIndex(this_value) != 0) // Labyrinth Zone's 16x16 blocks rely on this odd masking.
-							lowest_value = std::min(lowest_value, this_value);
+							lowest_values[1] = std::min(lowest_values[1], this_value);
 
 						if (run_value == this_value)
 						{
@@ -125,7 +118,7 @@ namespace ClownLZSS
 
 					std::free(sort_buffer);
 
-					return SpecialValues{longest_run_value, lowest_value};
+					return SpecialValues{longest_run_value, lowest_values};
 				};
 
 				auto special_values = FindSpecialValues(data, data_size);
@@ -142,37 +135,44 @@ namespace ClownLZSS
 				const unsigned int inline_value_length = std::bit_width(GetTileIndex(combined));
 				const unsigned int render_flags_mask = combined >> (16 - 5);
 
-				output.Write(inline_value_length);
-				output.Write(render_flags_mask);
-				output.WriteBE16(special_values->lowest);
-				output.WriteBE16(special_values->most_common);
-
-				BitFieldWriter<decltype(output)> bits(output);
-
 				const unsigned char* const input_end = data + data_size;
+
+				struct Run
+				{
+					enum class Type
+					{
+						Same = 4,
+						Increment = 5,
+						Decrement = 6,
+						Raw = 7
+					};
+
+					Type type;
+					unsigned int length;
+				};
+#if 0
+				unsigned int selected_lowest;
+#endif
+				const auto IsIncrementalCopyMatch = [&](const Run &run, const unsigned char* const input)
+				{
+					return (run.type == Run::Type::Increment || run.length == 1) && ReadWord(input) == special_values->lowest[selected_lowest];
+				};
+
+				const auto IsLiteralCopyMatch = [&](const Run &run, const unsigned char* const input)
+				{
+					return (run.type == Run::Type::Same || run.length == 1) && ReadWord(input) == special_values->most_common;
+				};
 
 				const auto GetWordsRemaining = [&](const unsigned char* const input)
 				{
 					return std::distance(input, input_end) / bytes_per_value;
 				};
 
-				for (const unsigned char *input = data; input < input_end; )
+				const auto GetRun = [&IsIncrementalCopyMatch, &IsLiteralCopyMatch, &GetWordsRemaining, &ReadWord, &special_values, &selected_lowest](const unsigned char* const input)
 				{
-					struct Run
-					{
-						enum class Type
-						{
-							Same = 4,
-							Increment = 5,
-							Decrement = 6,
-							Raw = 7
-						};
+					const unsigned int maximum_length = std::min<unsigned int>(0xF, GetWordsRemaining(input));
 
-						Type type;
-						unsigned int length;
-					};
-
-					const auto GetRun = [&](const unsigned char* const input)
+					const auto GetRun = [&GetWordsRemaining, &ReadWord, &special_values, &selected_lowest](const unsigned char* const input)
 					{
 						const unsigned int maximum_length = std::min<unsigned int>(0x10, GetWordsRemaining(input));
 
@@ -184,7 +184,7 @@ namespace ClownLZSS
 							for (i = 1; i < maximum_length; ++i)
 							{
 								const unsigned int this_value = ReadWord(input + i * bytes_per_value);
-								
+
 								if (callback(this_value, i))
 									break;
 							}
@@ -201,7 +201,7 @@ namespace ClownLZSS
 
 						const auto IncrementRunCallback = [&](const unsigned int this_value, const unsigned int index)
 						{
-							return this_value != first_value + index || this_value == special_values->lowest;
+							return this_value != first_value + index || this_value == special_values->lowest[selected_lowest];
 						};
 
 						const unsigned int increment_run_length = GetRunLength(IncrementRunCallback);
@@ -214,7 +214,7 @@ namespace ClownLZSS
 						const unsigned int decrement_run_length = GetRunLength(DecrementRunCallback);
 
 						// Always prefer special matches to inline matches, even if the inline matches are longer.
-						if (first_value == special_values->lowest && increment_run_length)
+						if (first_value == special_values->lowest[selected_lowest] && increment_run_length) // TODO: WTF is this check at the end for?
 						{
 							Run run;
 							run.type = Run::Type::Increment;
@@ -248,18 +248,6 @@ namespace ClownLZSS
 						return run;
 					};
 
-					const auto IsIncrementalCopyMatch = [&](const Run &run, const unsigned char* const input)
-					{
-						return (run.type == Run::Type::Increment || run.length == 1) && ReadWord(input) == special_values->lowest;
-					};
-
-					const auto IsLiteralCopyMatch = [&](const Run &run, const unsigned char* const input)
-					{
-						return (run.type == Run::Type::Same || run.length == 1) && ReadWord(input) == special_values->most_common;
-					};
-
-					const unsigned int maximum_length = std::min<unsigned int>(0xF, GetWordsRemaining(input));
-
 					Run run;
 					unsigned int raw_copy_length;
 					for (raw_copy_length = 0; raw_copy_length < maximum_length; ++raw_copy_length)
@@ -270,18 +258,17 @@ namespace ClownLZSS
 
 						if (raw_copy_length == 0)
 						{
-							if (
-								run.length > 1
-								|| IsLiteralCopyMatch(run, run_input)
-								|| IsIncrementalCopyMatch(run, run_input)
-							)
+							if (run.length > 1 || (IsLiteralCopyMatch(run, run_input) && run.length > 0))
 								break;
 						}
 						else
 						{
-							if (run.length > 2 || (IsLiteralCopyMatch(run, run_input) && run.length > 1) || IsIncrementalCopyMatch(run, run_input))
+							if (run.length > 2 || (IsLiteralCopyMatch(run, run_input) && run.length > 1))
 								break;
 						}
+
+						if (IsIncrementalCopyMatch(run, run_input))
+							break;
 					}
 
 					if (raw_copy_length != 0)
@@ -290,8 +277,65 @@ namespace ClownLZSS
 							run.type = Run::Type::Same;
 						else
 							run.type = Run::Type::Raw;
+
 						run.length = raw_copy_length;
 					}
+
+					return run;
+				};
+#if 0
+				const auto backup = special_values;
+
+				std::array<unsigned int, 2> total_copy_increment_matches = {0, 0};
+
+				selected_lowest = 0;
+
+				for (const unsigned char *input = data; input < input_end; )
+				{
+					const auto run = GetRun(input);
+
+					if (IsIncrementalCopyMatch(run, input))
+					{
+						++total_copy_increment_matches[0];
+						special_values->lowest[selected_lowest] += run.length;
+					}
+
+					input += run.length * bytes_per_value;
+				}
+
+				std::cout << "total_copy_increment_matches[0] = " << total_copy_increment_matches[0] << "\n";
+
+				selected_lowest = 1;
+
+				for (const unsigned char *input = data; input < input_end; )
+				{
+					const auto run = GetRun(input);
+
+					if (IsIncrementalCopyMatch(run, input))
+					{
+						++total_copy_increment_matches[1];
+						special_values->lowest[selected_lowest] += run.length;
+					}
+
+					input += run.length * bytes_per_value;
+				}
+
+				std::cout << "total_copy_increment_matches[1] = " << total_copy_increment_matches[1] << "\n";
+
+				special_values = backup;
+
+				selected_lowest = total_copy_increment_matches[0] <= total_copy_increment_matches[1];
+#endif
+				output.Write(inline_value_length);
+				output.Write(render_flags_mask);
+				output.WriteBE16(special_values->lowest[selected_lowest]);
+				output.WriteBE16(special_values->most_common);
+
+				BitFieldWriter<decltype(output)> bits(output);
+
+				for (const unsigned char *input = data; input < input_end; )
+				{
+					const auto run = GetRun(input);
 
 					const auto WriteInlineValue = [&](const unsigned char* const input)
 					{
@@ -317,7 +361,7 @@ namespace ClownLZSS
 					{
 						bits.Push(0, 2);
 						bits.Push(run.length - 1, 4);
-						special_values->lowest += run.length;
+						special_values->lowest[selected_lowest] += run.length;
 					}
 					else if (IsLiteralCopyMatch(run, input))
 					{
@@ -340,6 +384,12 @@ namespace ClownLZSS
 
 				return true;
 			}
+
+			template<typename T>
+			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			{
+				return Compress(data, data_size, output, 0);
+			}
 		}
 	}
 
@@ -348,11 +398,28 @@ namespace ClownLZSS
 	{
 		using namespace Internal;
 
+		std::stringstream buffer;
+		CompressorOutput output_string(buffer);
+
+		const auto a_start = output_string.Tell();
+		Enigma::Compress(data, data_size, output_string, 0);
+		const auto a_size = output_string.Distance(a_start);
+
+		buffer.clear();
+
+		const auto b_start = output_string.Tell();
+		Enigma::Compress(data, data_size, output_string, 1);
+		const auto b_size = output_string.Distance(b_start);
+
+		std::cout << "a_size is " << a_size << "\n";
+		std::cout << "b_size is " << b_size << "\n";
+
 		CompressorOutput output_wrapped(std::forward<T>(output));
 
 		const auto start = output_wrapped.Tell();
-		const bool success = Enigma::Compress(data, data_size, output_wrapped);
+		const bool success = Enigma::Compress(data, data_size, output_wrapped, a_size < b_size ? 0 : 1);
 
+		// Temporary hack to pad to an even address until the disassemblies are corrected.
 		if (output_wrapped.Distance(start) % 2 != 0)
 			output_wrapped.Write(0);
 

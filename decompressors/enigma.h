@@ -76,6 +76,7 @@ namespace ClownLZSS
 					switch (action)
 					{
 						case 0:
+							std::cout << "Doing incremental copy of length " << count << "\n";
 							for (unsigned int i = 0; i < count; ++i)
 							{
 								output.WriteBE16(incremental_copy_word);
@@ -85,6 +86,7 @@ namespace ClownLZSS
 							break;
 
 						case 1:
+							std::cout << "Doing literal copy of length " << count << "\n";
 							for (unsigned int i = 0; i < count; ++i)
 								output.WriteBE16(literal_copy_word);
 
@@ -92,6 +94,7 @@ namespace ClownLZSS
 
 						case 2:
 						{
+							std::cout << "Doing inline literal copy of length " << count << "\n";
 							const unsigned int inline_value = GetInlineValue();
 
 							for (unsigned int i = 0; i < count; ++i)
@@ -102,6 +105,7 @@ namespace ClownLZSS
 
 						case 3:
 						{
+							std::cout << "Doing inline incremental copy of length " << count << "\n";
 							unsigned int inline_value = GetInlineValue();
 
 							for (unsigned int i = 0; i < count; ++i)
@@ -115,6 +119,7 @@ namespace ClownLZSS
 
 						case 4:
 						{
+							std::cout << "Doing inline decremental copy of length " << count << "\n";
 							unsigned int inline_value = GetInlineValue();
 
 							for (unsigned int i = 0; i < count; ++i)
@@ -127,6 +132,7 @@ namespace ClownLZSS
 						}
 
 						case 5:
+							std::cout << "Doing inline raw copy of length " << count << "\n";
 							for (unsigned int i = 0; i < count; ++i)
 								output.WriteBE16(GetInlineValue());
 

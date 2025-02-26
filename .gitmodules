@@ -1,0 +1,3 @@
+[submodule "test/pluto-sonic-crackers-thing"]
+	path = test/pluto-sonic-crackers-thing
+	url = https://github.com/GeminiCrafterMan/pluto-sonic-crackers-thing
