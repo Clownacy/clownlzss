@@ -61,13 +61,12 @@ namespace ClownLZSS
 
 	namespace Internal
 	{
-		template<typename T>
+		template<unsigned int total_bytes, Endian endian, typename T>
 		bool ModuledCompressionWrapper(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output, bool (* const compression_function)(const unsigned char *data, std::size_t data_size, CompressorOutput<T> &output), const std::size_t module_size, const std::size_t module_alignment)
 		{
-			const unsigned int header = (data_size % module_size) | ((data_size / module_size) << 12);
+			const auto header = (data_size % module_size) | ((data_size / module_size) << 12);
 
-			output.Write((header >> (8 * 1)) & 0xFF);
-			output.Write((header >> (8 * 0)) & 0xFF);
+			output.template Write<total_bytes, endian>(header);
 
 			typename CompressorOutput<T>::difference_type compressed_size = 0;
 			for (std::size_t i = 0; i < data_size; i += module_size)

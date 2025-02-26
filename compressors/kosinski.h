@@ -120,7 +120,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		CompressorOutput output_wrapped(std::forward<T>(output));
-		return ModuledCompressionWrapper(data, data_size, output_wrapped, Kosinski::Compress, module_size, 0x10);
+		return ModuledCompressionWrapper<2, Endian::Big>(data, data_size, output_wrapped, Kosinski::Compress, module_size, 0x10);
 	}
 }
 
