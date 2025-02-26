@@ -48,38 +48,24 @@ namespace ClownLZSS
 				High
 			};
 
-			enum class Endian
-			{
-				Big,
-				Little
-			};
+			// TODO: Delete this.
+			using Endian = Internal::Endian;
 
 			template<unsigned int total_bytes, ReadWhen read_when, PopWhere pop_where, Endian endian, typename Input>
+			requires (total_bytes >= 1) && (total_bytes <= 4)
 			class Reader
 			{
 			private:
 				static constexpr unsigned int total_bits = total_bytes * 8;
 
 				Input &input;
-				unsigned int bits = 0, bits_remaining;
+				unsigned long bits = 0;
+				unsigned int bits_remaining;
 
 				void ReadBits()
 				{
 					bits_remaining = total_bits;
-
-					for (unsigned int i = 0; i < total_bytes; ++i)
-					{
-						if constexpr(endian == Endian::Big)
-						{
-							bits <<= 8;
-							bits |= input.Read();
-						}
-						else if constexpr(endian == Endian::Little)
-						{
-							bits >>= 8;
-							bits |= static_cast<decltype(bits)>(input.Read()) << (total_bits - 8);
-						}
-					}
+					bits = input.template Read<total_bytes, endian>();
 				};
 
 			public:
@@ -138,28 +124,19 @@ namespace ClownLZSS
 			};
 
 			template<unsigned int total_bytes, WriteWhen write_when, PushWhere push_where, Endian endian, typename Output, typename Derived>
+			requires (total_bytes >= 1) && (total_bytes <= 4)
 			class WriterBase
 			{
 			protected:
 				static constexpr unsigned int total_bits = total_bytes * 8;
 
 				Output &output;
-				unsigned int bits = 0, bits_remaining = total_bits;
+				unsigned long bits = 0;
+				unsigned int bits_remaining = total_bits;
 
 				void WriteBitsImplementation()
 				{
-					for (unsigned int i = 0; i < total_bytes; ++i)
-					{
-						unsigned int shift;
-
-						if constexpr(endian == Endian::Big)
-							shift = total_bytes - i - 1;
-						else //if constexpr(endian == Endian::Little)
-							shift = i;
-
-						output.Write((bits >> (shift * 8)) & 0xFF);
-					}
-
+					output.template Write<total_bytes, endian>(bits);
 					bits_remaining = total_bits;
 				}
 

@@ -201,7 +201,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		CompressorOutput output_wrapped(std::forward<T>(output));
-		return ModuledCompressionWrapper(data, data_size, output_wrapped, Rage::Compress, module_size, 2);
+		return ModuledCompressionWrapper<2, Endian::Big>(data, data_size, output_wrapped, Rage::Compress, module_size, 2);
 	}
 }
 

@@ -341,16 +341,16 @@ namespace ClownLZSS
 
 	namespace Internal
 	{
-		template<typename T1, typename T2>
+		template<unsigned int total_bytes, Endian endian, typename T1, typename T2>
 		void ModuledDecompressionWrapper(DecompressorInput<T1> &input, T2 &output, void (* const decompression_function)(DecompressorInput<T1> &input, T2 &output), const std::size_t module_alignment)
 		{
-			const unsigned int header = input.ReadBE16();
+			const auto header = input.template Read<total_bytes, endian>();
 
 			const auto input_start_position = input.Tell();
 
-			const unsigned int total_modules = (header + (0x1000 - 1)) / 0x1000; // Round up.
+			const unsigned long total_modules = (header + (0x1000 - 1)) / 0x1000; // Round up.
 
-			for (unsigned int i = 0; i < total_modules - 1; ++i)
+			for (unsigned long i = 0; i < total_modules - 1; ++i)
 			{
 				decompression_function(input, output);
 				input += (module_alignment - (input.Distance(input_start_position) % module_alignment)) % module_alignment;

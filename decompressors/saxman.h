@@ -115,7 +115,7 @@ namespace ClownLZSS
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
 		Saxman::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
-		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Saxman::Decompress, 2);
+		ModuledDecompressionWrapper<2, Endian::Big>(input_wrapped, output_wrapped, Saxman::Decompress, 2);
 	}
 }
 

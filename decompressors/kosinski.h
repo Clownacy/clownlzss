@@ -108,7 +108,7 @@ namespace ClownLZSS
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
 		Kosinski::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
-		ModuledDecompressionWrapper(input_wrapped, output_wrapped, Kosinski::Decompress, 0x10);
+		ModuledDecompressionWrapper<2, Endian::Big>(input_wrapped, output_wrapped, Kosinski::Decompress, 0x10);
 	}
 }
 
