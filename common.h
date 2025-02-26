@@ -26,6 +26,12 @@ namespace ClownLZSS
 {
 	namespace Internal
 	{
+		enum class Endian
+		{
+			Big,
+			Little
+		};
+
 		template<typename T>
 		concept random_access_input_output_iterator = std::random_access_iterator<T> && std::output_iterator<T, unsigned char>;
 
@@ -75,18 +81,39 @@ namespace ClownLZSS
 				return static_cast<Derived*>(this)->ReadImplementation();
 			}
 
-			unsigned int ReadBE16()
+			template<unsigned int total_bytes, Endian endian>
+			requires (total_bytes >= 1) && (total_bytes <= 4)
+			auto Read()
 			{
-				const unsigned int upper = Read();
-				const unsigned int lower = Read();
-				return upper << 8 | lower;
+				unsigned long result = 0;
+
+				for (unsigned int i = 0; i < total_bytes; ++i)
+				{
+					if constexpr(endian == Endian::Big)
+					{
+						result <<= 8;
+						result |= Read();
+					}
+					else if constexpr(endian == Endian::Little)
+					{
+						result >>= 8;
+						result |= static_cast<decltype(result)>(Read()) << (total_bytes - 1) * 8;
+					}
+				}
+
+				return result;
 			}
 
+			// TODO: Delete this.
+			unsigned int ReadBE16()
+			{
+				return Read<2, Endian::Big>();
+			}
+
+			// TODO: Delete this.
 			unsigned int ReadLE16()
 			{
-				const unsigned int lower = Read();
-				const unsigned int upper = Read();
-				return upper << 8 | lower;
+				return Read<2, Endian::Little>();
 			}
 		};
 
@@ -108,16 +135,33 @@ namespace ClownLZSS
 				static_cast<Derived*>(this)->WriteImplementation(value);
 			}
 
-			void WriteBE16(const unsigned int value)
+			template<unsigned int total_bytes, Endian endian>
+			requires (total_bytes >= 1) && (total_bytes <= 4)
+			void Write(const unsigned long value)
 			{
-				Write(value >> 8);
-				Write(value & 0xFF);
+				for (unsigned int i = 0; i < total_bytes; ++i)
+				{
+					unsigned int shift;
+
+					if constexpr(endian == Endian::Big)
+						shift = total_bytes - i - 1;
+					else //if constexpr(endian == Endian::Little)
+						shift = i;
+
+					Write((value >> (shift * 8)) & 0xFF);
+				}
 			}
 
+			// TODO: Delete this.
+			void WriteBE16(const unsigned int value)
+			{
+				Write<2, Endian::Big>(value);
+			}
+
+			// TODO: Delete this.
 			void WriteLE16(const unsigned int value)
 			{
-				Write(value & 0xFF);
-				Write(value >> 8);
+				Write<2, Endian::Little>(value);
 			}
 
 			void Fill(const unsigned char value, const unsigned int count)
