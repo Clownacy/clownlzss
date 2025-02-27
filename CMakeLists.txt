@@ -33,6 +33,7 @@ make_library(clownlzss clownlzss)
 make_compression_library(chameleon)
 make_compression_library(comper)
 make_compression_library(faxman)
+make_compression_library(gba)
 make_compression_library(kosinski)
 make_compression_library(kosinskiplus)
 make_compression_library(rage)
@@ -50,6 +51,7 @@ set_target_properties(clownlzss-tool PROPERTIES
 )
 
 target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-comper clownlzss-faxman clownlzss-kosinski clownlzss-kosinskiplus clownlzss-rage clownlzss-rocket clownlzss-saxman)
+install(TARGETS clownlzss-tool DESTINATION bin)
 
 
 #########
@@ -86,6 +88,8 @@ make_test(rocket "-r")
 make_test(saxman "-s")
 make_test(saxman_no_header "-sn")
 make_test(faxman "-f")
+make_test(gba "-g")
+make_test(gba_vram_safe "-gv")
 
 set_property(TEST comper_compress_run_clone_driver_v2_dac_driver PROPERTY WILL_FAIL true)
 set_property(TEST comper_compress_compare_clone_driver_v2_dac_driver PROPERTY WILL_FAIL true)
