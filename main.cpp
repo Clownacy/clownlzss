@@ -269,6 +269,7 @@ int main(int argc, char **argv)
 								ClownLZSS::ModuledGbaDecompress(in_file, out_file);
 							else
 								ClownLZSS::GbaDecompress(in_file, out_file);
+							break;
 
 						case Format::KOSINSKI:
 							if (moduled)
