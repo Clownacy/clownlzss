@@ -121,7 +121,7 @@ namespace ClownLZSS
 				assert(IsInRange(length, 0u, maximum_encoded_length));
 				assert(IsInRange(offset, 0u, maximum_encoded_offset));
 
-				return ((offset & 255) << 8) | ((length) << 4) | (offset >> 8);
+				return ((offset & 0xFF) << 8) | ((length) << 4) | (offset >> 8);
 			}
 
 			template<typename T>

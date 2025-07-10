@@ -107,14 +107,15 @@ namespace ClownLZSS
 					{
 						const std::size_t distance = match->destination == match->source ? 0x800 : match->destination - match->source;
 						const std::size_t length = match->length;
+						const std::size_t offset = 0 - distance;
 
 						if (length >= 2 && length <= 5 && distance <= 0x100)
 						{
 							PushDescriptorBit(0);
 							PushDescriptorBit(0);
-							output.Write(-distance & 0xFF);
-							PushDescriptorBit(!!((length - 2) & 2));
-							PushDescriptorBit(!!((length - 2) & 1));
+							output.Write(offset & 0xFF);
+							PushDescriptorBit(((length - 2) & 2) != 0);
+							PushDescriptorBit(((length - 2) & 1) != 0);
 						}
 						else //if (length >= 3)
 						{

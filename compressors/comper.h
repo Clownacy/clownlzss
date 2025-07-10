@@ -66,9 +66,10 @@ namespace ClownLZSS
 					{
 						const std::size_t distance = match->destination - match->source;
 						const std::size_t length = match->length;
+						const std::size_t offset = 0 - distance;
 
 						descriptor_bits.Push(1);
-						output.Write(-distance & 0xFF);
+						output.Write(offset & 0xFF);
 						output.Write(length - 1);
 					}
 				}

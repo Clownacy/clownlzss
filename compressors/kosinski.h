@@ -66,28 +66,29 @@ namespace ClownLZSS
 					{
 						const std::size_t distance = match->destination - match->source;
 						const std::size_t length = match->length;
+						const std::size_t offset = 0 - distance;
 
 						if (length >= 2 && length <= 5 && distance <= 0x100)
 						{
 							descriptor_bits.Push(0);
 							descriptor_bits.Push(0);
-							descriptor_bits.Push(!!((length - 2) & 2));
-							descriptor_bits.Push(!!((length - 2) & 1));
-							output.Write(-distance & 0xFF);
+							descriptor_bits.Push(((length - 2) & 2) != 0);
+							descriptor_bits.Push(((length - 2) & 1) != 0);
+							output.Write(offset & 0xFF);
 						}
 						else if (length >= 3 && length <= 9)
 						{
 							descriptor_bits.Push(0);
 							descriptor_bits.Push(1);
-							output.Write(-distance & 0xFF);
-							output.Write(((-distance >> (8 - 3)) & 0xF8) | ((length - 2) & 7));
+							output.Write(offset & 0xFF);
+							output.Write(((offset >> (8 - 3)) & 0xF8) | ((length - 2) & 7));
 						}
 						else //if (length >= 3)
 						{
 							descriptor_bits.Push(0);
 							descriptor_bits.Push(1);
-							output.Write(-distance & 0xFF);
-							output.Write((-distance >> (8 - 3)) & 0xF8);
+							output.Write(offset & 0xFF);
+							output.Write((offset >> (8 - 3)) & 0xF8);
 							output.Write(length - 1);
 						}
 					}
