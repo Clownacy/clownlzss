@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.7.2)
 
 project(clownlzss LANGUAGES C CXX)
 
+include(GNUInstallDirs)
+
 function(make_library name filename)
 	add_library(${name} STATIC
 		"compressors/${filename}.c"
@@ -12,6 +14,15 @@ function(make_library name filename)
 		C_STANDARD 90
 		C_STANDARD_REQUIRED NO
 		C_EXTENSIONS OFF
+	)
+
+	set_target_properties(${name} PROPERTIES PUBLIC_HEADER "compressors/${filename}.h")
+
+	install(TARGETS ${name}
+		ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+		LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+		RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+		PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/clownlzss/compressors"
 	)
 endfunction()
 
@@ -27,6 +38,15 @@ function(make_compression_library name)
 	)
 
 	target_link_libraries(clownlzss-${name} INTERFACE clownlzss)
+
+	set_target_properties(clownlzss-${name} PROPERTIES PUBLIC_HEADER "compressors/${name}.h")
+
+	install(TARGETS clownlzss-${name}
+		ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+		LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+		RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+		PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/clownlzss/compressors"
+	)
 endfunction()
 
 make_library(clownlzss clownlzss)
