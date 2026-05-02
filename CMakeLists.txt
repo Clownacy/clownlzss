@@ -4,7 +4,7 @@ project(clownlzss LANGUAGES C CXX)
 
 include(GNUInstallDirs)
 
-function(make_library name filename)
+function(make_compression_core_library name filename)
 	add_library(${name} STATIC
 		"compressors/${filename}.c"
 		"compressors/${filename}.h"
@@ -26,52 +26,74 @@ function(make_library name filename)
 	)
 endfunction()
 
-function(make_compression_library name)
-	add_library(clownlzss-${name} INTERFACE
-		"compressors/${name}.h"
+function(make_header_library name prefix directory sources)
+	add_library(clownlzss-${prefix}${name} INTERFACE
+		"${sources}"
 	)
 
-	set_target_properties(clownlzss-${name} PROPERTIES
+	set_target_properties(clownlzss-${prefix}${name} PROPERTIES
 		CXX_STANDARD 20
 		CXX_STANDARD_REQUIRED NO
 		CXX_EXTENSIONS OFF
 	)
 
-	target_link_libraries(clownlzss-${name} INTERFACE clownlzss)
+	set_target_properties(clownlzss-${prefix}${name} PROPERTIES PUBLIC_HEADER "${sources}")
 
-	set_target_properties(clownlzss-${name} PROPERTIES PUBLIC_HEADER "compressors/${name}.h")
-
-	install(TARGETS clownlzss-${name}
+	install(TARGETS clownlzss-${prefix}${name}
 		ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 		LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 		RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-		PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/clownlzss/compressors"
+		PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/clownlzss/${directory}"
 	)
 endfunction()
 
-make_library(clownlzss clownlzss)
-make_compression_library(chameleon)
-make_compression_library(comper)
-make_compression_library(faxman)
-make_compression_library(gba)
-make_compression_library(kosinski)
-make_compression_library(kosinskiplus)
-make_compression_library(rage)
-make_compression_library(rocket)
-make_compression_library(saxman)
+make_header_library("common" "" "" "bitfield.h;common.h")
 
-add_executable(clownlzss-tool
+function(make_lone_header_library name prefix directory)
+	make_header_library("${name}" "${prefix}" "${directory}" "${directory}${name}.h")
+	target_link_libraries(clownlzss-${prefix}${name} INTERFACE clownlzss-common)
+endfunction()
+
+function(make_lone_header_libraries name)
+	# Compression
+	make_lone_header_library(${name} "compression-" "compressors/")
+
+	# Decompression
+	make_lone_header_library(${name} "decompression-" "decompressors/")
+endfunction()
+
+make_lone_header_libraries("common")
+
+function(make_format_libraries name)
+	make_lone_header_libraries(${name})
+
+	target_link_libraries(clownlzss-compression-${name} INTERFACE clownlzss-compression-common clownlzss-compression-core)
+	target_link_libraries(clownlzss-decompression-${name} INTERFACE clownlzss-decompression-common)
+endfunction()
+
+make_compression_core_library(clownlzss-compression-core clownlzss)
+make_format_libraries(chameleon)
+make_format_libraries(comper)
+make_format_libraries(faxman)
+make_format_libraries(gba)
+make_format_libraries(kosinski)
+make_format_libraries(kosinskiplus)
+make_format_libraries(rage)
+make_format_libraries(rocket)
+make_format_libraries(saxman)
+
+add_executable(clownlzss
 	"main.cpp"
 )
 
-set_target_properties(clownlzss-tool PROPERTIES
+set_target_properties(clownlzss PROPERTIES
 	CXX_STANDARD 20
 	CXX_STANDARD_REQUIRED NO
 	CXX_EXTENSIONS OFF
 )
 
-target_link_libraries(clownlzss-tool PRIVATE clownlzss-chameleon clownlzss-comper clownlzss-faxman clownlzss-kosinski clownlzss-kosinskiplus clownlzss-rage clownlzss-rocket clownlzss-saxman)
-install(TARGETS clownlzss-tool DESTINATION bin)
+target_link_libraries(clownlzss PRIVATE clownlzss-compression-chameleon clownlzss-compression-comper clownlzss-compression-faxman clownlzss-compression-kosinski clownlzss-compression-kosinskiplus clownlzss-compression-rage clownlzss-compression-rocket clownlzss-compression-saxman)
+install(TARGETS clownlzss DESTINATION bin)
 
 
 #########
@@ -83,12 +105,12 @@ enable_testing()
 function(make_test_internal compression-name command)
 	foreach(directory "clone_driver_v2_dac_driver" "chameleon_code" "executable")
 		# Compress
-		add_test(NAME ${compression-name}_compress_run_${directory} COMMAND clownlzss-tool ${command} "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/uncompressed" "zzzz_${compression-name}_compress_${directory}")
+		add_test(NAME ${compression-name}_compress_run_${directory} COMMAND clownlzss ${command} "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/uncompressed" "zzzz_${compression-name}_compress_${directory}")
 		add_test(NAME ${compression-name}_compress_compare_${directory} COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/${compression-name}" "zzzz_${compression-name}_compress_${directory}")
 		set_tests_properties(${compression-name}_compress_compare_${directory} PROPERTIES DEPENDS "${compression-name}_compress_run_${directory}")
 
 		# Decompress
-		add_test(NAME ${compression-name}_decompress_run_${directory} COMMAND clownlzss-tool -d ${command} "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/${compression-name}" "zzzz_${compression-name}_decompress_${directory}")
+		add_test(NAME ${compression-name}_decompress_run_${directory} COMMAND clownlzss -d ${command} "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/${compression-name}" "zzzz_${compression-name}_decompress_${directory}")
 		add_test(NAME ${compression-name}_decompress_compare_${directory} COMMAND ${CMAKE_COMMAND} -E compare_files "${CMAKE_CURRENT_SOURCE_DIR}/test/${directory}/uncompressed" "zzzz_${compression-name}_decompress_${directory}")
 		set_tests_properties(${compression-name}_decompress_compare_${directory} PROPERTIES DEPENDS "${compression-name}_decompress_run_${directory}")
 	endforeach()
