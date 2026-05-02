@@ -28,7 +28,7 @@ namespace ClownLZSS
 		namespace Enigma
 		{
 			template<typename T>
-			using DecompressorOutput = DecompressorOuputBasic<T>;
+			using DecompressorOutput = DecompressorOutputBasic<T>;
 
 			template<typename T>
 			using BitField = BitField::Reader<1, BitField::ReadWhen::BeforePop, BitField::PopWhere::High, BitField::Endian::Big, T>;

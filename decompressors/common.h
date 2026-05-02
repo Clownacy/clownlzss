@@ -207,30 +207,30 @@ namespace ClownLZSS
 	};
 	#endif
 
-	// DecompressorOuputBasic
+	// DecompressorOutputBasic
 
 	template<typename T>
-	class DecompressorOuputBasic : public Internal::OutputCommon<T, DecompressorOuputBasic<T>>
+	class DecompressorOutputBasic : public Internal::OutputCommon<T, DecompressorOutputBasic<T>>
 	{
 	public:
-		DecompressorOuputBasic(T output);
+		DecompressorOutputBasic(T output);
 	};
 
 	template<typename T>
 	requires std::random_access_iterator<std::decay_t<T>>
-	class DecompressorOuputBasic<T> : public Internal::OutputCommon<T, DecompressorOuputBasic<T>>
+	class DecompressorOutputBasic<T> : public Internal::OutputCommon<T, DecompressorOutputBasic<T>>
 	{
 	public:
-		using Internal::OutputCommon<T, DecompressorOuputBasic<T>>::OutputCommon;
+		using Internal::OutputCommon<T, DecompressorOutputBasic<T>>::OutputCommon;
 	};
 
 	#if __STDC_HOSTED__
 	template<typename T>
 	requires std::is_convertible_v<T&, std::ostream&>
-	class DecompressorOuputBasic<T> : public Internal::OutputCommon<T, DecompressorOuputBasic<T>>
+	class DecompressorOutputBasic<T> : public Internal::OutputCommon<T, DecompressorOutputBasic<T>>
 	{
 	public:
-		using Internal::OutputCommon<T, DecompressorOuputBasic<T>>::OutputCommon;
+		using Internal::OutputCommon<T, DecompressorOutputBasic<T>>::OutputCommon;
 	};
 	#endif
 
