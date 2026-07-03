@@ -22,6 +22,15 @@ PERFORMANCE OF THIS SOFTWARE.
 #define CLOWNLZSS_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define CLOWNLZSS_MAX(a, b) ((a) > (b) ? (a) : (b))
 
+#ifdef __cplusplus
+ // MSVC does not adhere to the C++ standard.
+ #ifdef _MSVC_LANG
+  #define CLOWNLZSS_CPLUSPLUS _MSVC_LANG
+ #else
+  #define CLOWNLZSS_CPLUSPLUS __cplusplus
+ #endif
+#endif
+
 typedef struct ClownLZSS_GraphEdge
 {
 	union
@@ -42,7 +51,7 @@ typedef struct ClownLZSS_Match
 
 #define CLOWNLZSS_MATCH_IS_LITERAL(match) ((match)->source == (match)->destination + 1)
 
-#ifdef __cplusplus
+#ifdef CLOWNLZSS_CPLUSPLUS
 extern "C" {
 #endif
 
@@ -61,11 +70,11 @@ int ClownLZSS_FindOptimalMatches(
 	const void *user
 );
 
-#ifdef __cplusplus
+#ifdef CLOWNLZSS_CPLUSPLUS
 }
 #endif
 
-#if defined(__cplusplus) && __cplusplus >= 201103L
+#if defined(CLOWNLZSS_CPLUSPLUS) && CLOWNLZSS_CPLUSPLUS >= 201103L
 #include <memory>
 
 namespace ClownLZSS
