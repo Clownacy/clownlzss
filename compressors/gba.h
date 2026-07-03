@@ -20,6 +20,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <cstddef>
 #include <ranges>
 
+#include "../bitfield.h"
 #include "clownlzss.h"
 #include "common.h"
 

@@ -16,6 +16,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #ifndef CLOWNLZSS_DECOMPRESSORS_GBA_H
 #define CLOWNLZSS_DECOMPRESSORS_GBA_H
 
+#include "../bitfield.h"
 #include "common.h"
 
 namespace ClownLZSS
