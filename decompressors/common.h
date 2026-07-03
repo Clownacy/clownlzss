@@ -18,6 +18,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <iterator>
 #if __STDC_HOSTED__
 	#include <istream>
@@ -294,8 +295,10 @@ namespace ClownLZSS
 		using Base = Internal::OutputCommon<T, DecompressorOutput<T, dictionary_size, maximum_copy_length, filler_value>>;
 		using Base::output;
 
-		// TODO: Round 'dictionary_size' to the next power-of-two, for improved performance.
-		std::array<char, dictionary_size + maximum_copy_length - 1> buffer;
+		// Pad this to the nearest power-of-two so that the modulos are faster.
+		static constexpr auto padded_dictionary_size = std::bit_ceil(dictionary_size);
+
+		std::array<char, padded_dictionary_size + maximum_copy_length - 1> buffer;
 		unsigned int index = 0;
 
 		void WriteToBuffer(const unsigned char value)
@@ -304,9 +307,9 @@ namespace ClownLZSS
 
 			// A lovely little trick that is borrowed from Okumura's LZSS decompressor...
 			if (index < maximum_copy_length - 1)
-				buffer[dictionary_size + index] = value;
+				buffer[padded_dictionary_size + index] = value;
 
-			index = (index + 1) % dictionary_size;
+			index = (index + 1) % padded_dictionary_size;
 		}
 
 		void WriteImplementation(const unsigned char value)
@@ -326,7 +329,7 @@ namespace ClownLZSS
 
 		void Copy(const unsigned int distance, const unsigned int count)
 		{
-			const unsigned int source_index = (index - distance + dictionary_size) % dictionary_size;
+			const unsigned int source_index = (index - distance + padded_dictionary_size) % padded_dictionary_size;
 			const unsigned int destination_index = index;
 
 			for (unsigned int i = 0; i < count; ++i)
