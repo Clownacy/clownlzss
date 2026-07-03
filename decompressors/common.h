@@ -303,7 +303,7 @@ namespace ClownLZSS
 			buffer[index] = value;
 
 			// A lovely little trick that is borrowed from Okumura's LZSS decompressor...
-			if (index < maximum_copy_length)
+			if (index < maximum_copy_length - 1)
 				buffer[dictionary_size + index] = value;
 
 			index = (index + 1) % dictionary_size;
