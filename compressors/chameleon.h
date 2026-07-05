@@ -48,9 +48,9 @@ namespace ClownLZSS
 			{
 				/* Produce a series of LZSS compression matches. */
 				/* Yes, the first two values really are lower than usual by 1. */
-				ClownLZSS::Matches matches;
-				std::size_t total_matches;
-				if (!ClownLZSS::FindOptimalMatches(-1, 0xFF, 0x7FF, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
+				const ClownLZSS::Matches matches = ClownLZSS::FindOptimalMatches(-1, 0xFF, 0x7FF, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, nullptr);
+
+				if (!matches)
 					return false;
 
 				/* Track the location of the header... */
@@ -65,16 +65,16 @@ namespace ClownLZSS
 					/* Produce Chameleon-formatted data. */
 					/* Unlike many other LZSS formats, Chameleon stores the descriptor fields separately from the rest of the data. */
 					/* Iterate over the compression matches, outputting just the descriptor fields. */
-					for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
+					for (const auto &match : matches)
 					{
-						if (CLOWNLZSS_MATCH_IS_LITERAL(match))
+						if (CLOWNLZSS_MATCH_IS_LITERAL(&match))
 						{
 							descriptor_bits.Push(1);
 						}
 						else
 						{
-							const std::size_t distance = match->destination - match->source;
-							const std::size_t length = match->length;
+							const std::size_t distance = match.destination - match.source;
+							const std::size_t length = match.length;
 
 							if (length >= 2 && length <= 3 && distance < 0x100)
 							{
@@ -122,16 +122,16 @@ namespace ClownLZSS
 				output.Seek(current_position);
 
 				/* Iterate over the compression matches again, now outputting just the literals and offset/length pairs. */
-				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
+				for (const auto &match : matches)
 				{
-					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
+					if (CLOWNLZSS_MATCH_IS_LITERAL(&match))
 					{
-						output.Write(data[match->destination]);
+						output.Write(data[match.destination]);
 					}
 					else
 					{
-						const std::size_t distance = match->destination - match->source;
-						const std::size_t length = match->length;
+						const std::size_t distance = match.destination - match.source;
+						const std::size_t length = match.length;
 
 						if (length >= 2 && length <= 3 && distance < 0x100)
 						{

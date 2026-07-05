@@ -87,9 +87,9 @@ namespace ClownLZSS
 			{
 				// Produce a series of LZSS compression matches.
 				// Yes, the distance really is 1 lower than usual.
-				ClownLZSS::Matches matches;
-				std::size_t total_matches;
-				if (!ClownLZSS::FindOptimalMatches(-1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
+				const ClownLZSS::Matches matches = ClownLZSS::FindOptimalMatches(-1, 0xFFFFFFFF/*dictionary-matches can be infinite*/, 0x1FFF, FindExtraMatches, 0xFFFFFFF/*dummy*/, GetMatchCost, data, 1, data_size, nullptr);
+
+				if (!matches)
 					return false;
 
 				// Track the location of the header...
@@ -99,14 +99,14 @@ namespace ClownLZSS
 				output.WriteLE16(0);
 
 				// Produce Rage-formatted data.
-				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
+				for (const auto &match : matches)
 				{
-					const std::size_t distance = match->destination - match->source;
-					const std::size_t offset = match->source;
+					const std::size_t distance = match.destination - match.source;
+					const std::size_t offset = match.source;
 
 					std::size_t length;
 
-					length = match->length;
+					length = match.length;
 
 					if (distance == 0)
 					{

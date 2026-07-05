@@ -75,9 +75,9 @@ namespace ClownLZSS
 			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				// Produce a series of LZSS compression matches.
-				ClownLZSS::Matches matches;
-				std::size_t total_matches;
-				if (!ClownLZSS::FindOptimalMatches(-1, 0x1F + 3, 0x800, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
+				const ClownLZSS::Matches matches = ClownLZSS::FindOptimalMatches(-1, 0x1F + 3, 0x800, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, nullptr);
+
+				if (!matches)
 					return false;
 
 				// Track the location of the header...
@@ -96,17 +96,17 @@ namespace ClownLZSS
 				};
 
 				// Produce Faxman-formatted data.
-				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
+				for (const auto &match : matches)
 				{
-					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
+					if (CLOWNLZSS_MATCH_IS_LITERAL(&match))
 					{
 						PushDescriptorBit(1);
-						output.Write(data[match->destination]);
+						output.Write(data[match.destination]);
 					}
 					else
 					{
-						const std::size_t distance = match->destination == match->source ? 0x800 : match->destination - match->source;
-						const std::size_t length = match->length;
+						const std::size_t distance = match.destination == match.source ? 0x800 : match.destination - match.source;
+						const std::size_t length = match.length;
 						const std::size_t offset = 0 - distance;
 
 						if (length >= 2 && length <= 5 && distance <= 0x100)

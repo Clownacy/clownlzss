@@ -18,7 +18,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #include <cassert>
 #include <cstddef>
-#include <ranges>
 
 #include "../bitfield.h"
 #include "clownlzss.h"
@@ -51,7 +50,7 @@ namespace ClownLZSS
 			template<typename T>
 			using DescriptorFieldWriter = BitField::DescriptorFieldWriter<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::Low, BitField::Endian::Big, T>;
 
-			bool IsInRange(std::unsigned_integral auto x, std::unsigned_integral auto min, std::unsigned_integral auto max)
+			static constexpr bool IsInRange(const std::unsigned_integral auto x, const std::unsigned_integral auto min, const std::unsigned_integral auto max)
 			{
 				return (min <= x) && (x <= max);
 			}
@@ -126,10 +125,10 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			void EncodeMatches(const unsigned char* const data, const Matches& matches, std::size_t total_matches, CompressorOutput<T> &output)
+			void EncodeMatches(const unsigned char* const data, const Matches& matches, CompressorOutput<T> &output)
 			{
 				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
-				for (const auto& match : std::ranges::subrange(&matches[0], &matches[total_matches]))
+				for (const auto &match : matches)
 				{
 					if (CLOWNLZSS_MATCH_IS_LITERAL(&match))
 					{
@@ -150,13 +149,13 @@ namespace ClownLZSS
 				using namespace Compressor;
 
 				// Produce a series of LZSS compression matches.
-				ClownLZSS::Matches matches;
-				std::size_t total_matches;
-				if (!ClownLZSS::FindOptimalMatches(filler_value, maximum_match_length, maximum_match_distance, nullptr, literal_cost, match_cost_callback, data, bytes_per_value, data_size / bytes_per_value, &matches, &total_matches, nullptr))
+				const ClownLZSS::Matches matches = ClownLZSS::FindOptimalMatches(filler_value, maximum_match_length, maximum_match_distance, nullptr, literal_cost, match_cost_callback, data, bytes_per_value, data_size / bytes_per_value, nullptr);
+
+				if (!matches)
 					return false;
 
 				const auto header_position = ReserveSpaceForHeader(output);
-				EncodeMatches(data, matches, total_matches, output);
+				EncodeMatches(data, matches, output);
 				WriteHeader(header_position, data_size, output);
 				WritePaddingBytes(header_position, output);
 

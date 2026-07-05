@@ -79,8 +79,9 @@ int ClownLZSS_FindOptimalMatches(
 
 namespace ClownLZSS
 {
-	namespace Internal
+	class Matches
 	{
+	private:
 		struct MatchDeleter
 		{
 			void operator()(ClownLZSS_Match* const a)
@@ -88,11 +89,38 @@ namespace ClownLZSS
 				free(a);
 			}
 		};
-	}
 
-	using Matches = std::unique_ptr<ClownLZSS_Match[], Internal::MatchDeleter>;
+		static constexpr size_t invalid_total_matches = static_cast<size_t>(-1);
 
-	inline bool FindOptimalMatches(
+		const std::unique_ptr<ClownLZSS_Match[], MatchDeleter> pointer;
+		const size_t total_matches;
+
+	public:
+		Matches() noexcept
+			: pointer(nullptr)
+			, total_matches(invalid_total_matches)
+		{}
+
+		Matches(ClownLZSS_Match* const matches, const size_t total_matches) noexcept
+			: pointer(matches)
+			, total_matches(total_matches)
+		{}
+
+		auto size() const noexcept {return total_matches;}
+
+		auto begin() noexcept {return pointer.get();}
+		auto end() noexcept {return pointer.get() + size();}
+
+		auto begin() const noexcept {return pointer.get();}
+		auto end() const noexcept {return pointer.get() + size();}
+
+		auto cbegin() const noexcept {return pointer.get();}
+		auto cend() const noexcept {return pointer.get() + size();}
+
+		operator bool() const noexcept {return size() != invalid_total_matches;}
+	};
+
+	inline Matches FindOptimalMatches(
 		int filler_value,
 		size_t maximum_match_length,
 		size_t maximum_match_distance,
@@ -102,17 +130,16 @@ namespace ClownLZSS
 		const unsigned char *data,
 		size_t bytes_per_value,
 		size_t total_values,
-		Matches *matches,
-		size_t *total_matches,
 		const void *user
 	)
 	{
-		ClownLZSS_Match *matches_pointer;
-		const bool success = ClownLZSS_FindOptimalMatches(filler_value, maximum_match_length, maximum_match_distance, extra_matches_callback, literal_cost, match_cost_callback, data, bytes_per_value, total_values, &matches_pointer, total_matches, user);
+		ClownLZSS_Match *matches;
+		size_t total_matches;
 
-		*matches = Matches(matches_pointer);
+		if (!ClownLZSS_FindOptimalMatches(filler_value, maximum_match_length, maximum_match_distance, extra_matches_callback, literal_cost, match_cost_callback, data, bytes_per_value, total_values, &matches, &total_matches, user))
+			return {};
 
-		return success;
+		return {matches, total_matches};
 	}
 }
 #endif

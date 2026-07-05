@@ -46,26 +46,26 @@ namespace ClownLZSS
 					return false;
 
 				// Produce a series of LZSS compression matches.
-				ClownLZSS::Matches matches;
-				std::size_t total_matches;
-				if (!ClownLZSS::FindOptimalMatches(-1, 0x100, 0x100, nullptr, 1 + 16, GetMatchCost, data, bytes_per_value, data_size / bytes_per_value, &matches, &total_matches, nullptr))
+				const ClownLZSS::Matches matches = ClownLZSS::FindOptimalMatches(-1, 0x100, 0x100, nullptr, 1 + 16, GetMatchCost, data, bytes_per_value, data_size / bytes_per_value, nullptr);
+
+				if (!matches)
 					return false;
 
 				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
 
 				// Produce Comper-formatted data.
-				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
+				for (const auto &match : matches)
 				{
-					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
+					if (CLOWNLZSS_MATCH_IS_LITERAL(&match))
 					{
 						descriptor_bits.Push(0);
-						output.Write(data[match->destination * 2 + 0]);
-						output.Write(data[match->destination * 2 + 1]);
+						output.Write(data[match.destination * 2 + 0]);
+						output.Write(data[match.destination * 2 + 1]);
 					}
 					else
 					{
-						const std::size_t distance = match->destination - match->source;
-						const std::size_t length = match->length;
+						const std::size_t distance = match.destination - match.source;
+						const std::size_t length = match.length;
 						const std::size_t offset = 0 - distance;
 
 						descriptor_bits.Push(1);

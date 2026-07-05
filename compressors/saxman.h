@@ -66,25 +66,25 @@ namespace ClownLZSS
 			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				// Produce a series of LZSS compression matches.
-				ClownLZSS::Matches matches;
-				std::size_t total_matches;
-				if (!ClownLZSS::FindOptimalMatches(-1, 0x12, 0x1000, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, &matches, &total_matches, nullptr))
+				const ClownLZSS::Matches matches = ClownLZSS::FindOptimalMatches(-1, 0x12, 0x1000, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, nullptr);
+
+				if (!matches)
 					return false;
 
 				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
 
 				// Produce Saxman-formatted data.
-				for (ClownLZSS_Match *match = &matches[0]; match != &matches[total_matches]; ++match)
+				for (const auto &match : matches)
 				{
-					if (CLOWNLZSS_MATCH_IS_LITERAL(match))
+					if (CLOWNLZSS_MATCH_IS_LITERAL(&match))
 					{
 						descriptor_bits.Push(1);
-						output.Write(data[match->destination]);
+						output.Write(data[match.destination]);
 					}
 					else
 					{
-						const std::size_t offset = match->source - 0x12;
-						const std::size_t length = match->length;
+						const std::size_t offset = match.source - 0x12;
+						const std::size_t length = match.length;
 
 						descriptor_bits.Push(0);
 						output.Write(offset & 0xFF);
