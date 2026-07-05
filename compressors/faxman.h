@@ -72,7 +72,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				// Produce a series of LZSS compression matches.
 				const ClownLZSS::Matches matches = ClownLZSS::FindOptimalMatches(-1, 0x1F + 3, 0x800, FindExtraMatches, 1 + 8, GetMatchCost, data, 1, data_size, nullptr);
@@ -86,7 +86,7 @@ namespace ClownLZSS
 				// ...and insert a placeholder there.
 				output.WriteLE16(0);
 
-				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
+				DescriptorFieldWriter descriptor_bits(output);
 				unsigned int descriptor_bits_total = 0;
 
 				const auto PushDescriptorBit = [&](const bool value)
@@ -145,7 +145,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool FaxmanCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	inline bool FaxmanCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -154,7 +154,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ModuledFaxmanCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	inline bool ModuledFaxmanCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 

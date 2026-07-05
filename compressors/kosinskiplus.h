@@ -44,7 +44,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				// Produce a series of LZSS compression matches.
 				const ClownLZSS::Matches matches = ClownLZSS::FindOptimalMatches(-1, 0x100 + 8, 0x2000, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, nullptr);
@@ -52,7 +52,7 @@ namespace ClownLZSS
 				if (!matches)
 					return false;
 
-				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
+				DescriptorFieldWriter descriptor_bits(output);
 
 				// Produce Kosinski+-formatted data.
 				for (const auto &match : matches)
@@ -107,7 +107,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool KosinskiPlusCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	inline bool KosinskiPlusCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -116,7 +116,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ModuledKosinskiPlusCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	inline bool ModuledKosinskiPlusCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 

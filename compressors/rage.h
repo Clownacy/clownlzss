@@ -83,7 +83,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				// Produce a series of LZSS compression matches.
 				// Yes, the distance really is 1 lower than usual.
@@ -187,7 +187,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool RageCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	inline bool RageCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -196,7 +196,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ModuledRageCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	inline bool ModuledRageCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 

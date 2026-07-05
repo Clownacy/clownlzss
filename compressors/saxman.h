@@ -71,7 +71,7 @@ namespace ClownLZSS
 				if (!matches)
 					return false;
 
-				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
+				DescriptorFieldWriter descriptor_bits(output);
 
 				// Produce Saxman-formatted data.
 				for (const auto &match : matches)
@@ -131,7 +131,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool SaxmanCompressWithoutHeader(const unsigned char* const data, const std::size_t data_size, T &&output)
+	inline bool SaxmanCompressWithoutHeader(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -140,7 +140,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool SaxmanCompressWithHeader(const unsigned char* const data, const std::size_t data_size, T &&output)
+	inline bool SaxmanCompressWithHeader(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -149,7 +149,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ModuledSaxmanCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	inline bool ModuledSaxmanCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 

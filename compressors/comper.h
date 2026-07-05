@@ -37,7 +37,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				constexpr unsigned int bytes_per_value = 2;
 
@@ -51,7 +51,7 @@ namespace ClownLZSS
 				if (!matches)
 					return false;
 
-				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
+				DescriptorFieldWriter descriptor_bits(output);
 
 				// Produce Comper-formatted data.
 				for (const auto &match : matches)
@@ -85,7 +85,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ComperCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	inline bool ComperCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -94,7 +94,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ModuledComperCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	inline bool ModuledComperCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 

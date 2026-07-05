@@ -147,7 +147,7 @@ namespace ClownLZSS
 				output.WriteBE16(special_values->lowest);
 				output.WriteBE16(special_values->most_common);
 
-				BitFieldWriter<decltype(output)> bits(output);
+				BitFieldWriter bits(output);
 
 				const unsigned char* const input_end = data + data_size;
 
@@ -344,7 +344,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool EnigmaCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	inline bool EnigmaCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -360,7 +360,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ModuledEnigmaCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	inline bool ModuledEnigmaCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 

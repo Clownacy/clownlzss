@@ -44,7 +44,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				/* Produce a series of LZSS compression matches. */
 				/* Yes, the first two values really are lower than usual by 1. */
@@ -60,7 +60,7 @@ namespace ClownLZSS
 				output.WriteBE16(0);
 
 				{
-					BitFieldWriter<decltype(output)> descriptor_bits(output);
+					BitFieldWriter descriptor_bits(output);
 
 					/* Produce Chameleon-formatted data. */
 					/* Unlike many other LZSS formats, Chameleon stores the descriptor fields separately from the rest of the data. */
@@ -159,7 +159,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ChameleonCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	inline bool ChameleonCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -168,7 +168,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ModuledChameleonCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	inline bool ModuledChameleonCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 

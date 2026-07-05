@@ -37,7 +37,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				// Produce a series of LZSS compression matches.
 				const ClownLZSS::Matches matches = ClownLZSS::FindOptimalMatches(0x20, 0x40, 0x400, nullptr, 1 + 8, GetMatchCost, data, 1, data_size, nullptr);
@@ -54,7 +54,7 @@ namespace ClownLZSS
 				// ...and insert a placeholder there.
 				output.WriteBE16(0);
 
-				DescriptorFieldWriter<decltype(output)> descriptor_bits(output);
+				DescriptorFieldWriter descriptor_bits(output);
 
 				// Produce Rocket-formatted data.
 				for (const auto &match : matches)
@@ -93,7 +93,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool RocketCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	inline bool RocketCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -102,7 +102,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	bool ModuledRocketCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	inline bool ModuledRocketCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 
