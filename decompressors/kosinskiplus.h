@@ -36,7 +36,7 @@ namespace ClownLZSS
 			template<typename T1, typename T2>
 			void Decompress(DecompressorInput<T1> &input, DecompressorOutput<T2> &output)
 			{
-				BitField<decltype(input)> descriptor_bits(input);
+				BitField descriptor_bits(input);
 
 				for (;;)
 				{
@@ -95,7 +95,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		KosinskiPlus::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
+		KosinskiPlus::DecompressorOutput output_wrapped(std::forward<T2>(output));
 		KosinskiPlus::Decompress(input_wrapped, output_wrapped);
 	}
 
@@ -105,7 +105,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		KosinskiPlus::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
+		KosinskiPlus::DecompressorOutput output_wrapped(std::forward<T2>(output));
 		ModuledDecompressionWrapper<2, Endian::Big>(input_wrapped, output_wrapped, KosinskiPlus::Decompress, 1);
 	}
 }

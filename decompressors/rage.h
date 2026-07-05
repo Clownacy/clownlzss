@@ -108,7 +108,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Rage::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
+		Rage::DecompressorOutput output_wrapped(std::forward<T2>(output));
 		Rage::Decompress(input_wrapped, output_wrapped);
 	}
 
@@ -118,7 +118,7 @@ namespace ClownLZSS
 		using namespace Internal;
 
 		DecompressorInput input_wrapped(std::forward<T1>(input));
-		Rage::DecompressorOutput<T2> output_wrapped(std::forward<T2>(output));
+		Rage::DecompressorOutput output_wrapped(std::forward<T2>(output));
 		ModuledDecompressionWrapper<2, Endian::Big>(input_wrapped, output_wrapped, Rage::Decompress, 2);
 	}
 }
