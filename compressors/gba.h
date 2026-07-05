@@ -50,12 +50,12 @@ namespace ClownLZSS
 			template<typename T>
 			using DescriptorFieldWriter = BitField::DescriptorFieldWriter<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::Low, BitField::Endian::Big, T>;
 
-			inline constexpr bool IsInRange(const auto x, const auto min, const auto max)
+			[[nodiscard]] inline constexpr bool IsInRange(const auto x, const auto min, const auto max)
 			{
 				return (min <= x) && (x <= max);
 			}
 
-			inline constexpr std::size_t GetMatchCost(const std::size_t, const std::size_t length, void* const)
+			[[nodiscard]] inline constexpr std::size_t GetMatchCost(const std::size_t, const std::size_t length, void* const)
 			{
 				using namespace Compressor;
 
@@ -65,7 +65,7 @@ namespace ClownLZSS
 				return match_cost;
 			}
 
-			inline constexpr std::size_t GetMatchCostVramSafe(const std::size_t distance, const std::size_t length, void* const)
+			[[nodiscard]] inline constexpr std::size_t GetMatchCostVramSafe(const std::size_t distance, const std::size_t length, void* const)
 			{
 				using namespace Compressor;
 
@@ -76,7 +76,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			inline auto ReserveSpaceForHeader(CompressorOutput<T> &output)
+			[[nodiscard]] inline auto ReserveSpaceForHeader(CompressorOutput<T> &output)
 			{
 				const auto header_position = output.Tell();
 				output.WriteLE16(0);
@@ -111,7 +111,7 @@ namespace ClownLZSS
 				}
 			}
 
-			inline unsigned int EncodeMatch(const ClownLZSS_Match& match)
+			[[nodiscard]] inline unsigned int EncodeMatch(const ClownLZSS_Match& match)
 			{
 				using namespace Compressor;
 
@@ -144,7 +144,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			inline bool Compress(const unsigned char* const data, const std::size_t data_size, auto match_cost_callback, CompressorOutput<T> &output)
+			[[nodiscard]] inline bool Compress(const unsigned char* const data, const std::size_t data_size, auto match_cost_callback, CompressorOutput<T> &output)
 			{
 				using namespace Compressor;
 
@@ -163,13 +163,13 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			[[nodiscard]] inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				return Compress(data, data_size, GetMatchCost, output);
 			}
 
 			template<typename T>
-			inline bool CompressVramSafe(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			[[nodiscard]] inline bool CompressVramSafe(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				return Compress(data, data_size, GetMatchCostVramSafe, output);
 			}
@@ -177,7 +177,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	inline bool GbaCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	[[nodiscard]] inline bool GbaCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -186,7 +186,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	inline bool GbaVramSafeCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	[[nodiscard]] inline bool GbaVramSafeCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -195,7 +195,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	inline bool ModuledGbaCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	[[nodiscard]] inline bool ModuledGbaCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 
@@ -204,7 +204,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	inline bool ModuledGbaVramSafeCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	[[nodiscard]] inline bool ModuledGbaVramSafeCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 

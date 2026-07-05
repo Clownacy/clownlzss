@@ -36,7 +36,7 @@ namespace ClownLZSS
 			using BitFieldWriter = BitField::Writer<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::Low, BitField::Endian::Big, T>;
 
 			template<typename T>
-			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			[[nodiscard]] inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				if (data_size == 0)
 					return true;
@@ -344,7 +344,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	inline bool EnigmaCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	[[nodiscard]] inline bool EnigmaCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -360,7 +360,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	inline bool ModuledEnigmaCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	[[nodiscard]] inline bool ModuledEnigmaCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 

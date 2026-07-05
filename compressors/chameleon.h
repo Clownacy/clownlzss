@@ -31,7 +31,7 @@ namespace ClownLZSS
 			template<typename T>
 			using BitFieldWriter = BitField::Writer<1, BitField::WriteWhen::BeforePush, BitField::PushWhere::Low, BitField::Endian::Big, T>;
 
-			inline std::size_t GetMatchCost(const std::size_t distance, const std::size_t length, [[maybe_unused]] void* const user)
+			[[nodiscard]] inline std::size_t GetMatchCost(const std::size_t distance, const std::size_t length, [[maybe_unused]] void* const user)
 			{
 				if (length >= 2 && length <= 3 && distance < 0x100)
 					return 2 + 8 + 1;         /* Descriptor bits, offset byte, length bit */
@@ -44,7 +44,7 @@ namespace ClownLZSS
 			}
 
 			template<typename T>
-			inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
+			[[nodiscard]] inline bool Compress(const unsigned char* const data, const std::size_t data_size, CompressorOutput<T> &output)
 			{
 				/* Produce a series of LZSS compression matches. */
 				/* Yes, the first two values really are lower than usual by 1. */
@@ -159,7 +159,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	inline bool ChameleonCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
+	[[nodiscard]] inline bool ChameleonCompress(const unsigned char* const data, const std::size_t data_size, T &&output)
 	{
 		using namespace Internal;
 
@@ -168,7 +168,7 @@ namespace ClownLZSS
 	}
 
 	template<typename T>
-	inline bool ModuledChameleonCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
+	[[nodiscard]] inline bool ModuledChameleonCompress(const unsigned char* const data, const std::size_t data_size, T &&output, const std::size_t module_size)
 	{
 		using namespace Internal;
 
