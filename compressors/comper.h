@@ -56,7 +56,7 @@ namespace ClownLZSS
 				// Produce Comper-formatted data.
 				for (const auto &match : matches)
 				{
-					if (CLOWNLZSS_MATCH_IS_LITERAL(&match))
+					if (match.IsLiteral())
 					{
 						descriptor_bits.Push(0);
 						output.Write(data[match.destination * 2 + 0]);

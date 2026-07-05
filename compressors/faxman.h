@@ -98,7 +98,7 @@ namespace ClownLZSS
 				// Produce Faxman-formatted data.
 				for (const auto &match : matches)
 				{
-					if (CLOWNLZSS_MATCH_IS_LITERAL(&match))
+					if (match.IsLiteral())
 					{
 						PushDescriptorBit(1);
 						output.Write(data[match.destination]);

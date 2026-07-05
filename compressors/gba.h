@@ -130,7 +130,7 @@ namespace ClownLZSS
 				DescriptorFieldWriter descriptor_bits(output);
 				for (const auto &match : matches)
 				{
-					if (CLOWNLZSS_MATCH_IS_LITERAL(&match))
+					if (match.IsLiteral())
 					{
 						descriptor_bits.Push(0);
 						output.Write(data[match.destination]);

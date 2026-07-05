@@ -59,7 +59,7 @@ namespace ClownLZSS
 				// Produce Rocket-formatted data.
 				for (const auto &match : matches)
 				{
-					if (CLOWNLZSS_MATCH_IS_LITERAL(&match))
+					if (match.IsLiteral())
 					{
 						descriptor_bits.Push(1);
 						output.Write(data[match.destination]);

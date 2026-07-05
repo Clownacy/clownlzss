@@ -79,12 +79,24 @@ int ClownLZSS_FindOptimalMatches(
 
 namespace ClownLZSS
 {
+	struct Match : public ClownLZSS_Match
+	{
+		bool IsLiteral() const
+		{
+			return CLOWNLZSS_MATCH_IS_LITERAL(this);
+		}
+	};
+
+	// Make sure that this is just a thin wrapper.
+	static_assert(sizeof(Match) == sizeof(ClownLZSS_Match));
+	static_assert(std::is_standard_layout_v<ClownLZSS_Match>);
+
 	class Matches
 	{
 	private:
 		struct MatchDeleter
 		{
-			void operator()(ClownLZSS_Match* const a)
+			void operator()(Match* const a)
 			{
 				free(a);
 			}
@@ -92,7 +104,7 @@ namespace ClownLZSS
 
 		static constexpr size_t invalid_total_matches = static_cast<size_t>(-1);
 
-		const std::unique_ptr<ClownLZSS_Match[], MatchDeleter> pointer;
+		const std::unique_ptr<Match[], MatchDeleter> pointer;
 		const size_t total_matches;
 
 	public:
@@ -101,7 +113,7 @@ namespace ClownLZSS
 			, total_matches(invalid_total_matches)
 		{}
 
-		Matches(ClownLZSS_Match* const matches, const size_t total_matches) noexcept
+		Matches(Match* const matches, const size_t total_matches) noexcept
 			: pointer(matches)
 			, total_matches(total_matches)
 		{}
@@ -139,7 +151,7 @@ namespace ClownLZSS
 		if (!ClownLZSS_FindOptimalMatches(filler_value, maximum_match_length, maximum_match_distance, extra_matches_callback, literal_cost, match_cost_callback, data, bytes_per_value, total_values, &matches, &total_matches, user))
 			return {};
 
-		return {matches, total_matches};
+		return {static_cast<Match*>(matches), total_matches};
 	}
 }
 #endif

@@ -124,7 +124,7 @@ namespace ClownLZSS
 				/* Iterate over the compression matches again, now outputting just the literals and offset/length pairs. */
 				for (const auto &match : matches)
 				{
-					if (CLOWNLZSS_MATCH_IS_LITERAL(&match))
+					if (match.IsLiteral())
 					{
 						output.Write(data[match.destination]);
 					}
