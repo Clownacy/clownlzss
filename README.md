@@ -1,4 +1,4 @@
-clownlzss is a lightweight, minimalist, graph-based LZSS framework.
+ClownLZSS is a lightweight, minimalist, graph-based LZSS framework.
 Also included are a collection of compressors which utilise the framework.
 
 Formats supported by the supplied utilities include:
@@ -30,7 +30,7 @@ Formats supported by the supplied utilities include:
 - GBA BIOS - LZSS compression as implemented in the Gameboy Advance BIOS.
   Both normal and VRAM safe mode are supported.
 
-clownlzss utilises graph theory to perform optimal compression: naive "greedy
+ClownLZSS utilises graph theory to perform optimal compression: naive "greedy
 algorithm" compressors prefer to compress the longest runs possible, but this
 does not guarantee the best compression ratio. Graph-based compressors resolve
 this by creating an "LZSS graph" - a weighted directed acyclic graph where each
