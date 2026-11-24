@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.7.2...4.0)
 
 option(CLOWNLZSS_TOOL "Produce compression utility" ON)
 option(CLOWNLZSS_COMPRESSORS "Produce compression libraries" ON)
